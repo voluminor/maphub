@@ -30,6 +30,8 @@ const PLACEHOLDERS = {
     FONTS_CSS: "{{FONTS_CSS}}",
 };
 
+const CONFIG_PLACEHOLDER_RE = /{{([A-Z0-9_.]+)}}/g;
+
 const LZMA_WORKER_FILE = "lzma_worker-min.js";
 const LZMA_LIB_FILE = "lzma-d-min.js";
 const SCRIPT_TYPE = "text/javascript";
@@ -55,6 +57,11 @@ const ERR_INVALID_PAGE_CONFIG_PREFIX =
     "Invalid config for page folder ";
 const ERR_INVALID_PAGE_CONFIG_SUFFIX =
     ". Expected embedParameters.meta.name_app and embedParameters.meta.name_file.";
+
+const ERR_CONFIG_PLACEHOLDER_UNRESOLVED_PREFIX =
+    "Unresolved config placeholder: ";
+const ERR_CONFIG_PLACEHOLDER_NON_STRING_PREFIX =
+    "Config placeholder value is not a string: ";
 
 async function statIfExists(targetPath) {
     try {
@@ -131,6 +138,45 @@ function applyTemplate(template, replacements) {
     return out;
 }
 
+function getByPath(root, parts) {
+    let cur = root;
+    for (const p of parts) {
+        if (cur == null || typeof cur !== "object") return undefined;
+        if (!Object.prototype.hasOwnProperty.call(cur, p)) return undefined;
+        cur = cur[p];
+    }
+    return cur;
+}
+
+function makeConfigReplacements(template, embedParameters) {
+    const seen = new Set();
+    const out = {};
+    for (const m of template.matchAll(CONFIG_PLACEHOLDER_RE)) {
+        const placeholder = m[0];
+        const name = m[1];
+        if (!name.includes(".")) continue;
+        if (seen.has(placeholder)) continue;
+        seen.add(placeholder);
+
+        const pathParts = name.split(".").map((p) => p.toLowerCase());
+        const value = getByPath(embedParameters, pathParts);
+
+        if (value == null) {
+            const msg = `${ERR_CONFIG_PLACEHOLDER_UNRESOLVED_PREFIX}"${placeholder}" -> embedParameters.${pathParts.join(".")}`;
+            console.error(msg);
+            throw new Error(msg);
+        }
+        if (typeof value !== "string") {
+            const msg = `${ERR_CONFIG_PLACEHOLDER_NON_STRING_PREFIX}"${placeholder}" -> embedParameters.${pathParts.join(".")} (${typeof value})`;
+            console.error(msg);
+            throw new Error(msg);
+        }
+
+        out[placeholder] = value;
+    }
+    return out;
+}
+
 async function main() {
     const cwd = process.cwd();
     const distDir = await resolveDistDir(cwd);
@@ -160,6 +206,7 @@ async function main() {
                 [PLACEHOLDERS.JS_BASE]: JS_BASE,
                 [PLACEHOLDERS.LZMA_SCRIPTS]: makeLzmaScripts(cfg.includeLzma, JS_BASE),
                 [PLACEHOLDERS.FONTS_CSS]: makeFontsCss(cfg.fonts, FONTS_BASE),
+                ...makeConfigReplacements(template, cfg.embedParameters),
             });
 
             const outPath = path.join(pagesDir, folder, OUTPUT_FILENAME);
