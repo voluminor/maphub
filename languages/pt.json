@@ -1,0 +1,498 @@
+{
+  "__name": "Português",
+  "meta": {
+    "title": "{{NAME_FULL}}",
+    "description": "{{DESCRIPTION}}"
+  },
+  "ui": {
+    "skip": "Ir para o conteúdo",
+    "brandTitle": "{{NAME_FULL}}",
+    "brandSub": "ferramentas para gerar e editar mapas",
+    "navApi": "API",
+    "navCode": "GitHub",
+    "navInspiration": "Fonte original",
+    "feedback": "Email",
+    "langLabel": "Idioma:",
+    "introTitle": "Sobre o projeto",
+    "generatorsTitle": "Geradores",
+    "open": "Abrir",
+    "newTab": "Num novo separador",
+    "details": "Mais detalhes",
+    "close": "Fechar",
+    "modalFeatures": "Principais funcionalidades",
+    "modalHotkeys": "Teclas e controlos",
+    "compatTitle": "Sobre a compilação:",
+    "compatText": "{{NAME_SHORT}} {{VERSION}}",
+    "legalHtml": "<p><b>Informação legal.</b> A página é disponibilizada «tal como está», sem quaisquer garantias. O utilizador usa-a por sua conta e risco.</p><p><b>Ferramentas de terceiros.</b> Os geradores podem ser baseados em ou inspirados por projetos de terceiros. Por favor, respeite as respetivas licenças e requisitos de atribuição.</p><p><b>Privacidade.</b> A página não recolhe intencionalmente dados pessoais. O idioma selecionado é guardado localmente no navegador (localStorage) para memorizar a sua escolha.</p>",
+    "footerAbout": "Inspirado por: Procgen Arcana (Watabou).",
+    "copyrightOwner": "{{LICENSE}}",
+    "pwaInstall": "Instalar",
+    "pwaInstallUnavailable": "A instalação não está disponível.",
+    "pwaInstallUnsupported": "A instalação não é suportada neste navegador.",
+    "pwaInstallIOS": "No ecrã principal",
+    "pwaInstallIOSHint": "iPhone/iPad: Partilhar → No ecrã principal",
+    "pwaInstallIOSToast": "iPhone/iPad: abra «Partilhar» e selecione «No ecrã principal»"
+  },
+  "generators": {
+    "cave": {
+      "title": "Gerador de Caverna/Clareira",
+      "tag": "mapa de localização",
+      "short": "Um análogo do «one‑page dungeon» para locais naturais: cavernas, tocas ou clareiras na floresta.",
+      "desc": [
+        "O gerador foi pensado como um análogo natural do «one‑page dungeon». Com a mesma base, é possível obter uma rede de câmaras de caverna ou um conjunto de clareiras florestais ligadas.",
+        "Muitas definições estão disponíveis através de menus de contexto. Há exportação para PNG/SVG."
+      ],
+      "features": [
+        "Dois modos de visualização: caverna e clareira.",
+        "Áreas inundadas e alteração do nível da água.",
+        "Estradas opcionais entre saídas opostas.",
+        "Exportação para PNG e SVG."
+      ],
+      "hotkeysTitle": "Atalhos de teclado",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "novo mapa"
+        },
+        {
+          "k": "Tab",
+          "d": "diálogo de etiquetas"
+        },
+        {
+          "k": "R",
+          "d": "diálogo de rotação"
+        },
+        {
+          "k": "G",
+          "d": "alternar grelha"
+        },
+        {
+          "k": [
+            "Shift",
+            "G"
+          ],
+          "d": "definições da grelha"
+        },
+        {
+          "k": "S",
+          "d": "estilo"
+        },
+        {
+          "k": "W",
+          "d": "geometria das paredes"
+        },
+        {
+          "k": [
+            "Shift",
+            "W"
+          ],
+          "d": "alternar todos os parâmetros de geometria"
+        },
+        {
+          "k": "M",
+          "d": "paredes suaves"
+        },
+        {
+          "k": "E",
+          "d": "paredes retas"
+        },
+        {
+          "k": "N",
+          "d": "túneis estreitos"
+        },
+        {
+          "k": "X",
+          "d": "saídas"
+        },
+        {
+          "k": "D",
+          "d": "portas"
+        },
+        {
+          "k": "T",
+          "d": "título"
+        },
+        {
+          "k": "F",
+          "d": "modo clareira"
+        },
+        {
+          "k": "[",
+          "d": "baixar o nível da água"
+        },
+        {
+          "k": "]",
+          "d": "subir o nível da água"
+        },
+        {
+          "k": "H",
+          "d": "(cavernas) hachura"
+        },
+        {
+          "k": "1/2/3",
+          "d": "(cavernas) predefinições de estilo"
+        },
+        {
+          "k": "1…4, 0",
+          "d": "(clareiras) predefinições / estilo aleatório"
+        }
+      ]
+    },
+    "dwellings": {
+      "title": "Gerador de Habitações",
+      "tag": "plantas de edifícios",
+      "short": "Edifícios residenciais, de cabanas a mansões e pequenos castelos — com foco em plantas de pisos coerentes.",
+      "desc": [
+        "Gera habitações desde cabanas simples até mansões de vários pisos e pequenos castelos. O foco é em plantas claras, em que a maioria das divisões tem uma função (cozinha, arsenal, etc.), e existe também um modo de visualização exterior.",
+        "Exportação de plantas e fachadas em PNG/SVG, bem como marcação em JSON/PROTO."
+      ],
+      "features": [
+        "Até 8 pisos (+ cave opcional), ligados por escadas.",
+        "Editor de blueprint para definir a forma do piso térreo.",
+        "Exportação PNG/SVG para plantas de pisos e fachadas.",
+        "Exportação do esquema em JSON/PROTO."
+      ],
+      "hotkeysTitle": "Atalhos de teclado",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "gerar uma nova casa"
+        },
+        {
+          "k": [
+            "Shift",
+            "Enter"
+          ],
+          "d": "regerar os pisos"
+        },
+        {
+          "k": [
+            "Ctrl",
+            "Enter"
+          ],
+          "d": "regerar as divisões"
+        },
+        {
+          "k": "↑/↓ (ou ←/→)",
+          "d": "alternar pisos"
+        },
+        {
+          "k": "Space",
+          "d": "mostrar o nome da casa"
+        },
+        {
+          "k": "E",
+          "d": "modo elevation"
+        },
+        {
+          "k": "B",
+          "d": "editor de blueprint"
+        },
+        {
+          "k": "T",
+          "d": "diálogo de etiquetas"
+        },
+        {
+          "k": "S",
+          "d": "diálogo de estilo"
+        },
+        {
+          "k": "G",
+          "d": "grelha"
+        },
+        {
+          "k": [
+            "Shift",
+            "G"
+          ],
+          "d": "visibilidade da grelha"
+        },
+        {
+          "k": [
+            "Ctrl",
+            "G"
+          ],
+          "d": "tamanho da grelha"
+        },
+        {
+          "k": "D",
+          "d": "modo portas"
+        },
+        {
+          "k": "L",
+          "d": "iluminação"
+        },
+        {
+          "k": "A",
+          "d": "setas das escadas"
+        },
+        {
+          "k": "P",
+          "d": "adereços (props)"
+        },
+        {
+          "k": "R",
+          "d": "legendas das divisões"
+        },
+        {
+          "k": "O",
+          "d": "AO"
+        },
+        {
+          "k": "1…5",
+          "d": "esquema de cores"
+        },
+        {
+          "k": "6…0",
+          "d": "estilo das paredes"
+        }
+      ]
+    },
+    "village": {
+      "title": "Gerador de Aldeia",
+      "tag": "mapa de aldeia",
+      "short": "As aldeias constroem-se em torno de estradas: há menos casas do que em Medieval Fantasy City, e mais campos e árvores.",
+      "desc": [
+        "Ao contrário de Medieval Fantasy City, aqui o povoado é moldado pelas estradas. As casas ficam mais espaçadas ao longo de caminhos sinuosos, e os campos e as árvores dão ao mapa um carácter marcadamente rural.",
+        "Exportação da imagem em PNG/SVG, bem como marcação em JSON/PROTO."
+      ],
+      "features": [
+        "Várias configurações de terreno com pontes/cais quando necessário.",
+        "As altitudes são mostradas com hachuras e sombras.",
+        "Campos, pomares e praças.",
+        "Integração com Dwellings.",
+        "Integração com City Viewer.",
+        "Exportação para PNG/SVG e JSON/PROTO."
+      ],
+      "hotkeysTitle": "Atalhos de teclado",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "gerar uma nova aldeia"
+        },
+        {
+          "k": [
+            "Shift",
+            "Enter"
+          ],
+          "d": "regerar a atual"
+        },
+        {
+          "k": "Tab",
+          "d": "janela de etiquetas"
+        },
+        {
+          "k": "C",
+          "d": "definições de estilo"
+        },
+        {
+          "k": "E",
+          "d": "visualização do relevo"
+        },
+        {
+          "k": "F",
+          "d": "campos"
+        },
+        {
+          "k": "H",
+          "d": "shading"
+        },
+        {
+          "k": "O",
+          "d": "orchards"
+        },
+        {
+          "k": "B",
+          "d": "casas (wilderness mode)"
+        },
+        {
+          "k": "R",
+          "d": "estradas"
+        },
+        {
+          "k": "S",
+          "d": "sombras"
+        },
+        {
+          "k": "N",
+          "d": "plate"
+        },
+        {
+          "k": "T",
+          "d": "árvores"
+        },
+        {
+          "k": [
+            "Shift",
+            "T"
+          ],
+          "d": "regerar as árvores"
+        },
+        {
+          "k": "L",
+          "d": "spotlight"
+        },
+        {
+          "k": [
+            "Shift",
+            "L"
+          ],
+          "d": "janela Spotlight"
+        },
+        {
+          "k": "1…6",
+          "d": "predefinições de estilo"
+        },
+        {
+          "k": "0",
+          "d": "estilo aleatório"
+        }
+      ]
+    },
+    "mfcg": {
+      "title": "Gerador de Cidade de Fantasia Medieval",
+      "tag": "mapa de cidade",
+      "short": "Esquema configurável de uma cidade medieval, com muitas opções e exportação (PNG/SVG/JSON/PROTO).",
+      "desc": [
+        "O MFCG é a ferramenta mais desenvolvida do conjunto: evoluiu de esquemas simples «tipo cidade» para mapas mais detalhados e realistas, com muitos parâmetros.",
+        "Muitas opções estão disponíveis através do menu de contexto.",
+        "Exportação da imagem em PNG/SVG, bem como marcação em JSON/PROTO."
+      ],
+      "features": [
+        "Controlo de elementos obrigatórios (muros, rio, etc.).",
+        "Ferramentas para alterar a forma da cidade.",
+        "Nomes procedurais de bairros.",
+        "Integração com Dwellings.",
+        "Integração com City Viewer.",
+        "Exportação para PNG/SVG e JSON/PROTO."
+      ],
+      "hotkeysTitle": "Atalhos de teclado",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "gerar uma nova cidade"
+        },
+        {
+          "k": "Tab / G",
+          "d": "janela Generate"
+        },
+        {
+          "k": "T",
+          "d": "janela Town"
+        },
+        {
+          "k": "S",
+          "d": "janela Style"
+        },
+        {
+          "k": "O",
+          "d": "separador Outline (em Style)"
+        },
+        {
+          "k": "C",
+          "d": "janela Color scheme"
+        },
+        {
+          "k": "W",
+          "d": "modo Warp"
+        },
+        {
+          "k": "L",
+          "d": "label mode"
+        },
+        {
+          "k": "D",
+          "d": "grelha"
+        },
+        {
+          "k": "B",
+          "d": "edifícios"
+        },
+        {
+          "k": "A",
+          "d": "becos"
+        },
+        {
+          "k": "N",
+          "d": "linhas finas"
+        }
+      ]
+    },
+    "viewer": {
+      "title": "Visualizador de Cidades",
+      "tag": "visualização 3D",
+      "short": "Visualizador 3D: importa JSON/PROTO dos geradores ou alterna entre vistas aleatórias.",
+      "desc": [
+        "Este é mesmo um visualizador. Nele podes abrir uma cidade ou aldeia específica diretamente a partir do MFCG ou do Village, mas para conteúdo novo normalmente precisas de gerar uma cidade/aldeia, exportar JSON/PROTO e importá-lo aqui.",
+        "As opções do visualizador estão disponíveis através do menu de contexto."
+      ],
+      "features": [
+        "Importação de JSON/PROTO de geradores compatíveis.",
+        "Vários modos de visualização e estilos.",
+        "Exportação do modelo 3D em OBJ."
+      ],
+      "hotkeysTitle": "Atalhos de teclado",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "carregar outro exemplo incorporado"
+        },
+        {
+          "k": "1/2/3/4",
+          "d": "modos de visualização"
+        },
+        {
+          "k": "5…0",
+          "d": "estilos / iluminação"
+        },
+        {
+          "k": "G",
+          "d": "gable roofs"
+        },
+        {
+          "k": "W",
+          "d": "windows"
+        },
+        {
+          "k": "T",
+          "d": "trees"
+        },
+        {
+          "k": "X",
+          "d": "exportar para .obj"
+        },
+        {
+          "k": "~",
+          "d": "rotação automática"
+        },
+        {
+          "k": [
+            "Shift",
+            "1"
+          ],
+          "d": "modo fly‑through"
+        },
+        {
+          "k": [
+            "Shift",
+            "0"
+          ],
+          "d": "estilo aleatório"
+        },
+        {
+          "k": "W A S D",
+          "d": "movimento (fly‑through)"
+        },
+        {
+          "k": "+ / -",
+          "d": "movimentos adicionais (como na fonte)"
+        },
+        {
+          "k": "Setas",
+          "d": "navegação"
+        }
+      ]
+    }
+  },
+  "introHtml": "<p>Esta página é um hub compacto para vários geradores procedurais de mapas e plantas. A ideia é simples: abrir uma ferramenta, obter rapidamente um resultado, ajustar os parâmetros se necessário e exportar para usar no jogo ou em documentos.</p>\n<p><b>Porquê um hub separado?</b> Quando trabalhas com vários geradores, é mais cómodo ter um ponto de entrada único com descrições claras, um estilo consistente e acesso rápido às exportações — tudo num só lugar, num só estilo e totalmente compatível entre si.</p><p><b>Informação principal:</b></p><ul><li>Gerar rapidamente uma variação com <span class='kbd'>Enter</span> («regerar»).</li><li>Alterar estilo/legendas/parâmetros através do menu de contexto (botão direito do rato ou toque prolongado no telemóvel).</li><li>Exportação para PNG/SVG; JSON/PROTO — necessário para a visualização 3D ou soluções de terceiros.</li><li>Exemplo de uso: criar uma aldeia e detalhar uma casa específica com o gerador de plantas.</li></ul><p>Esta página nasceu como um hobby de fim de semana; todos os geradores foram feitos por <a href='https://{{PRIMARY_SOURCE}}' target='_blank'>watabou</a>, e a integração e unificação numa única página foi feita por <a href='https://{{GITHUB}}' target='_blank'>sunsung</a></p>"
+}

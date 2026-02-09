@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="description" content="API documentation for {{NAME_FULL}}." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="{{STYLE_COLOR_THEME}}" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/img/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/img/icon-512.png" />
+    <link rel="stylesheet" href="/css/styles.css" />
+
+    <title>{{NAME_FULL}} | API</title>
+
+    <script src="/js/rapidoc-min.js"></script>
+    <style>
+        rapi-doc, #doc{
+            min-width:0;
+            width:100%;
+            max-width:100%;
+            display:block;
+        }
+    </style>
+</head>
+<body>
+<noscript>JavaScript is required for this page.</noscript>
+
+<rapi-doc
+        id="doc"
+        spec-url="/to/openapi.json"
+        render-style="read"
+        show-header="false"
+        theme="dark"
+        primary-color="{{STYLE_COLOR_THEME}}"
+        load-fonts="false"
+        regular-font='"Share Tech", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif'
+        mono-font='"Share Tech Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace'
+        allow-authentication="false"
+        persist-auth="false"
+        allow-try="false"
+        allow-server-selection="false"
+        allow-spec-url-load="false"
+        allow-spec-file-load="false"
+        allow-spec-file-download="false"
+        show-info="true"
+        show-components="true"
+        schema-style="tree"
+        info-description-headings-in-navbar="false"
+>
+    <a slot="nav-logo" href="/" style="display:flex; align-items:center; gap:10px; padding: 12px 10px; text-decoration:none;">
+        <img src="/img/ico_full.png" alt="" style="width:28px; height:28px; display:block;" />
+        <span style="color:#E7EDF6; font-weight:600; letter-spacing:.2px;">{{NAME_FULL}}</span>
+    </a>
+</rapi-doc>
+
+<script>
+    (function () {
+        function apply() {
+            var base = window.location.origin;
+            var baseEl = document.getElementById('apiBaseUrl');
+            if (baseEl) baseEl.textContent = base;
+
+            var doc = document.getElementById('doc');
+            if (doc) doc.setAttribute('server-url', base);
+
+            var y = document.getElementById('year');
+            if (y) y.textContent = String(new Date().getFullYear());
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', apply);
+        } else {
+            apply();
+        }
+    })();
+</script>
+</body>
+</html>

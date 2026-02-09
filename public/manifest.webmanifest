@@ -1,0 +1,36 @@
+{
+  "name": "{{NAME_FULL}}",
+  "short_name": "{{NAME_SHORT}}",
+  "description": "{{DESCRIPTION}}",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "{{STYLE_COLOR_BACKGROUND}}",
+  "theme_color": "{{STYLE_COLOR_THEME}}",
+  "icons": [
+    {
+      "src": "/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/img/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "name": "fantasy-maphub",
+  "name_full": "Fantasy MapHub Generators",
+  "version": "1.0.2",
+  "description": "An offline-first hub that bundles several Watabou map generators into one consistent web app: same UI patterns, local assets, and modern import/export. It adds OpenAPI docs, proto-first serialization (including pure protobuf files), and a PWA build so everything works without an internet connection.",
+  "license": "MPL-2.0",
+  "author": "mail@sunsung.fun",
+  "homepage": "maphub.webtools.download",
+  "github": "github.com/voluminor/maphub",
+  "primary_source": "watabou.github.io",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@9.2.0",
+  "engines": {
+    "npm": "9.2.0",
+    "node": "v20.19.0"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "lint": "eslint .",
+    "pre:gen:proto": "node scripts/generate-protobuf.mjs",
+    "prebuild": "run-s clean pre:gen:proto",
+    "build:gen:index-pages": "node scripts/generate-pages-index.mjs",
+    "build:gen:icons": "node scripts/generate-icons.mjs",
+    "build:gen:languages": "node scripts/generate-languages-bundle.mjs",
+    "build:gen:openapi": "node scripts/merge-openapi.mjs",
+    "build:rewrite:tags": "node scripts/replace-tags-dist.mjs",
+    "build:rewrite:minify": "node scripts/minify-static-js.mjs",
+    "build:rewrite:hash-url": "node scripts/add-query-hash.mjs",
+    "build:list": "run-s build:gen:index-pages build:gen:icons build:gen:languages build:gen:openapi build:rewrite:tags build:rewrite:minify build:rewrite:hash-url",
+    "build": "vite build && npm run build:list",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.0",
+    "globals": "^17.3.0",
+    "inquirer": "^13.2.2",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.3.1",
+    "protobufjs-cli": "^2.0.0",
+    "rimraf": "^6.1.2",
+    "sharp": "^0.34.5",
+    "vite": "^5.1.6"
+  },
+  "dependencies": {
+    "file-saver": "^2.0.5",
+    "howler": "^2.2.4",
+    "pako": "^2.1.0",
+    "protobufjs": "^7.5.4",
+    "vite-plugin-static-copy": "^3.2.0"
+  }
+}

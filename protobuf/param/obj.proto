@@ -1,0 +1,15 @@
+syntax = 'proto3';
+
+package params;
+
+import "param/rout.proto";
+import "param/flag.proto";
+import "param/meta.proto";
+
+// // // //
+
+message Obj {
+  RoutObj routes = 1;
+  FlagObj flags = 2;
+  MetaObj meta = 3;
+}

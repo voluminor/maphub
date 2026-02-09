@@ -1,0 +1,45 @@
+name: "Pull request build"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: pr-build-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    name: "🏗️ Build (matrix)"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20.19.0", "22.x"]
+        npm-version: ["9.2.0", "10.x"]
+    env:
+      CI: "true"
+      NPM_CONFIG_FUND: "false"
+      NPM_CONFIG_AUDIT: "false"
+      NPM_CONFIG_PROGRESS: "false"
+    steps:
+      - name: "🛎️ Checkout"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/init-node
+        with:
+          node-version: ${{ matrix.node-version }}
+          npm-version: ${{ matrix.npm-version }}
+
+      - uses: ./.github/actions/npm-install
+
+      - uses: ./.github/actions/build-web
+        with:
+          node-version: ${{ matrix.node-version }}
+          npm-version: ${{ matrix.npm-version }}

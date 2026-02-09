@@ -1,0 +1,35 @@
+name: "Bump version"
+description: "Bump package.json version and push"
+inputs:
+  bump:
+    description: "Version bump: patch|minor"
+    required: true
+  push-branch:
+    description: "Branch to push"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: "🔖 Bump version (${{ inputs.bump }})"
+      id: bump
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        npm version ${{ inputs.bump }} --no-git-tag-version
+
+        if [ -f package-lock.json ]; then
+          if git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            git checkout -- package-lock.json
+          else
+            rm -f package-lock.json
+          fi
+        fi
+
+        newVer=$(node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));process.stdout.write(p.version)")
+
+        git add package.json
+        git commit -m "chore: bump version to v$newVer"
+        git push origin HEAD:${{ inputs.push-branch }}
+
+        echo "version=$newVer" >> $GITHUB_OUTPUT

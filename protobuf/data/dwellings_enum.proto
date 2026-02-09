@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package data;
+
+// // // //
+
+enum DwellingsDirectionType {
+  DIRECTION_TYPE_UNSPECIFIED = 0;
+  n = 1;
+  s = 2;
+  e = 3;
+  w = 4;
+}
+
+enum DwellingsDoorType {
+  DOOR_TYPE_UNSPECIFIED = 0;
+  NULL = 1;
+  DOORWAY = 2;
+  REGULAR = 3;
+}

@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta name="description" content="The page you’re looking for can’t be found. Use the links below to get back on track." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="{{STYLE_COLOR_THEME}}" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/img/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/img/icon-512.png" />
+  <link rel="stylesheet" href="/css/styles.css" />
+
+  <title>{{NAME_FULL}} | 404 – Page Not Found</title>
+</head>
+<body>
+<a id="skipLink" class="skip" href="#main">Skip to content</a>
+
+<header>
+  <div class="container head-inner">
+    <a class="brand" href="/" aria-label="Home">
+      <span class="logo" aria-hidden="true"></span>
+      <span>
+        <h1 class="brand-title" id="brandTitle">{{NAME_FULL}}</h1>
+        <span class="brand-sub" id="brandSub">tools for generating and editing maps</span>
+      </span>
+    </a>
+
+    <nav aria-label="Navigation">
+      <a class="navlink" href="/api.html" id="navApi">API</a>
+      <a class="navlink" href="https://{{GITHUB}}" target="_blank" rel="noopener" id="navCode">GitHub</a>
+      <a class="navlink" href="https://{{PRIMARY_SOURCE}}" target="_blank" rel="noopener" id="navInspiration">Original source</a>
+      <a class="btn" href="mailto:{{AUTHOR}}" id="navFeedback">Email</a>
+
+      <span class="lang" aria-label="Language">
+        <label id="langLabelHead" for="langSelectHead">Language:</label>
+        <select id="langSelectHead"></select>
+      </span>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="container">
+  <section class="hero" aria-label="404 content">
+    <div class="panel">
+      <div class="code" aria-label="Error 404">404</div>
+      <h2 class="title" id="nfTitle">Page not found</h2>
+      <p class="sub" id="nfSub">
+        The address may be mistyped, the page may have moved, or it may no longer exist.
+      </p>
+
+      <div class="actions" aria-label="Primary actions">
+        <a class="btn primary" href="/" id="btnHome">Go to home</a>
+        <a class="btn" href="/#generators" id="btnGenerators">Open generators</a>
+        <a class="btn" href="/api.html" id="btnApi">Open API</a>
+        <a class="btn" href="/" id="backBtn">Go back</a>
+      </div>
+
+      <p class="sub" style="margin-top:12px;">
+        <span class="muted" id="nfTipLabel">Tip:</span>
+        <span id="nfTipText">If you arrived here from a bookmark, try opening the home page and navigating from there.</span>
+      </p>
+    </div>
+
+    <div class="panel" aria-label="Helpful links">
+      <h2 class="title" id="nfWhatTitle" style="font-size:16px; letter-spacing:.4px;">What you can do</h2>
+      <ul class="list">
+        <li id="nfL1">Check the URL for typos.</li>
+        <li id="nfL2">Use <b>Generators</b> to open a tool directly.</li>
+        <li id="nfL3">Use <b>API</b> if you’re integrating with scripts.</li>
+        <li id="nfL4">Open <b>GitHub</b> to report an issue or suggest a fix.</li>
+      </ul>
+
+      <div class="actions" aria-label="Secondary actions">
+        <a class="btn" href="https://{{GITHUB}}" target="_blank" rel="noopener" id="nfRepoBtn">Open repository</a>
+        <a class="btn" href="mailto:{{AUTHOR}}" id="nfContactBtn">Contact</a>
+      </div>
+    </div>
+  </section>
+
+  <noscript>
+    <div class="panel">
+      JavaScript is disabled. The page still works — use the buttons above to navigate.
+    </div>
+  </noscript>
+</main>
+
+<footer>
+  <div class="container footgrid">
+    <div class="footcol">
+      <div id="footerAbout">Inspired by: Procgen Arcana (Watabou).</div>
+
+      <div class="footlinks" aria-label="Links">
+        <a class="btn" href="https://{{GITHUB}}" target="_blank" rel="noopener" id="footGitHub">GitHub</a>
+        <a class="btn" href="https://{{PRIMARY_SOURCE}}" target="_blank" rel="noopener" id="footSource">Original source</a>
+        <a class="btn" href="/api.html" id="footApi">API</a>
+        <a class="btn" href="mailto:{{AUTHOR}}" id="footFeedback">Email</a>
+
+        <span class="lang" aria-label="Language">
+          <label id="langLabelFoot" for="langSelectFoot">Language:</label>
+          <select id="langSelectFoot"></select>
+        </span>
+      </div>
+    </div>
+
+    <div class="footcol">
+      <div><b id="compatTitle">Build:</b> <span id="compatText">{{NAME_SHORT}} {{VERSION}}</span></div>
+      <div class="legal" id="legalBlock"></div>
+      <div style="margin-top:10px;">© <span id="year"></span> <span id="copyrightOwner">{{LICENSE}}</span></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var I18N = {};
+    var LANG_KEY = "lang";
+    var currentLang = "en";
+
+    function $(id) { return document.getElementById(id); }
+
+    function on(el, evt, fn) {
+      if (!el) return;
+      if (el.addEventListener) el.addEventListener(evt, fn, false);
+      else if (el.attachEvent) el.attachEvent("on" + evt, fn);
+    }
+
+    function text(el, value) {
+      if (!el) return;
+      if (typeof value === "undefined" || value === null) return;
+      el.textContent = value;
+      if (typeof el.textContent === "undefined") el.innerText = value;
+    }
+
+    function setHtml(el, value) {
+      if (!el) return;
+      if (typeof value === "undefined" || value === null) return;
+      el.innerHTML = value;
+    }
+
+    function getQueryParam(name) {
+      try {
+        var qs = window.location.search || "";
+        if (!qs) return null;
+        if (qs.charAt(0) === "?") qs = qs.substring(1);
+        var parts = qs.split("&");
+        for (var i = 0; i < parts.length; i++) {
+          var kv = parts[i].split("=");
+          if (kv.length < 1) continue;
+          var k = decodeURIComponent(kv[0] || "");
+          if (k === name) return decodeURIComponent((kv[1] || "").replace(/\+/g, " "));
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function safeLocalStorageGet(key) {
+      try { return window.localStorage ? window.localStorage.getItem(key) : null; }
+      catch (e) { return null; }
+    }
+    function safeLocalStorageSet(key, val) {
+      try { if (window.localStorage) window.localStorage.setItem(key, val); }
+      catch (e) {}
+    }
+
+    function normalizeLang(code) {
+      if (!code) return null;
+      code = ("" + code).toLowerCase();
+      if (code.indexOf("-") > -1) code = code.split("-")[0];
+      return code;
+    }
+
+    function getSupportedLangs() {
+      var arr = [];
+      for (var code in I18N) {
+        if (I18N.hasOwnProperty(code)) arr.push(code);
+      }
+      return arr;
+    }
+
+    function renderLangSelect(selectEl, selectedCode) {
+      if (!selectEl) return;
+      while (selectEl.firstChild) selectEl.removeChild(selectEl.firstChild);
+
+      var langs = getSupportedLangs();
+      for (var i = 0; i < langs.length; i++) {
+        var code = langs[i];
+        var opt = document.createElement("option");
+        opt.value = code;
+        opt.appendChild(document.createTextNode((I18N[code] && I18N[code].__name) ? I18N[code].__name : code));
+        if (code === selectedCode) opt.selected = true;
+        selectEl.appendChild(opt);
+      }
+    }
+
+    function syncLangSelects(lang) {
+      renderLangSelect($("langSelectHead"), lang);
+      renderLangSelect($("langSelectFoot"), lang);
+    }
+
+    function loadJSON(url, cb) {
+      var xhr = null;
+      try { xhr = new XMLHttpRequest(); }
+      catch (e1) {
+        try { xhr = new ActiveXObject("Msxml2.XMLHTTP"); }
+        catch (e2) {
+          try { xhr = new ActiveXObject("Microsoft.XMLHTTP"); }
+          catch (e3) { xhr = null; }
+        }
+      }
+      if (!xhr) { cb && cb(new Error("XHR not supported")); return; }
+
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+
+        var ok = (xhr.status >= 200 && xhr.status < 300) || xhr.status === 0;
+        if (!ok) { cb && cb(new Error("HTTP " + xhr.status)); return; }
+
+        try {
+          var data = JSON.parse(xhr.responseText);
+          cb && cb(null, data);
+        } catch (err) {
+          cb && cb(err);
+        }
+      };
+
+      try {
+        xhr.open("GET", url, true);
+        xhr.send(null);
+      } catch (e) {
+        cb && cb(e);
+      }
+    }
+
+    function applyTexts(lang) {
+      var t = I18N[lang];
+      if (!t) return;
+
+      currentLang = lang;
+      safeLocalStorageSet(LANG_KEY, lang);
+
+      try { document.documentElement.setAttribute("lang", lang); } catch (e) {}
+
+      var ui = t.ui || {};
+      var meta = t.meta || {};
+      var nf = t.notFound || {};
+
+      var title = nf.pageTitle || (meta.title ? (meta.title + " | 404 – " + (nf.title || "Page not found")) : null);
+      if (title) document.title = title;
+
+      var metaDesc = document.querySelector ? document.querySelector('meta[name="description"]') : null;
+      if (metaDesc && metaDesc.setAttribute) metaDesc.setAttribute("content", nf.metaDescription || nf.description || meta.description || "");
+
+      text($("skipLink"), ui.skip);
+
+      text($("brandTitle"), ui.brandTitle);
+      text($("brandSub"), ui.brandSub);
+
+      text($("navApi"), ui.navApi);
+      text($("navCode"), ui.navCode);
+      text($("navInspiration"), ui.navInspiration);
+      text($("navFeedback"), ui.feedback);
+
+      text($("langLabelHead"), ui.langLabel);
+      text($("langLabelFoot"), ui.langLabel);
+
+      setHtml($("footerAbout"), ui.footerAbout);
+      text($("footGitHub"), ui.navCode);
+      text($("footSource"), ui.navInspiration);
+      text($("footApi"), ui.navApi);
+      text($("footFeedback"), ui.feedback);
+
+      text($("compatTitle"), ui.compatTitle);
+      text($("compatText"), ui.compatText);
+      setHtml($("legalBlock"), ui.legalHtml);
+      text($("copyrightOwner"), ui.copyrightOwner);
+
+      text($("nfTitle"), nf.title);
+      text($("nfSub"), nf.subtitle);
+      text($("btnHome"), nf.btnHome);
+      text($("btnGenerators"), nf.btnGenerators);
+      text($("btnApi"), nf.btnApi);
+      text($("backBtn"), nf.btnBack);
+
+      text($("nfTipLabel"), nf.tipLabel);
+      text($("nfTipText"), nf.tipText);
+
+      text($("nfWhatTitle"), nf.whatTitle);
+
+      text($("nfL1"), nf.list1);
+      setHtml($("nfL2"), nf.list2Html);
+      setHtml($("nfL3"), nf.list3Html);
+      setHtml($("nfL4"), nf.list4Html);
+
+      text($("nfRepoBtn"), nf.repoBtn);
+      text($("nfContactBtn"), nf.contactBtn);
+
+      syncLangSelects(lang);
+    }
+
+    function initLanguage() {
+      var fromQuery = normalizeLang(getQueryParam("lang"));
+      if (fromQuery && I18N[fromQuery]) { applyTexts(fromQuery); return; }
+
+      var saved = normalizeLang(safeLocalStorageGet(LANG_KEY));
+      if (saved && I18N[saved]) { applyTexts(saved); return; }
+
+      var nav = null;
+      try { nav = normalizeLang(navigator.language || (navigator.languages && navigator.languages[0]) || ""); } catch (e) {}
+      if (nav && I18N[nav]) { applyTexts(nav); return; }
+
+      if (I18N.en) { applyTexts("en"); return; }
+
+      var langs = getSupportedLangs();
+      if (langs.length) applyTexts(langs[0]);
+    }
+
+    function initBack() {
+      var back = $("backBtn");
+      if (!back) return;
+      on(back, "click", function (e) {
+        try { e.preventDefault(); } catch (err) {}
+        if (window.history && window.history.length > 1) window.history.back();
+        else window.location.href = "/";
+      });
+    }
+
+    function initBase() {
+      var y = $("year");
+      if (y) text(y, String(new Date().getFullYear()));
+      initBack();
+    }
+
+    function boot() {
+      initBase();
+
+      loadJSON("/languages.json", function (err, data) {
+        if (!err && data) I18N = data;
+        if (!I18N || typeof I18N !== "object") I18N = {};
+        initLanguage();
+      });
+
+      on($("langSelectHead"), "change", function () {
+        var v = normalizeLang(this.value);
+        if (I18N[v]) applyTexts(v);
+      });
+      on($("langSelectFoot"), "change", function () {
+        var v = normalizeLang(this.value);
+        if (I18N[v]) applyTexts(v);
+      });
+    }
+
+    if (document.readyState === "loading") on(document, "DOMContentLoaded", boot);
+    else boot();
+  })();
+</script>
+</body>
+</html>

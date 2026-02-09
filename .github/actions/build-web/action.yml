@@ -1,0 +1,45 @@
+name: "Build"
+description: "Build the web application"
+inputs:
+  node-version:
+    description: "Node.js version (for cache key)"
+    required: false
+    default: "unknown"
+  npm-version:
+    description: "npm version (for cache key)"
+    required: false
+    default: "unknown"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "🗄️ Restore build cache"
+      uses: actions/cache@v4
+      with:
+        path: |
+          node_modules/.cache
+          node_modules/.vite
+          .vite
+          .turbo
+          .next/cache
+          .nuxt
+          .svelte-kit
+          .parcel-cache
+          .astro
+          .storybook/cache
+          .cache
+          ${{ env.HOME }}/.cache/vite
+          ${{ env.HOME }}/.cache/webpack
+          ${{ env.HOME }}/.cache/esbuild
+          ${{ env.HOME }}/.cache/rollup
+        key: build-cache-${{ runner.os }}-node-${{ inputs.node-version }}-npm-${{ inputs.npm-version }}-${{ hashFiles('package-lock.json', 'npm-shrinkwrap.json', 'package.json', 'vite.config.*', 'webpack.config.*', 'rollup.config.*', 'tsconfig*.json', 'next.config.*') }}
+        restore-keys: |
+          build-cache-${{ runner.os }}-node-${{ inputs.node-version }}-npm-${{ inputs.npm-version }}-
+          build-cache-${{ runner.os }}-node-${{ inputs.node-version }}-
+          build-cache-${{ runner.os }}-
+
+    - name: "🏗️ Build"
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        npm run build

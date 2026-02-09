@@ -1,0 +1,89 @@
+name: "Setup Node.js with cache"
+description: "Setup Node.js and configure npm cache"
+inputs:
+  node-version:
+    description: "Node.js version"
+    required: true
+  npm-version:
+    description: "npm version"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: "🔎 Detect lock file"
+      id: lock
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        if [ -f package-lock.json ]; then
+          echo "enabled=true" >> $GITHUB_OUTPUT
+          echo "dependency-path=package-lock.json" >> $GITHUB_OUTPUT
+        elif [ -f npm-shrinkwrap.json ]; then
+          echo "enabled=true" >> $GITHUB_OUTPUT
+          echo "dependency-path=npm-shrinkwrap.json" >> $GITHUB_OUTPUT
+        elif [ -f yarn.lock ]; then
+          echo "enabled=true" >> $GITHUB_OUTPUT
+          echo "dependency-path=yarn.lock" >> $GITHUB_OUTPUT
+        else
+          echo "enabled=false" >> $GITHUB_OUTPUT
+          echo "dependency-path=" >> $GITHUB_OUTPUT
+        fi
+
+    - name: "🔧 Install Node.js ${{ inputs.node-version }} (cached)"
+      if: steps.lock.outputs.enabled == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: "npm"
+        cache-dependency-path: ${{ steps.lock.outputs.dependency-path }}
+
+    - name: "🔧 Install Node.js ${{ inputs.node-version }}"
+      if: steps.lock.outputs.enabled != 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: "🗄️ Restore npm cache (fallback)"
+      if: steps.lock.outputs.enabled != 'true'
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.HOME }}/.npm
+        key: npm-cache-${{ runner.os }}-node-${{ inputs.node-version }}-npm-${{ inputs.npm-version }}-${{ hashFiles('package.json') }}
+        restore-keys: |
+          npm-cache-${{ runner.os }}-node-${{ inputs.node-version }}-npm-${{ inputs.npm-version }}-
+          npm-cache-${{ runner.os }}-node-${{ inputs.node-version }}-
+          npm-cache-${{ runner.os }}-
+
+    - name: "🔧 Ensure npm ${{ inputs.npm-version }}"
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        cur="$(npm -v)"
+        req="${{ inputs.npm-version }}"
+        need=1
+
+        if [[ "$req" == *"x" ]] || [[ "$req" == *"X" ]] || [[ "$req" == *"*"* ]]; then
+          req_major="${req%%.*}"
+          cur_major="${cur%%.*}"
+          if [ "$req_major" = "$cur_major" ]; then
+            need=0
+          fi
+        else
+          if [ "$cur" = "$req" ]; then
+            need=0
+          fi
+        fi
+
+        if [ "$need" -eq 1 ]; then
+          npm i -g "npm@${req}" --no-fund --no-audit
+        fi
+
+        npm -v
+
+    - name: "🧾 Versions"
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        node -v
+        npm -v

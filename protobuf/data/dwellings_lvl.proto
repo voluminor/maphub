@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package data;
+
+import "data/dwellings_enum.proto";
+
+// // // //
+
+message DwellingsCellObj {
+  int32 i = 1;
+  int32 j = 2;
+}
+
+message DwellingsRoomObj {
+  optional string name = 1;
+  repeated DwellingsCellObj cells = 2;
+}
+
+message DwellingsEdgeObj {
+  DwellingsCellObj cell = 1;
+  DwellingsDirectionType dir = 2;
+}
+
+message DwellingsDoorObj {
+  DwellingsEdgeObj edge = 1;
+  optional DwellingsDoorType type = 2;
+}
+
+message DwellingsStairObj {
+  DwellingsCellObj cell = 1;
+  DwellingsDirectionType dir = 2;
+  bool up = 3;
+}

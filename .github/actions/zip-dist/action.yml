@@ -1,0 +1,14 @@
+name: "Zip dist"
+description: "Create dist.zip from dist/"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "📦 Zip dist"
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        test -d dist
+        rm -f dist.zip
+        (cd dist && zip -r ../dist.zip .)
+        ls -lh dist.zip

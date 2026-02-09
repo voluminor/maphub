@@ -1,0 +1,447 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Village Generator Query Parameters",
+    "version": "{{VERSION}}"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Village Generator WEB APP",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/preview"
+          },
+          {
+            "$ref": "#/components/parameters/seed"
+          },
+          {
+            "$ref": "#/components/parameters/tags"
+          },
+          {
+            "$ref": "#/components/parameters/width"
+          },
+          {
+            "$ref": "#/components/parameters/height"
+          },
+          {
+            "$ref": "#/components/parameters/trees"
+          },
+          {
+            "$ref": "#/components/parameters/roads"
+          },
+          {
+            "$ref": "#/components/parameters/name"
+          },
+          {
+            "$ref": "#/components/parameters/pop"
+          },
+          {
+            "$ref": "#/components/parameters/marked"
+          },
+          {
+            "$ref": "#/components/parameters/style"
+          }
+        ],
+        "x-querySchema": {
+          "$ref": "#/components/schemas/VillageQuery"
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "preview": {
+        "name": "preview",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "enum": [
+            0,
+            1
+          ],
+          "default": 0
+        },
+        "description": "UI-only flag. Interpreted as an integer (0 = false, any non-zero = true in the code path used). When enabled, some interactive features and certain layers (e.g., dramatic effects and title plate visibility) are disabled. This does not change the underlying village generation logic.",
+        "examples": {
+          "disabled": {
+            "value": 0
+          },
+          "enabled": {
+            "value": 1
+          }
+        }
+      },
+      "seed": {
+        "name": "seed",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "default": 0
+        },
+        "description": "Primary RNG seed. If omitted or set to 0 AND 'tags' is also omitted, the code treats the URL as having no blueprint and falls back to a fully random village.\n\nIf provided as a non-zero integer, it forces the village to be reproducible (subject to other parameters such as 'roads' and 'trees').",
+        "examples": {
+          "random": {
+            "value": 0
+          },
+          "fixed": {
+            "value": 123456
+          }
+        }
+      },
+      "tags": {
+        "name": "tags",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": "Comma-separated list of map tags (values are URL-decoded before processing).\n\nAllowed tag values (exact strings): 'farmland', 'uncultivated', 'no orchards', 'district', 'organic', 'no square', 'grove', 'palisade', 'sparse', 'dense', 'river', 'coast', 'island', 'pond', 'confluence', 'estuary', 'isolated', 'highway', 'dead end', 'crossroads'.\n\nImportant rules inferred from the code:\n- If 'tags' is present, the blueprint is considered specified even when 'seed' is 0.\n- Some tag categories are conceptually mutually exclusive (density, water type, road type). When multiple tags from the same category are supplied, the code picks the FIRST matching tag in the provided order for single-valued selections (density/water/roads).\n- If no road-type tag is provided, the code implicitly adds 'isolated'.\n- If both 'farmland' and 'uncultivated' are present, 'uncultivated' overrides (no fields).\n- 'no orchards' is redundant when 'uncultivated' is present because orchards are disabled when 'uncultivated' is set.\n- 'dead end' conceptually implies a village square; combining it with 'no square' makes the 'dead end' intent meaningless (the square will not be created when 'no square' is present).\n- 'palisade' is intended for inland, non-district villages without water; combining it with 'district' or water-type tags is discouraged and may increase the chance of generation errors.",
+        "examples": {
+          "simple": {
+            "value": "dense,river,highway,farmland"
+          },
+          "isolated_default": {
+            "value": "sparse,pond"
+          }
+        }
+      },
+      "width": {
+        "name": "width",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 200,
+          "maximum": 1500,
+          "default": 500
+        },
+        "description": "Map width in the same internal units used by the generator. The UI clamps this value to [200, 1500]. This parameter is only applied when a blueprint is considered specified (i.e., 'seed' is non-zero OR 'tags' is present).",
+        "examples": {
+          "default": {
+            "value": 500
+          },
+          "large": {
+            "value": 800
+          }
+        }
+      },
+      "height": {
+        "name": "height",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 200,
+          "maximum": 1500,
+          "default": 500
+        },
+        "description": "Map height in the same internal units used by the generator. The UI clamps this value to [200, 1500]. This parameter is only applied when a blueprint is considered specified (i.e., 'seed' is non-zero OR 'tags' is present).",
+        "examples": {
+          "default": {
+            "value": 500
+          },
+          "large": {
+            "value": 800
+          }
+        }
+      },
+      "trees": {
+        "name": "trees",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "description": "Tree RNG seed override. If omitted, it defaults to the primary 'seed'. If provided and different from 'seed', it changes only the forest generation (tree placement and related noise) while leaving the road network and buildings controlled by 'seed'/'roads'.\n\nThis parameter is only applied when a blueprint is considered specified (i.e., 'seed' is non-zero OR 'tags' is present).",
+        "examples": {
+          "same_as_seed": {
+            "value": 123456
+          },
+          "different": {
+            "value": 999
+          }
+        }
+      },
+      "roads": {
+        "name": "roads",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "description": "Road/network variation seed (stored by the code as 'varSeed'). When positive, it is used instead of the primary 'seed' to build the road network, buildings, and fields, while the forest remains controlled by 'trees'.\n\nNote: In Village.js this value is written into the URL (permalink) when non-zero, and the generation logic supports it via 'varSeed'. However, the URL parsing routine shown in the file does not explicitly read 'roads' back from the URL. If you supply it in a request, it may be ignored depending on the surrounding runtime integration.",
+        "examples": {
+          "unset": {
+            "value": 0
+          },
+          "reroll_roads": {
+            "value": 1700000000
+          }
+        }
+      },
+      "name": {
+        "name": "name",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": "Village name override. If omitted, the name is generated procedurally. When provided (non-empty), it is used verbatim for the title plate.\n\nThis parameter is only applied when a blueprint is considered specified (i.e., 'seed' is non-zero OR 'tags' is present).",
+        "examples": {
+          "example": {
+            "value": "Oakford"
+          }
+        }
+      },
+      "pop": {
+        "name": "pop",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "default": 0
+        },
+        "description": "Population override. If set to a value > 0, the displayed population is forced to that number. If omitted or set to 0, population is computed from generated buildings.\n\nThis parameter is only applied when a blueprint is considered specified (i.e., 'seed' is non-zero OR 'tags' is present).",
+        "examples": {
+          "auto": {
+            "value": 0
+          },
+          "fixed": {
+            "value": 250
+          }
+        }
+      },
+      "marked": {
+        "name": "marked",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Comma-separated list of building indices to mark/number. The indices are parsed as integers.\n\nDuring generation, indices that are >= the number of generated buildings are dropped. Negative indices are not filtered by the code and should be avoided.\n\nThis parameter is only applied when a blueprint is considered specified (i.e., 'seed' is non-zero OR 'tags' is present).",
+        "examples": {
+          "none": {
+            "value": ""
+          },
+          "some": {
+            "value": "0,3,7"
+          }
+        }
+      },
+      "style": {
+        "name": "style",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "default",
+            "sand",
+            "cold",
+            "night",
+            "bw",
+            "minimal",
+            "random"
+          ]
+        },
+        "description": "Preset palette asset name. When provided, the palette is loaded via an asset lookup using this name.\n\nKnown preset names are derived from the style selection UI list in Village.js: 'default', 'sand', 'cold', 'night', 'bw', 'minimal', 'random'.\n\nThis parameter is only applied when a blueprint is considered specified (i.e., 'seed' is non-zero OR 'tags' is present).",
+        "examples": {
+          "default": {
+            "value": "default"
+          },
+          "bw": {
+            "value": "bw"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "VillageQuery": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "preview": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          },
+          "seed": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "default": 0
+          },
+          "tags": {
+            "type": "string",
+            "minLength": 1
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 200,
+            "maximum": 1500,
+            "default": 500
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 200,
+            "maximum": 1500,
+            "default": 500
+          },
+          "trees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "roads": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pop": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "default": 0
+          },
+          "marked": {
+            "type": "string"
+          },
+          "style": {
+            "type": "string",
+            "enum": [
+              "default",
+              "sand",
+              "cold",
+              "night",
+              "bw",
+              "minimal",
+              "random"
+            ]
+          }
+        },
+        "oneOf": [
+          {
+            "title": "RandomVillage",
+            "description": "When 'seed' is omitted or 0 AND 'tags' is omitted, the code treats the URL as having no blueprint and generates a fully random village. In this mode, blueprint-related parameters (width/height/trees/roads/name/pop/marked/style) are ignored by the implementation.",
+            "allOf": [
+              {
+                "not": {
+                  "required": [
+                    "tags"
+                  ]
+                }
+              },
+              {
+                "properties": {
+                  "seed": {
+                    "enum": [
+                      0
+                    ]
+                  }
+                }
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "width"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "height"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "trees"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "roads"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "name"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "pop"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "marked"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "style"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "title": "SpecifiedBlueprint",
+            "description": "A blueprint is considered specified when either 'seed' is a non-zero integer or 'tags' is present. In this mode, blueprint-related parameters are accepted.",
+            "anyOf": [
+              {
+                "required": [
+                  "tags"
+                ]
+              },
+              {
+                "required": [
+                  "seed"
+                ],
+                "properties": {
+                  "seed": {
+                    "minimum": 1
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

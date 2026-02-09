@@ -1,0 +1,498 @@
+{
+  "__name": "English",
+  "meta": {
+    "title": "{{NAME_FULL}}",
+    "description": "{{DESCRIPTION}}"
+  },
+  "ui": {
+    "skip": "Skip to content",
+    "brandTitle": "{{NAME_FULL}}",
+    "brandSub": "tools for generating and editing maps",
+    "navApi": "API",
+    "navCode": "GitHub",
+    "navInspiration": "Original source",
+    "feedback": "Email",
+    "langLabel": "Language:",
+    "introTitle": "About the project",
+    "generatorsTitle": "Generators",
+    "open": "Open",
+    "newTab": "In a new tab",
+    "details": "Details",
+    "close": "Close",
+    "modalFeatures": "Key features",
+    "modalHotkeys": "Hotkeys & controls",
+    "compatTitle": "Build:",
+    "compatText": "{{NAME_SHORT}} {{VERSION}}",
+    "legalHtml": "<p><b>Legal information.</b> This page is provided “as is”, without any warranties. You use it at your own risk.</p><p><b>Third-party tools.</b> Generators may be based on or inspired by third-party projects. Please comply with their licenses and attribution requirements.</p><p><b>Privacy.</b> The page intentionally does not collect personal data. Your selected language is stored locally in the browser (localStorage) to remember your choice.</p>",
+    "footerAbout": "Inspired by: Procgen Arcana (Watabou).",
+    "copyrightOwner": "{{LICENSE}}",
+    "pwaInstall": "Install",
+    "pwaInstallUnavailable": "Installation unavailable.",
+    "pwaInstallUnsupported": "Installation isn't supported in this browser.",
+    "pwaInstallIOS": "To Home Screen",
+    "pwaInstallIOSHint": "iPhone/iPad: Share → Add to Home Screen",
+    "pwaInstallIOSToast": "iPhone/iPad: open “Share” and choose “Add to Home Screen”"
+  },
+  "generators": {
+    "cave": {
+      "title": "Cave/Glade Generator",
+      "tag": "location map",
+      "short": "A “one-page dungeon” analogue for natural sites: caves, burrows, or forest clearings.",
+      "desc": [
+        "The generator was conceived as a natural analogue of a one-page dungeon. Using the same approach, you can get a network of cavern chambers or a cluster of connected forest glades.",
+        "Many settings are available via context menus. Exports to PNG/SVG are supported."
+      ],
+      "features": [
+        "Two render modes: cave and glade.",
+        "Flooded areas and water-level adjustment.",
+        "Optional roads between opposite exits.",
+        "Export to PNG and SVG."
+      ],
+      "hotkeysTitle": "Hotkeys",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "new map"
+        },
+        {
+          "k": "Tab",
+          "d": "tag dialog"
+        },
+        {
+          "k": "R",
+          "d": "rotation dialog"
+        },
+        {
+          "k": "G",
+          "d": "toggle grid"
+        },
+        {
+          "k": [
+            "Shift",
+            "G"
+          ],
+          "d": "grid settings"
+        },
+        {
+          "k": "S",
+          "d": "style"
+        },
+        {
+          "k": "W",
+          "d": "wall geometry"
+        },
+        {
+          "k": [
+            "Shift",
+            "W"
+          ],
+          "d": "toggle all geometry options"
+        },
+        {
+          "k": "M",
+          "d": "smooth walls"
+        },
+        {
+          "k": "E",
+          "d": "straight walls"
+        },
+        {
+          "k": "N",
+          "d": "narrow tunnels"
+        },
+        {
+          "k": "X",
+          "d": "exits"
+        },
+        {
+          "k": "D",
+          "d": "doors"
+        },
+        {
+          "k": "T",
+          "d": "title"
+        },
+        {
+          "k": "F",
+          "d": "glade mode"
+        },
+        {
+          "k": "[",
+          "d": "lower water level"
+        },
+        {
+          "k": "]",
+          "d": "raise water level"
+        },
+        {
+          "k": "H",
+          "d": "(caves) hatching"
+        },
+        {
+          "k": "1/2/3",
+          "d": "(caves) style presets"
+        },
+        {
+          "k": "1…4, 0",
+          "d": "(glades) presets / random style"
+        }
+      ]
+    },
+    "dwellings": {
+      "title": "Dwellings Generator",
+      "tag": "building floor plans",
+      "short": "Residential buildings from huts to mansions and small castles—focused on sensible floor plans.",
+      "desc": [
+        "Generates homes from simple huts to multi-story mansions and small castles. The focus is on readable plans where most rooms have a purpose (kitchen, armory, etc.), plus an exterior view mode.",
+        "Export floor plans and elevations to PNG/SVG, as well as markup in JSON/PROTO."
+      ],
+      "features": [
+        "Up to 8 floors (+ optional basement), connected by stairs.",
+        "Blueprint editor to define the first-floor shape.",
+        "PNG/SVG export for floor plans and elevations.",
+        "Export the layout schema to JSON/PROTO."
+      ],
+      "hotkeysTitle": "Hotkeys",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "generate a new house"
+        },
+        {
+          "k": [
+            "Shift",
+            "Enter"
+          ],
+          "d": "regenerate floors"
+        },
+        {
+          "k": [
+            "Ctrl",
+            "Enter"
+          ],
+          "d": "regenerate rooms"
+        },
+        {
+          "k": "↑/↓ (or ←/→)",
+          "d": "switch floors"
+        },
+        {
+          "k": "Space",
+          "d": "show the house name"
+        },
+        {
+          "k": "E",
+          "d": "elevation mode"
+        },
+        {
+          "k": "B",
+          "d": "blueprint editor"
+        },
+        {
+          "k": "T",
+          "d": "tag dialog"
+        },
+        {
+          "k": "S",
+          "d": "style dialog"
+        },
+        {
+          "k": "G",
+          "d": "grid"
+        },
+        {
+          "k": [
+            "Shift",
+            "G"
+          ],
+          "d": "grid visibility"
+        },
+        {
+          "k": [
+            "Ctrl",
+            "G"
+          ],
+          "d": "grid size"
+        },
+        {
+          "k": "D",
+          "d": "door mode"
+        },
+        {
+          "k": "L",
+          "d": "lighting"
+        },
+        {
+          "k": "A",
+          "d": "stairs arrows"
+        },
+        {
+          "k": "P",
+          "d": "objects (props)"
+        },
+        {
+          "k": "R",
+          "d": "room labels"
+        },
+        {
+          "k": "O",
+          "d": "AO"
+        },
+        {
+          "k": "1…5",
+          "d": "color scheme"
+        },
+        {
+          "k": "6…0",
+          "d": "wall style"
+        }
+      ]
+    },
+    "village": {
+      "title": "Village Generator",
+      "tag": "village map",
+      "short": "Villages are built around roads: fewer houses than in Medieval Fantasy City, more fields and trees.",
+      "desc": [
+        "Unlike Medieval Fantasy City, the settlement is shaped by roads. Houses are spaced farther apart along winding paths, and fields and trees give the map a distinctly rural feel.",
+        "Export as an image to PNG/SVG, as well as markup in JSON/PROTO."
+      ],
+      "features": [
+        "Several terrain setups with bridges/piers when needed.",
+        "Elevation shown with hatching and shadows.",
+        "Fields, gardens, and squares.",
+        "Integration with Dwellings.",
+        "Integration with City Viewer.",
+        "Export to PNG/SVG and JSON/PROTO."
+      ],
+      "hotkeysTitle": "Hotkeys",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "generate a new village"
+        },
+        {
+          "k": [
+            "Shift",
+            "Enter"
+          ],
+          "d": "regenerate current"
+        },
+        {
+          "k": "Tab",
+          "d": "tag window"
+        },
+        {
+          "k": "C",
+          "d": "style settings"
+        },
+        {
+          "k": "E",
+          "d": "terrain rendering"
+        },
+        {
+          "k": "F",
+          "d": "fields"
+        },
+        {
+          "k": "H",
+          "d": "shading"
+        },
+        {
+          "k": "O",
+          "d": "orchards"
+        },
+        {
+          "k": "B",
+          "d": "houses (wilderness mode)"
+        },
+        {
+          "k": "R",
+          "d": "roads"
+        },
+        {
+          "k": "S",
+          "d": "shadows"
+        },
+        {
+          "k": "N",
+          "d": "plate"
+        },
+        {
+          "k": "T",
+          "d": "trees"
+        },
+        {
+          "k": [
+            "Shift",
+            "T"
+          ],
+          "d": "regenerate trees"
+        },
+        {
+          "k": "L",
+          "d": "spotlight"
+        },
+        {
+          "k": [
+            "Shift",
+            "L"
+          ],
+          "d": "Spotlight window"
+        },
+        {
+          "k": "1…6",
+          "d": "style presets"
+        },
+        {
+          "k": "0",
+          "d": "random style"
+        }
+      ]
+    },
+    "mfcg": {
+      "title": "Medieval Fantasy City Generator",
+      "tag": "city map",
+      "short": "A customizable medieval city layout with lots of options and exports (PNG/SVG/JSON/PROTO).",
+      "desc": [
+        "MFCG is the most mature tool in the set: it has evolved from simple “city-like” layouts into more detailed and realistic maps with many parameters.",
+        "Many options are available via the context menu.",
+        "Export as an image to PNG/SVG, as well as markup in JSON/PROTO."
+      ],
+      "features": [
+        "Control of required elements (walls, river, etc.).",
+        "Tools to reshape the city.",
+        "Procedural district names.",
+        "Integration with Dwellings.",
+        "Integration with City Viewer.",
+        "Export to PNG/SVG and JSON/PROTO."
+      ],
+      "hotkeysTitle": "Hotkeys",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "generate a new city"
+        },
+        {
+          "k": "Tab / G",
+          "d": "Generate window"
+        },
+        {
+          "k": "T",
+          "d": "Town window"
+        },
+        {
+          "k": "S",
+          "d": "Style window"
+        },
+        {
+          "k": "O",
+          "d": "Outline tab (in Style)"
+        },
+        {
+          "k": "C",
+          "d": "Color scheme window"
+        },
+        {
+          "k": "W",
+          "d": "Warp mode"
+        },
+        {
+          "k": "L",
+          "d": "label mode"
+        },
+        {
+          "k": "D",
+          "d": "grid"
+        },
+        {
+          "k": "B",
+          "d": "buildings"
+        },
+        {
+          "k": "A",
+          "d": "alleys"
+        },
+        {
+          "k": "N",
+          "d": "thin lines"
+        }
+      ]
+    },
+    "viewer": {
+      "title": "City Viewer",
+      "tag": "3D viewer",
+      "short": "A 3D viewer: import JSON/PROTO from generators, or cycle through random views.",
+      "desc": [
+        "This is a viewer. You can open a specific city or village directly from MFCG or Village, but for new content you typically need to generate a city/village, export JSON/PROTO, and import it here.",
+        "Viewer options are available via the context menu."
+      ],
+      "features": [
+        "Import JSON/PROTO from compatible generators.",
+        "Multiple viewing modes and styles.",
+        "Export the 3D model to OBJ."
+      ],
+      "hotkeysTitle": "Hotkeys",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "load another built-in example"
+        },
+        {
+          "k": "1/2/3/4",
+          "d": "view modes"
+        },
+        {
+          "k": "5…0",
+          "d": "styles / lighting"
+        },
+        {
+          "k": "G",
+          "d": "gable roofs"
+        },
+        {
+          "k": "W",
+          "d": "windows"
+        },
+        {
+          "k": "T",
+          "d": "trees"
+        },
+        {
+          "k": "X",
+          "d": "export to .obj"
+        },
+        {
+          "k": "~",
+          "d": "auto-rotate"
+        },
+        {
+          "k": [
+            "Shift",
+            "1"
+          ],
+          "d": "fly-through mode"
+        },
+        {
+          "k": [
+            "Shift",
+            "0"
+          ],
+          "d": "random style"
+        },
+        {
+          "k": "W A S D",
+          "d": "movement (fly-through)"
+        },
+        {
+          "k": "+ / -",
+          "d": "additional movement (as in the original)"
+        },
+        {
+          "k": "Arrow keys",
+          "d": "navigation (arrow keys)"
+        }
+      ]
+    }
+  },
+  "introHtml": "<p>This page is a compact hub for several procedural generators of maps and floor plans. The idea is simple: open a tool, quickly get a result, tweak parameters if needed, and export it for use in a game or documents.</p>\n<p><b>Why a separate hub?</b> When you work with multiple generators, it\u2019s easier to have a single entry point with clear descriptions, a unified style, and fast access to exports\u2014in one place, in one style, and fully compatible with each other.</p><p><b>Key info:</b></p><ul><li>Quickly sketch a variant with <span class='kbd'>Enter</span> (\u201cregenerate\u201d).</li><li>Change style/labels/settings via the context menu (right\u2011click or long\u2011press on mobile).</li><li>Export to PNG/SVG; JSON/PROTO is needed for the 3D viewer or third\u2011party tools.</li><li>Example workflow: make a village and detail a specific house with the floor\u2011plan generator.</li></ul><p>This page started as a weekend hobby; all generators are written by <a href='https://{{PRIMARY_SOURCE}}' target='_blank'>watabou</a>, and the improvements and consolidation into a single page were done by <a href='https://{{GITHUB}}' target='_blank'>sunsung</a></p>"
+}

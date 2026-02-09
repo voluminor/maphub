@@ -1,0 +1,421 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cave Generator Permalink Query Parameters",
+    "version": "{{VERSION}}"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Cave Generator WEB APP",
+        "parameters": [
+          {
+            "name": "seed",
+            "in": "query",
+            "required": false,
+            "description": "Cave seed (32-bit integer). If omitted or set to 0 *and* `tags` is also omitted, no URL blueprint is loaded and the app starts with a random cave. If `tags` is provided while `seed` is omitted/0, the seed is randomized.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "maximum": 2147483647,
+              "default": 0
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": false,
+            "description": "Comma-separated tags controlling cave generation. If omitted, tags are randomized. If multiple tags from the same exclusive group are provided, results become ambiguous; this spec forbids such combinations.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "burrows",
+                  "hub",
+                  "chambers",
+                  "road",
+                  "tight",
+                  "large",
+                  "medium",
+                  "small",
+                  "sealed",
+                  "entrance",
+                  "passage",
+                  "junction",
+                  "cavities",
+                  "coral",
+                  "chaotic",
+                  "varied",
+                  "connected",
+                  "tree",
+                  "string",
+                  "dry",
+                  "wet",
+                  "flooded"
+                ]
+              },
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "Comma-separated list of cave generation tags. Tags are order-sensitive in the implementation, but this specification treats them as a set and enforces mutually exclusive groups to avoid ambiguous combinations.",
+              "allOf": [
+                {
+                  "not": {
+                    "contains": {
+                      "enum": [
+                        "large",
+                        "medium",
+                        "small"
+                      ]
+                    },
+                    "minContains": 2
+                  }
+                },
+                {
+                  "not": {
+                    "contains": {
+                      "enum": [
+                        "sealed",
+                        "entrance",
+                        "passage",
+                        "junction"
+                      ]
+                    },
+                    "minContains": 2
+                  }
+                },
+                {
+                  "not": {
+                    "contains": {
+                      "enum": [
+                        "cavities",
+                        "coral",
+                        "chaotic",
+                        "varied"
+                      ]
+                    },
+                    "minContains": 2
+                  }
+                },
+                {
+                  "not": {
+                    "contains": {
+                      "enum": [
+                        "connected",
+                        "tree",
+                        "string"
+                      ]
+                    },
+                    "minContains": 2
+                  }
+                },
+                {
+                  "not": {
+                    "contains": {
+                      "enum": [
+                        "dry",
+                        "wet",
+                        "flooded"
+                      ]
+                    },
+                    "minContains": 2
+                  }
+                },
+                {
+                  "not": {
+                    "contains": {
+                      "enum": [
+                        "burrows",
+                        "hub",
+                        "chambers"
+                      ]
+                    },
+                    "minContains": 2
+                  }
+                },
+                {
+                  "not": {
+                    "allOf": [
+                      {
+                        "contains": {
+                          "const": "sealed"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "road"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "not": {
+                    "allOf": [
+                      {
+                        "contains": {
+                          "const": "entrance"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "road"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "description": "Overrides the generated cave name. The implementation URL-decodes the value and also converts '+' to space before decoding.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "water",
+            "in": "query",
+            "required": false,
+            "description": "Custom water level as a fraction. When provided, it overrides the water-related tags (`dry`, `wet`, `flooded`) for the actual water amount used in generation. If the final water level is 0, the `waterSeed` parameter has no effect. The internal model typically uses steps of 0.05 (1/20), so values in that increment are recommended.",
+            "schema": {
+              "type": "number",
+              "format": "float",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          {
+            "name": "waterSeed",
+            "in": "query",
+            "required": false,
+            "description": "Seed used specifically for water generation randomness. Defaults to `seed` (the cave seed) when omitted. Has an effect only when the final water level is greater than 0.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          {
+            "name": "wd",
+            "in": "query",
+            "required": false,
+            "description": "Walls distortion factor. Default is 1.0. Values outside the 0..1 range are accepted by the implementation but are not meaningful.",
+            "schema": {
+              "type": "number",
+              "format": "float",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "wb",
+            "in": "query",
+            "required": false,
+            "description": "Walls bumpiness factor. Default is 1.0. Values outside the 0..1 range are accepted by the implementation but are not meaningful.",
+            "schema": {
+              "type": "number",
+              "format": "float",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "wr",
+            "in": "query",
+            "required": false,
+            "description": "Walls roughness factor. Default is 1.0. Values outside the 0..1 range are accepted by the implementation but are not meaningful.",
+            "schema": {
+              "type": "number",
+              "format": "float",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "glade",
+            "in": "query",
+            "required": false,
+            "description": "Glade mode toggle. The implementation treats any non-zero integer as enabled. When enabled, the app switches to the Glade scene and uses an alternate name grammar.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CaveTags": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "burrows",
+            "hub",
+            "chambers",
+            "road",
+            "tight",
+            "large",
+            "medium",
+            "small",
+            "sealed",
+            "entrance",
+            "passage",
+            "junction",
+            "cavities",
+            "coral",
+            "chaotic",
+            "varied",
+            "connected",
+            "tree",
+            "string",
+            "dry",
+            "wet",
+            "flooded"
+          ]
+        },
+        "uniqueItems": true,
+        "minItems": 1,
+        "description": "Comma-separated list of cave generation tags. Tags are order-sensitive in the implementation, but this specification treats them as a set and enforces mutually exclusive groups to avoid ambiguous combinations.",
+        "allOf": [
+          {
+            "not": {
+              "contains": {
+                "enum": [
+                  "large",
+                  "medium",
+                  "small"
+                ]
+              },
+              "minContains": 2
+            }
+          },
+          {
+            "not": {
+              "contains": {
+                "enum": [
+                  "sealed",
+                  "entrance",
+                  "passage",
+                  "junction"
+                ]
+              },
+              "minContains": 2
+            }
+          },
+          {
+            "not": {
+              "contains": {
+                "enum": [
+                  "cavities",
+                  "coral",
+                  "chaotic",
+                  "varied"
+                ]
+              },
+              "minContains": 2
+            }
+          },
+          {
+            "not": {
+              "contains": {
+                "enum": [
+                  "connected",
+                  "tree",
+                  "string"
+                ]
+              },
+              "minContains": 2
+            }
+          },
+          {
+            "not": {
+              "contains": {
+                "enum": [
+                  "dry",
+                  "wet",
+                  "flooded"
+                ]
+              },
+              "minContains": 2
+            }
+          },
+          {
+            "not": {
+              "contains": {
+                "enum": [
+                  "burrows",
+                  "hub",
+                  "chambers"
+                ]
+              },
+              "minContains": 2
+            }
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "contains": {
+                    "const": "sealed"
+                  }
+                },
+                {
+                  "contains": {
+                    "const": "road"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "contains": {
+                    "const": "entrance"
+                  }
+                },
+                {
+                  "contains": {
+                    "const": "road"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

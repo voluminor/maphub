@@ -1,0 +1,498 @@
+{
+  "__name": "Italiano",
+  "meta": {
+    "title": "{{NAME_FULL}}",
+    "description": "{{DESCRIPTION}}"
+  },
+  "ui": {
+    "skip": "Vai al contenuto",
+    "brandTitle": "{{NAME_FULL}}",
+    "brandSub": "strumenti per la generazione e la modifica di mappe",
+    "navApi": "API",
+    "navCode": "GitHub",
+    "navInspiration": "Fonte originale",
+    "feedback": "Email",
+    "langLabel": "Lingua:",
+    "introTitle": "Sul progetto",
+    "generatorsTitle": "Generatori",
+    "open": "Apri",
+    "newTab": "In una nuova scheda",
+    "details": "Dettagli",
+    "close": "Chiudi",
+    "modalFeatures": "Funzionalità principali",
+    "modalHotkeys": "Tasti e controlli",
+    "compatTitle": "Informazioni sulla build:",
+    "compatText": "{{NAME_SHORT}} {{VERSION}}",
+    "legalHtml": "<p><b>Informazioni legali.</b> La pagina è fornita «così com'è», senza alcuna garanzia. La usi a tuo rischio.</p><p><b>Strumenti di terze parti.</b> I generatori possono essere basati su o ispirati a progetti di terze parti. Ti preghiamo di rispettarne le licenze e i requisiti di attribuzione.</p><p><b>Privacy.</b> La pagina non raccoglie intenzionalmente dati personali. La lingua selezionata viene salvata localmente nel browser (localStorage) per ricordare la tua scelta.</p>",
+    "footerAbout": "Ispirato a: Procgen Arcana (Watabou).",
+    "copyrightOwner": "{{LICENSE}}",
+    "pwaInstall": "Installa",
+    "pwaInstallUnavailable": "Installazione non disponibile.",
+    "pwaInstallUnsupported": "Installazione non supportata in questo browser.",
+    "pwaInstallIOS": "Schermata Home",
+    "pwaInstallIOSHint": "iPhone/iPad: Condividi → Aggiungi a Home",
+    "pwaInstallIOSToast": "iPhone/iPad: apri «Condividi» e scegli «Aggiungi a Home»"
+  },
+  "generators": {
+    "cave": {
+      "title": "Cave/Glade Generator",
+      "tag": "mappa della location",
+      "short": "Un analogo del «one‑page dungeon» per ambienti naturali: grotte, tane o radure nel bosco.",
+      "desc": [
+        "Il generatore è stato concepito come analogo naturale del «one‑page dungeon». Sulla stessa base puoi ottenere una rete di camere di grotta o un gruppo di radure collegate.",
+        "Molte impostazioni sono disponibili tramite menu contestuali. Esportazione in PNG/SVG."
+      ],
+      "features": [
+        "Due modalità di visualizzazione: grotta e radura.",
+        "Aree allagate e variazione del livello dell’acqua.",
+        "Strade opzionali tra le uscite opposte.",
+        "Esportazione in PNG e SVG."
+      ],
+      "hotkeysTitle": "Scorciatoie da tastiera",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "nuova mappa"
+        },
+        {
+          "k": "Tab",
+          "d": "finestra dei tag"
+        },
+        {
+          "k": "R",
+          "d": "finestra di rotazione"
+        },
+        {
+          "k": "G",
+          "d": "attiva/disattiva la griglia"
+        },
+        {
+          "k": [
+            "Shift",
+            "G"
+          ],
+          "d": "impostazioni della griglia"
+        },
+        {
+          "k": "S",
+          "d": "stile"
+        },
+        {
+          "k": "W",
+          "d": "geometria delle pareti"
+        },
+        {
+          "k": [
+            "Shift",
+            "W"
+          ],
+          "d": "commuta tutti i parametri della geometria"
+        },
+        {
+          "k": "M",
+          "d": "pareti morbide"
+        },
+        {
+          "k": "E",
+          "d": "pareti dritte"
+        },
+        {
+          "k": "N",
+          "d": "tunnel stretti"
+        },
+        {
+          "k": "X",
+          "d": "uscite"
+        },
+        {
+          "k": "D",
+          "d": "porte"
+        },
+        {
+          "k": "T",
+          "d": "titolo"
+        },
+        {
+          "k": "F",
+          "d": "modalità radura (glade)"
+        },
+        {
+          "k": "[",
+          "d": "abbassa il livello dell’acqua"
+        },
+        {
+          "k": "]",
+          "d": "alza il livello dell’acqua"
+        },
+        {
+          "k": "H",
+          "d": "(grotte) tratteggio"
+        },
+        {
+          "k": "1/2/3",
+          "d": "(grotte) preset di stile"
+        },
+        {
+          "k": "1…4, 0",
+          "d": "(radure) preset / stile casuale"
+        }
+      ]
+    },
+    "dwellings": {
+      "title": "Dwellings Generator",
+      "tag": "planimetrie degli edifici",
+      "short": "Edifici residenziali, da casette a ville e piccoli castelli — con attenzione a planimetrie sensate.",
+      "desc": [
+        "Genera abitazioni dalle casette più semplici fino a ville a più piani e piccoli castelli. Il focus è su planimetrie leggibili, in cui la maggior parte delle stanze ha una funzione (cucina, armeria, ecc.) e c’è anche una modalità di visualizzazione esterna.",
+        "Esportazione di planimetrie e facciate in PNG/SVG, oltre che della descrizione in JSON/PROTO"
+      ],
+      "features": [
+        "Fino a 8 piani (+ cantina opzionale), collegati da scale.",
+        "Editor del blueprint per definire la forma del primo piano.",
+        "Esportazione PNG/SVG per planimetrie e facciate.",
+        "Esportazione della descrizione in JSON/PROTO"
+      ],
+      "hotkeysTitle": "Scorciatoie da tastiera",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "genera una nuova casa"
+        },
+        {
+          "k": [
+            "Shift",
+            "Enter"
+          ],
+          "d": "rigenera i piani"
+        },
+        {
+          "k": [
+            "Ctrl",
+            "Enter"
+          ],
+          "d": "rigenera le stanze"
+        },
+        {
+          "k": "↑/↓ (или ←/→)",
+          "d": "cambiare piano"
+        },
+        {
+          "k": "Space",
+          "d": "mostra il nome della casa"
+        },
+        {
+          "k": "E",
+          "d": "modalità elevation"
+        },
+        {
+          "k": "B",
+          "d": "editor del blueprint"
+        },
+        {
+          "k": "T",
+          "d": "finestra dei tag"
+        },
+        {
+          "k": "S",
+          "d": "finestra dello stile"
+        },
+        {
+          "k": "G",
+          "d": "griglia"
+        },
+        {
+          "k": [
+            "Shift",
+            "G"
+          ],
+          "d": "visibilità della griglia"
+        },
+        {
+          "k": [
+            "Ctrl",
+            "G"
+          ],
+          "d": "dimensione della griglia"
+        },
+        {
+          "k": "D",
+          "d": "modalità porte"
+        },
+        {
+          "k": "L",
+          "d": "illuminazione"
+        },
+        {
+          "k": "A",
+          "d": "frecce delle scale"
+        },
+        {
+          "k": "P",
+          "d": "oggetti (props)"
+        },
+        {
+          "k": "R",
+          "d": "etichette delle stanze"
+        },
+        {
+          "k": "O",
+          "d": "AO"
+        },
+        {
+          "k": "1…5",
+          "d": "schema colori"
+        },
+        {
+          "k": "6…0",
+          "d": "stile delle pareti"
+        }
+      ]
+    },
+    "village": {
+      "title": "Village Generator",
+      "tag": "mappa del villaggio",
+      "short": "I villaggi si costruiscono attorno alle strade: meno case rispetto a Medieval Fantasy City, più campi e alberi.",
+      "desc": [
+        "A differenza di Medieval Fantasy City, qui l’insediamento è formato dalle strade. Le case sono più rade lungo i percorsi tortuosi, e campi e alberi rendono la mappa decisamente rurale.",
+        "Esportazione come immagine in PNG/SVG, oltre che della descrizione in JSON/PROTO."
+      ],
+      "features": [
+        "Diverse configurazioni del terreno con ponti/moli quando necessario.",
+        "Le altitudini sono mostrate con tratteggio e ombre.",
+        "Campi, frutteti e piazze.",
+        "Integrazione con Dwellings.",
+        "Integrazione con City Viewer.",
+        "Esportazione PNG/SVG e JSON/PROTO."
+      ],
+      "hotkeysTitle": "Scorciatoie da tastiera",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "genera un nuovo villaggio"
+        },
+        {
+          "k": [
+            "Shift",
+            "Enter"
+          ],
+          "d": "rigenera quello attuale"
+        },
+        {
+          "k": "Tab",
+          "d": "finestra dei tag"
+        },
+        {
+          "k": "C",
+          "d": "impostazioni dello stile"
+        },
+        {
+          "k": "E",
+          "d": "visualizzazione del rilievo"
+        },
+        {
+          "k": "F",
+          "d": "campi"
+        },
+        {
+          "k": "H",
+          "d": "shading"
+        },
+        {
+          "k": "O",
+          "d": "orchards"
+        },
+        {
+          "k": "B",
+          "d": "case (modalità wilderness)"
+        },
+        {
+          "k": "R",
+          "d": "strade"
+        },
+        {
+          "k": "S",
+          "d": "ombre"
+        },
+        {
+          "k": "N",
+          "d": "plate"
+        },
+        {
+          "k": "T",
+          "d": "alberi"
+        },
+        {
+          "k": [
+            "Shift",
+            "T"
+          ],
+          "d": "rigenera gli alberi"
+        },
+        {
+          "k": "L",
+          "d": "spotlight"
+        },
+        {
+          "k": [
+            "Shift",
+            "L"
+          ],
+          "d": "finestra Spotlight"
+        },
+        {
+          "k": "1…6",
+          "d": "preset di stile"
+        },
+        {
+          "k": "0",
+          "d": "stile casuale"
+        }
+      ]
+    },
+    "mfcg": {
+      "title": "Medieval Fantasy City Generator",
+      "tag": "mappa della città",
+      "short": "Schema configurabile di una città medievale con molte opzioni ed esportazione (PNG/SVG/JSON/PROTO).",
+      "desc": [
+        "MFCG è lo strumento più evoluto del pacchetto: si è trasformato da semplici schemi «tipo città» a mappe più dettagliate e realistiche, con moltissimi parametri.",
+        "Molte opzioni sono disponibili tramite menu contestuale.",
+        "Esportazione come immagine in PNG/SVG, oltre che della descrizione in JSON/PROTO."
+      ],
+      "features": [
+        "Controllo degli elementi obbligatori (mura, fiume, ecc.).",
+        "Strumenti per modificare la forma della città.",
+        "Nomi procedurali dei quartieri.",
+        "Integrazione con Dwellings.",
+        "Integrazione con City Viewer.",
+        "Esportazione PNG/SVG e JSON/PROTO."
+      ],
+      "hotkeysTitle": "Scorciatoie da tastiera",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "genera una nuova città"
+        },
+        {
+          "k": "Tab / G",
+          "d": "finestra Generate"
+        },
+        {
+          "k": "T",
+          "d": "finestra Town"
+        },
+        {
+          "k": "S",
+          "d": "finestra Style"
+        },
+        {
+          "k": "O",
+          "d": "scheda Outline (in Style)"
+        },
+        {
+          "k": "C",
+          "d": "finestra Color scheme"
+        },
+        {
+          "k": "W",
+          "d": "modalità Warp"
+        },
+        {
+          "k": "L",
+          "d": "label mode"
+        },
+        {
+          "k": "D",
+          "d": "griglia"
+        },
+        {
+          "k": "B",
+          "d": "edifici"
+        },
+        {
+          "k": "A",
+          "d": "vicoli"
+        },
+        {
+          "k": "N",
+          "d": "linee sottili"
+        }
+      ]
+    },
+    "viewer": {
+      "title": "City Viewer",
+      "tag": "visualizzatore 3D",
+      "short": "Visualizzatore 3D: importa JSON/PROTO dai generatori oppure passa tra viste casuali.",
+      "desc": [
+        "Questo è un visualizzatore e basta. Qui puoi aprire una città o un villaggio specifici direttamente da MFCG o Village, ma per nuovo contenuto di solito devi generare una città/un villaggio, esportare JSON/PROTO e importarlo qui.",
+        "Le opzioni del visualizzatore sono disponibili tramite menu contestuale."
+      ],
+      "features": [
+        "Importazione di JSON/PROTO dai generatori compatibili.",
+        "Diverse modalità di visualizzazione e stili.",
+        "Esportazione del modello 3D in OBJ."
+      ],
+      "hotkeysTitle": "Scorciatoie da tastiera",
+      "hotkeys": [
+        {
+          "k": "Enter",
+          "d": "carica un altro esempio incorporato"
+        },
+        {
+          "k": "1/2/3/4",
+          "d": "modalità di visualizzazione"
+        },
+        {
+          "k": "5…0",
+          "d": "stili / illuminazione"
+        },
+        {
+          "k": "G",
+          "d": "gable roofs"
+        },
+        {
+          "k": "W",
+          "d": "windows"
+        },
+        {
+          "k": "T",
+          "d": "trees"
+        },
+        {
+          "k": "X",
+          "d": "esporta in .obj"
+        },
+        {
+          "k": "~",
+          "d": "rotazione automatica"
+        },
+        {
+          "k": [
+            "Shift",
+            "1"
+          ],
+          "d": "modalità fly‑through"
+        },
+        {
+          "k": [
+            "Shift",
+            "0"
+          ],
+          "d": "stile casuale"
+        },
+        {
+          "k": "W A S D",
+          "d": "movimento (fly‑through)"
+        },
+        {
+          "k": "+ / -",
+          "d": "spostamenti aggiuntivi (come nella fonte)"
+        },
+        {
+          "k": "Стрелки",
+          "d": "navigazione"
+        }
+      ]
+    }
+  },
+  "introHtml": "<p>Questa pagina è un hub compatto per diversi generatori procedurali di mappe e planimetrie. L’idea è semplice: aprire uno strumento, ottenere rapidamente un risultato, ritoccare i parametri se serve ed esportare per usarlo nel gioco o nei documenti.</p>\n<p><b>Perché un hub separato?</b> Quando lavori con più generatori, è più comodo avere un unico punto di accesso con descrizioni chiare, uno stile coerente e accesso rapido alle esportazioni — tutto in un solo posto, con lo stesso aspetto e pienamente compatibile tra loro.</p><p><b>Informazioni principali:</b></p><ul><li>Buttare giù rapidamente una variante con <span class='kbd'>Enter</span> («rigenera»).</li><li>Modificare stile/etichette/parametri tramite il menu contestuale (tasto destro o pressione prolungata su mobile).</li><li>Esporta in PNG/SVG; JSON/PROTO — serve per la visualizzazione 3D o soluzioni di terze parti.</li><li>Esempio d’uso: creare un villaggio e dettagliare una singola casa con il generatore di planimetrie.</li></ul><p>Questa pagina è nata come hobby del fine settimana; tutti i generatori sono stati scritti da <a href='https://{{PRIMARY_SOURCE}}' target='_blank'>watabou</a>, le modifiche e l’unificazione in un’unica pagina sono state fatte da <a href='https://{{GITHUB}}' target='_blank'>sunsung</a></p>"
+}

@@ -1,0 +1,54 @@
+syntax = 'proto3';
+
+package params;
+
+import "param/rout.proto";
+
+// // // //
+
+message MetaParamObj {
+  bool allow_high_dpi = 1;
+  bool always_on_top = 2;
+  bool borderless = 3;
+  bool hidden = 4;
+  bool maximized = 5;
+  bool minimized = 6;
+  bool resizable = 7;
+
+  uint32 frame_rate = 8;
+  uint32 height = 9;
+  uint32 width = 10;
+}
+
+message MetaContextObj {
+  uint32 antialiasing = 1;
+  uint32 background = 2;
+  uint32 color_depth = 3;
+  bool depth = 4;
+  bool hardware = 5;
+  bool stencil = 6;
+  bool vsync = 7;
+}
+
+message AboutWindowObj {
+  string text = 1;
+  map<string, string> params = 2;
+  map<string, RoutAdrObj> buttons = 3;
+}
+
+//
+
+message MetaObj {
+  MetaParamObj param = 1;
+  MetaContextObj context = 2;
+
+  string build = 3;
+  string ver_app = 4;
+  string ver_global = 5;
+  string name_file = 6;
+  string name_company = 7;
+  string name_app = 8;
+  string name_package = 9;
+
+  AboutWindowObj about = 10;
+}

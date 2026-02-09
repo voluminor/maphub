@@ -1,0 +1,625 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Medieval Fantasy City Generator Permalink Query Parameters",
+    "version": "{{VERSION}}"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Medieval Fantasy City  Generator WEB APP",
+        "parameters": [
+          {
+            "name": "preview",
+            "in": "query",
+            "required": false,
+            "description": "Preview mode flag.\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Can be used without `size`/`seed`.\n- When enabled, some rendering details and interactions are simplified/disabled.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 0
+            },
+            "examples": {
+              "disabled": {
+                "value": 0
+              },
+              "enabled": {
+                "value": 1
+              }
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "description": "Map size (the generator's 'size' input; internally used as the number of patches).\n- Must be a positive integer.\n- **Required together with `seed`** to restore a map from the URL. If missing or `0`, the URL is treated as not containing a saved map.\n- The built-in UI validates custom sizes in the range 5..200.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "examples": {
+              "small": {
+                "value": 15
+              },
+              "medium": {
+                "value": 30
+              },
+              "large": {
+                "value": 60
+              }
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "required": false,
+            "description": "Random seed used to reproduce the same map.\n- Must be a non-zero integer.\n- **Required together with `size`** to restore a map from the URL.\n- The generator uses a 31-bit LCG; typical seeds are in 1..2147483646.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483646
+            },
+            "examples": {
+              "example": {
+                "value": 123456789
+              }
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "description": "Optional city name.\n- Only applied when both `size` and `seed` are provided and non-zero.\n- If omitted, the app will use its own naming logic.",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "example": {
+                "value": "New Albion"
+              }
+            }
+          },
+          {
+            "name": "population",
+            "in": "query",
+            "required": false,
+            "description": "Optional population override shown in the UI.\n- Integer.\n- Only applied when both `size` and `seed` are provided and non-zero.\n- If omitted or `0`, the UI estimates population from the number of buildings.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "examples": {
+              "auto": {
+                "value": 0
+              },
+              "explicit": {
+                "value": 42000
+              }
+            }
+          },
+          {
+            "name": "citadel",
+            "in": "query",
+            "required": false,
+            "description": "Feature flag: include a citadel/castle.\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 1
+            }
+          },
+          {
+            "name": "urban_castle",
+            "in": "query",
+            "required": false,
+            "description": "Feature flag: 'Inner castle' (urban castle).\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.\n- **Dependency:** This setting only makes sense when `citadel=1`. If `citadel=0`, the UI forces this feature off; the generator is designed with the assumption that an inner castle implies a citadel.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 0
+            }
+          },
+          {
+            "name": "plaza",
+            "in": "query",
+            "required": false,
+            "description": "Feature flag: include a central plaza.\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 1
+            }
+          },
+          {
+            "name": "temple",
+            "in": "query",
+            "required": false,
+            "description": "Feature flag: include a temple.\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 1
+            }
+          },
+          {
+            "name": "walls",
+            "in": "query",
+            "required": false,
+            "description": "Feature flag: include city walls.\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 1
+            }
+          },
+          {
+            "name": "shantytown",
+            "in": "query",
+            "required": false,
+            "description": "Feature flag: include a shanty town area.\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 0
+            }
+          },
+          {
+            "name": "river",
+            "in": "query",
+            "required": false,
+            "description": "Feature flag: include a river/canals.\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 0
+            }
+          },
+          {
+            "name": "coast",
+            "in": "query",
+            "required": false,
+            "description": "Feature flag: include coastline/sea.\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.\n- When `coast=0`, the `sea` parameter is ignored.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 1
+            }
+          },
+          {
+            "name": "sea",
+            "in": "query",
+            "required": false,
+            "description": "Coast orientation parameter (only meaningful when `coast=1`).\n- Parsed as a floating-point number and stored as `coastDir`.\n- Used as an angle multiplier: **angleRadians = sea * PI**.\n- In normal generator output this value is typically in 0.0..1.9 (step 0.1), but any finite float is accepted.\n- **Dependency:** has no effect when `coast=0`.",
+            "schema": {
+              "type": "number",
+              "default": 0.0
+            },
+            "examples": {
+              "east": {
+                "value": 0.0
+              },
+              "south": {
+                "value": 0.5
+              },
+              "west": {
+                "value": 1.0
+              }
+            }
+          },
+          {
+            "name": "greens",
+            "in": "query",
+            "required": false,
+            "description": "Feature flag: add 'Greens' (parks/green areas).\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 0
+            }
+          },
+          {
+            "name": "gates",
+            "in": "query",
+            "required": false,
+            "description": "Roads setting: requested number of city gates.\n- Integer.\n- `-1` means 'auto' (let the generator decide).\n- `0` means 'no gates'.\n- `>= 1` requests an exact number of gates.\n- Only applied when both `size` and `seed` are provided and non-zero.\n- **Interaction with `hub`:** If `gates >= 0`, this value takes precedence and `hub` is ignored.",
+            "schema": {
+              "type": "integer",
+              "minimum": -1,
+              "default": -1
+            },
+            "examples": {
+              "auto": {
+                "value": -1
+              },
+              "none": {
+                "value": 0
+              },
+              "three": {
+                "value": 3
+              }
+            }
+          },
+          {
+            "name": "hub",
+            "in": "query",
+            "required": false,
+            "description": "Roads setting: 'Maximum number' of gates.\n- Encoded as an integer flag (`1` = true, `0` = false).\n- Only applied when both `size` and `seed` are provided and non-zero.\n- **Meaning:** when enabled and when `gates` is not set to a non-negative value, the generator uses the maximum possible number of gates (one per wall vertex).\n- **Conflict:** If `gates >= 0`, `hub` becomes meaningless and is ignored.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 0
+            }
+          },
+          {
+            "name": "style",
+            "in": "query",
+            "required": false,
+            "description": "Color palette preset (asset id).\n- Only applied when both `size` and `seed` are provided and non-zero.\n- Known built-in presets exposed by the UI: `default`, `ink`, `bw`, `vivid`, `natural`, `modern`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "default",
+                "ink",
+                "bw",
+                "vivid",
+                "natural",
+                "modern"
+              ]
+            },
+            "examples": {
+              "default": {
+                "value": "default"
+              },
+              "ink": {
+                "value": "ink"
+              }
+            }
+          },
+          {
+            "name": "export",
+            "in": "query",
+            "required": false,
+            "description": "One-time auto-export trigger.\n- Only applied when both `size` and `seed` are provided and non-zero.\n- Case-insensitive; supported values: `png`, `svg`, `json`.\n- When present and valid, export is executed after the map loads and then cleared in memory (refreshing the page will trigger export again because the query parameter is still in the URL).",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "png",
+                "svg",
+                "json"
+              ]
+            },
+            "examples": {
+              "svg": {
+                "value": "svg"
+              },
+              "png": {
+                "value": "png"
+              },
+              "json": {
+                "value": "json"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "x-querySchema": {
+          "$ref": "#/components/schemas/PermalinkQuery"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PermalinkQuery": {
+        "type": "object",
+        "description": "A semantic schema for the full set of query parameters.\nNote: This is provided as a convenience reference; the actual request is still standard URL query parameters.",
+        "properties": {
+          "preview": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483646
+          },
+          "name": {
+            "type": "string"
+          },
+          "population": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "citadel": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 1
+          },
+          "urban_castle": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          },
+          "plaza": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 1
+          },
+          "temple": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 1
+          },
+          "walls": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 1
+          },
+          "shantytown": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          },
+          "river": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          },
+          "coast": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 1
+          },
+          "sea": {
+            "type": "number",
+            "default": 0.0
+          },
+          "greens": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          },
+          "gates": {
+            "type": "integer",
+            "minimum": -1,
+            "default": -1
+          },
+          "hub": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "default": 0
+          },
+          "style": {
+            "type": "string",
+            "enum": [
+              "default",
+              "ink",
+              "bw",
+              "vivid",
+              "natural",
+              "modern"
+            ]
+          },
+          "export": {
+            "type": "string",
+            "enum": [
+              "png",
+              "svg",
+              "json"
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "urban_castle": {
+                  "const": 1
+                }
+              },
+              "required": [
+                "urban_castle"
+              ]
+            },
+            "then": {
+              "properties": {
+                "citadel": {
+                  "const": 1
+                }
+              },
+              "required": [
+                "citadel"
+              ]
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "sea"
+              ]
+            },
+            "then": {
+              "properties": {
+                "coast": {
+                  "const": 1
+                }
+              },
+              "required": [
+                "coast"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "hub": {
+                  "const": 1
+                }
+              },
+              "required": [
+                "hub"
+              ]
+            },
+            "then": {
+              "properties": {
+                "gates": {
+                  "type": "integer",
+                  "maximum": -1
+                }
+              }
+            }
+          }
+        ],
+        "dependentRequired": {
+          "name": [
+            "size",
+            "seed"
+          ],
+          "population": [
+            "size",
+            "seed"
+          ],
+          "citadel": [
+            "size",
+            "seed"
+          ],
+          "urban_castle": [
+            "size",
+            "seed"
+          ],
+          "plaza": [
+            "size",
+            "seed"
+          ],
+          "temple": [
+            "size",
+            "seed"
+          ],
+          "walls": [
+            "size",
+            "seed"
+          ],
+          "shantytown": [
+            "size",
+            "seed"
+          ],
+          "river": [
+            "size",
+            "seed"
+          ],
+          "coast": [
+            "size",
+            "seed"
+          ],
+          "sea": [
+            "size",
+            "seed"
+          ],
+          "greens": [
+            "size",
+            "seed"
+          ],
+          "gates": [
+            "size",
+            "seed"
+          ],
+          "hub": [
+            "size",
+            "seed"
+          ],
+          "style": [
+            "size",
+            "seed"
+          ],
+          "export": [
+            "size",
+            "seed"
+          ]
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

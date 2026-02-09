@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package data;
+
+import "google/protobuf/struct.proto";
+
+// // // //
+
+enum GeoFeatureType {
+  GEO_FEATURE_UNSPECIFIED = 0;
+  values = 1;
+
+  earth = 2;
+  roads = 3;
+  planks = 4;
+  reserved 5 to 19;
+
+  // x2
+  buildings = 20;
+  prisms = 21;
+  squares = 22;
+  fields = 23;
+  trees = 24;
+  water = 25;
+  reserved 26 to 99;
+
+  // only mfcg
+  walls = 100;
+  rivers = 101;
+  districts = 102;
+  greens = 103;
+  reserved 104 to 149;
+
+  // only vg
+  extendable = 150;
+  palisade = 151;
+  reserved 152 to 200;
+}
+
+enum GeoGeneratorType {
+  GEO_GENERATOR_UNSPECIFIED = 0;
+  mfcg = 1;
+  vg = 2;
+  reserved 3 to 20;
+}
+
+enum GeoType {
+  GEO_TYPE_UNSPECIFIED = 0;
+
+  FeatureCollection = 1;
+  Feature = 2;
+  GeometryCollection = 3;
+  reserved 4 to 19;
+
+  LineString = 20;
+  MultiLineString = 21;
+  MultiPoint = 22;
+  Polygon = 23;
+  MultiPolygon = 24;
+  reserved 25 to 50;
+}

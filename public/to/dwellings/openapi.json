@@ -1,0 +1,541 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Dwellings Generator Permalink Query Parameters",
+    "version": "{{VERSION}}"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Dwellings Generator WEB APP",
+        "parameters": [
+          {
+            "name": "seed",
+            "in": "query",
+            "required": false,
+            "description": "Deterministic random seed used for generation. If omitted or set to 0, the generator will use a non-deterministic seed derived from the current RNG state. Seed is treated as an integer; non-integer values are effectively ignored by the client.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483646,
+              "default": 0
+            },
+            "examples": {
+              "example": {
+                "value": 123456
+              }
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "description": "Generation tags. Encoded as a single comma-separated value (CSV). Only the listed tag values are recognized. Unknown tags are accepted by the client but have no defined effect. Some tags are mutually exclusive (see schema constraints).",
+            "style": "form",
+            "explode": false,
+            "schema": {
+              "$ref": "#/components/schemas/Tags"
+            },
+            "examples": {
+              "example": {
+                "value": [
+                  "medium",
+                  "mechanical",
+                  "hallways"
+                ]
+              }
+            }
+          },
+          {
+            "name": "floors",
+            "in": "query",
+            "required": false,
+            "description": "Requested number of floors. If omitted or 0, the number of floors is chosen automatically (random) and may be influenced by height tags (low/tall). If the 'spiral' or 'stairwell' tag is present and floors is 1, the generator forces the value to 2.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8,
+              "default": 0
+            },
+            "examples": {
+              "random": {
+                "value": 0
+              },
+              "explicit": {
+                "value": 3
+              }
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": false,
+            "description": "Custom ground-plan bitmap code (hex-encoded) used to define the building footprint. This parameter is only meaningful together with 'w' and 'h'. If 'plan' is provided but 'w'/'h' are missing or outside the allowed range, the plan is ignored and a random footprint is used.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Fa-f]+$",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "w",
+            "in": "query",
+            "required": false,
+            "description": "Width of the bitmap used by 'plan'. Only meaningful when 'plan' is present. Valid range is 1..11 (inclusive).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 11
+            }
+          },
+          {
+            "name": "h",
+            "in": "query",
+            "required": false,
+            "description": "Height of the bitmap used by 'plan'. Only meaningful when 'plan' is present. Valid range is 1..11 (inclusive).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 11
+            }
+          },
+          {
+            "name": "entrance",
+            "in": "query",
+            "required": false,
+            "description": "Optional entrance edge override for a custom plan. Encoded as 4 hex digits representing the edge endpoints in the plan grid. Only meaningful when 'plan' is present and successfully decoded.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Fa-f]{4}$"
+            },
+            "examples": {
+              "example": {
+                "value": "0A1B"
+              }
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "description": "Optional label for the generated dwelling (e.g., used as a title in the UI). Does not affect generation.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "description": "Initial view mode. The client recognizes only 'plan' and 'elevation' (case-insensitive). Any other value is ignored.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "plan",
+                "elevation"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "x-querySchema": {
+          "$ref": "#/components/schemas/DwellingsQuery"
+        },
+        "x-behaviorNotes": [
+          "The client reads query parameters from the browser URL (URLSearchParams).",
+          "The permalink generator resets the query string and writes only the parameters it knows about."
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Tag": {
+        "type": "string",
+        "description": "A single recognized generation tag.",
+        "enum": [
+          "small",
+          "medium",
+          "large",
+          "square",
+          "low",
+          "tall",
+          "slab",
+          "mechanical",
+          "organic",
+          "hallways",
+          "spiral",
+          "stairwell",
+          "basement",
+          "blank",
+          "transparent",
+          "generic"
+        ]
+      },
+      "Tags": {
+        "type": "array",
+        "description": "CSV-encoded list of generation tags. The UI treats several groups as mutually exclusive; the schema enforces those constraints.",
+        "items": {
+          "$ref": "#/components/schemas/Tag"
+        },
+        "uniqueItems": true,
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "contains": {
+                        "const": "small"
+                      }
+                    },
+                    {
+                      "contains": {
+                        "const": "medium"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "contains": {
+                        "const": "small"
+                      }
+                    },
+                    {
+                      "contains": {
+                        "const": "large"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "contains": {
+                        "const": "medium"
+                      }
+                    },
+                    {
+                      "contains": {
+                        "const": "large"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "contains": {
+                    "const": "low"
+                  }
+                },
+                {
+                  "contains": {
+                    "const": "tall"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "contains": {
+                    "const": "blank"
+                  }
+                },
+                {
+                  "contains": {
+                    "const": "transparent"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "contains": {
+                    "const": "mechanical"
+                  }
+                },
+                {
+                  "contains": {
+                    "const": "organic"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "contains": {
+                    "const": "spiral"
+                  }
+                },
+                {
+                  "contains": {
+                    "const": "stairwell"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "DwellingsQuery": {
+        "type": "object",
+        "description": "Combined schema for the full query string. This schema is stricter than what the client parser tolerates and is meant to document meaningful combinations.",
+        "additionalProperties": false,
+        "properties": {
+          "seed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483646,
+            "default": 0
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "floors": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8,
+            "default": 0
+          },
+          "plan": {
+            "type": "string",
+            "pattern": "^[0-9A-Fa-f]+$",
+            "minLength": 1
+          },
+          "w": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 11
+          },
+          "h": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 11
+          },
+          "entrance": {
+            "type": "string",
+            "pattern": "^[0-9A-Fa-f]{4}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "view": {
+            "type": "string",
+            "enum": [
+              "plan",
+              "elevation"
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "plan"
+              ]
+            },
+            "then": {
+              "required": [
+                "w",
+                "h"
+              ]
+            },
+            "else": {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "w"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "h"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "entrance"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "floors": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "floors"
+              ]
+            },
+            "then": {
+              "not": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tags": {
+                        "contains": {
+                          "const": "low"
+                        }
+                      }
+                    },
+                    "required": [
+                      "tags"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "tags": {
+                        "contains": {
+                          "const": "tall"
+                        }
+                      }
+                    },
+                    "required": [
+                      "tags"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "tags": {
+                  "anyOf": [
+                    {
+                      "contains": {
+                        "const": "low"
+                      }
+                    },
+                    {
+                      "contains": {
+                        "const": "tall"
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "tags"
+              ]
+            },
+            "then": {
+              "properties": {
+                "floors": {
+                  "type": "integer",
+                  "enum": [
+                    0
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "tags": {
+                  "anyOf": [
+                    {
+                      "contains": {
+                        "const": "spiral"
+                      }
+                    },
+                    {
+                      "contains": {
+                        "const": "stairwell"
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "tags"
+              ]
+            },
+            "then": {
+              "properties": {
+                "floors": {
+                  "type": "integer",
+                  "description": "When spiral or stairwell is requested, floors=1 is coerced to 2 by the generator.",
+                  "not": {
+                    "enum": [
+                      1
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "examples": [
+          {
+            "seed": 123456,
+            "tags": [
+              "medium",
+              "mechanical",
+              "hallways"
+            ],
+            "floors": 3,
+            "view": "plan"
+          },
+          {
+            "seed": 98765,
+            "tags": [
+              "small",
+              "organic",
+              "spiral"
+            ],
+            "floors": 2
+          },
+          {
+            "seed": 2222,
+            "plan": "0F0F0F0F",
+            "w": 4,
+            "h": 4,
+            "entrance": "0123",
+            "tags": [
+              "generic"
+            ],
+            "floors": 2
+          }
+        ]
+      }
+    }
+  }
+}

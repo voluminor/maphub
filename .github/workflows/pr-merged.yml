@@ -1,0 +1,51 @@
+name: "PR merged to master"
+
+permissions:
+  contents: write
+  actions: write
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+env:
+  NODE_VERSION: "20.19.0"
+  NPM_VERSION: "9.2.0"
+  PUSH_BRANCH: "master"
+  CI: "true"
+  NPM_CONFIG_FUND: "false"
+  NPM_CONFIG_AUDIT: "false"
+  NPM_CONFIG_PROGRESS: "false"
+
+jobs:
+  bump:
+    name: "🔧 Build and bump"
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: "🛎️ Checkout ${{ env.PUSH_BRANCH }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PUSH_BRANCH }}
+          fetch-depth: 1
+
+      - uses: ./.github/actions/init-node
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          npm-version: ${{ env.NPM_VERSION }}
+
+      - uses: ./.github/actions/npm-install
+
+      - uses: ./.github/actions/build-web
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          npm-version: ${{ env.NPM_VERSION }}
+
+      - uses: ./.github/actions/github-setup-user
+
+      - name: "✔️ Bump patch and push package.json"
+        uses: ./.github/actions/bump-version
+        with:
+          bump: patch
+          push-branch: ${{ env.PUSH_BRANCH }}

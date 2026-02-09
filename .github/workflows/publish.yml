@@ -1,0 +1,143 @@
+name: "Publish"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: publish-${{ github.ref_name }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to publish"
+        default: "master"
+        required: false
+      ftp_dir:
+        description: "Remote directory"
+        default: "/"
+        required: false
+
+env:
+  NODE_VERSION: "20.19.0"
+  NPM_VERSION: "9.2.0"
+  PUSH_BRANCH: ${{ inputs.branch }}
+  FTP_DIR: ${{ inputs.ftp_dir }}
+  CI: "true"
+  NPM_CONFIG_FUND: "false"
+  NPM_CONFIG_AUDIT: "false"
+  NPM_CONFIG_PROGRESS: "false"
+
+jobs:
+  prepare:
+    name: "🔧 Prepare"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "🛎️ Checkout ${{ env.PUSH_BRANCH }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PUSH_BRANCH }}
+          fetch-depth: 1
+
+      - uses: ./.github/actions/init-node
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          npm-version: ${{ env.NPM_VERSION }}
+
+      - uses: ./.github/actions/npm-install
+
+      - uses: ./.github/actions/build-web
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          npm-version: ${{ env.NPM_VERSION }}
+
+      - name: "🔎 Check build output"
+        run: |
+          set -Eeuo pipefail
+          ls -la dist || true
+          test -f dist/index.html
+
+      - name: "📦 Upload dist/"
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          if-no-files-found: error
+          compression-level: 1
+          retention-days: 2
+
+  deploy:
+    name: "🚀 Deploy"
+    needs: [prepare]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "📥 Download dist"
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: "📂 Verify dist exists"
+        run: |
+          set -Eeuo pipefail
+          ls -la
+          test -f dist/index.html
+          ls -la dist | head -50
+
+      - name: "✅ Verify remote index.html exists"
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_PORT: ${{ vars.FTP_PORT }}
+          FTP_USER: ${{ vars.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ env.FTP_DIR }}
+        run: |
+          set -Eeuo pipefail
+
+          dir="${FTP_DIR%/}/"
+          url="ftp://${FTP_HOST}:${FTP_PORT}${dir}"
+
+          set +e
+          listing=$(curl --silent --show-error --user "${FTP_USER}:${FTP_PASSWORD}" --list-only "$url" 2>&1)
+          rc=$?
+          set -e
+
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::FTP connection or directory access failed."
+            echo "$listing"
+            exit 1
+          fi
+
+          if ! echo "$listing" | grep -Fxq "index.html"; then
+            echo "::error::index.html not found in remote directory '${dir}'."
+            echo "$listing"
+            exit 1
+          fi
+
+          echo "index.html exists."
+
+      - name: "📦 Install lftp"
+        run: |
+          set -Eeuo pipefail
+          sudo apt-get update -y -qq
+          sudo apt-get install -y -qq --no-install-recommends lftp
+
+      - name: "🚀 FTP deploy (lftp mirror)"
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_PORT: ${{ vars.FTP_PORT }}
+          FTP_USER: ${{ vars.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ env.FTP_DIR }}
+        run: |
+          set -Eeuo pipefail
+          lftp -u "${FTP_USER},${FTP_PASSWORD}" -p "${FTP_PORT}" "${FTP_HOST}" -e "
+            set cmd:fail-exit true;
+            set net:max-retries 2;
+            set net:timeout 20;
+            set ftp:ssl-allow no;
+            mirror -R --delete --verbose --parallel=2 ./dist /;
+            bye
+          "

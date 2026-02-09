@@ -1,0 +1,32 @@
+syntax = 'proto3';
+
+package params;
+
+// // // //
+
+enum RoutAdrType {
+  ROOT_ADR_UNSPECIFIED = 0;
+  local = 1;
+  global = 2;
+}
+
+message RoutAdrObj {
+    RoutAdrType type = 1;
+    string url = 2;
+}
+
+//
+
+message RoutObj {
+  RoutAdrObj primary_source = 1;
+  RoutAdrObj github = 2;
+  reserved 3 to 9;
+
+  RoutAdrObj homepage = 10;
+  RoutAdrObj cave = 11;
+  RoutAdrObj dwellings = 12;
+  RoutAdrObj mfcg = 13;
+  RoutAdrObj village = 14;
+  RoutAdrObj viewer = 15;
+  reserved 16 to 20;
+}

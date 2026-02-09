@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package data;
+
+import "data/dwellings_lvl.proto";
+
+// // // //
+
+message DwellingsPlanObj {
+  int32 level = 1;
+  repeated DwellingsRoomObj rooms = 2;
+  repeated DwellingsDoorObj doors = 3;
+  repeated DwellingsEdgeObj windows = 4;
+  repeated DwellingsStairObj stairs = 5;
+}
+
+//
+
+message DwellingsObj {
+  repeated DwellingsPlanObj floors = 1;
+  DwellingsEdgeObj exit = 2;
+  DwellingsEdgeObj spiral = 3;
+}

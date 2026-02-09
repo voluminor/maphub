@@ -1,0 +1,15 @@
+name: "Install dependencies"
+description: "Install npm dependencies"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "📦 Install"
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        if [ -f package-lock.json ]; then
+          npm ci --prefer-offline --no-audit --no-fund
+        else
+          npm install --no-package-lock --prefer-offline --no-audit --no-fund
+        fi
