@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="description" content="{{DESCRIPTION}}" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="{{STYLE_COLOR_THEME}}" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/img/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/img/icon-512.png" />
+    <link rel="stylesheet" href="/css/styles.css" />
+
+    <title>{{NAME_FULL}}</title>
+</head>
+<body>
+<a id="skipLink" class="skip" href="#main">Skip to content</a>
+
+<header>
+    <div class="container head-inner">
+        <a class="brand" href="/" aria-label="Home">
+            <span class="logo" aria-hidden="true"></span>
+            <span>
+          <h1 class="brand-title" id="brandTitle"></h1>
+          <span class="brand-sub" id="brandSub"></span>
+        </span>
+        </a>
+
+        <nav aria-label="Navigation">
+            <a class="navlink" href="/api.html" id="navApi"></a>
+            <a class="navlink" href="https://{{GITHUB}}" target="_blank" rel="noopener" id="navCode"></a>
+            <a class="navlink" href="https://{{PRIMARY_SOURCE}}" target="_blank" rel="noopener" id="navInspiration"></a>
+
+            <a class="btn" href="mailto:{{AUTHOR}}" id="navFeedback"></a>
+
+            <span class="lang" aria-label="Language">
+          <label id="langLabelHead" for="langSelectHead"></label>
+          <select id="langSelectHead"></select>
+        </span>
+        </nav>
+    </div>
+</header>
+
+<main id="main" class="container">
+    <section class="hero" aria-label="Intro">
+        <div class="panel intro" aria-label="Project description">
+            <h2 id="introTitle"></h2>
+            <div class="intro-body" id="introBody"></div>
+        </div>
+    </section>
+
+    <div class="section-title">
+        <h2 id="generators"></h2>
+    </div>
+
+    <div id="cards" class="cards" aria-label="Generators list"></div>
+</main>
+
+<div id="modalOverlay" class="modal-overlay" role="presentation" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-head">
+            <div>
+                <h3 class="modal-title" id="modalTitle"></h3>
+                <div class="modal-sub" id="modalTag"></div>
+            </div>
+            <button type="button" class="btn" id="modalCloseTop"></button>
+        </div>
+
+        <div class="modal-body">
+            <div id="modalDesc"></div>
+
+            <h4 id="modalFeaturesTitle"></h4>
+            <ul id="modalFeatures"></ul>
+
+            <h4 id="modalHotkeysTitle"></h4>
+            <div id="modalHotkeys"></div>
+        </div>
+
+        <div class="modal-foot">
+            <a class="btn primary" href="#" id="modalOpen"></a>
+            <a class="btn" href="#" target="_blank" rel="noopener" id="modalNewTab"></a>
+            <button type="button" class="btn" id="modalCloseBottom"></button>
+        </div>
+    </div>
+</div>
+
+<div id="toastHost" class="toast-host" aria-live="polite" aria-atomic="true"></div>
+
+<footer>
+    <div class="container footgrid">
+        <div class="footcol">
+            <div id="footerAbout"></div>
+
+            <div class="footlinks" aria-label="Links">
+                <a class="btn" href="https://{{GITHUB}}" target="_blank" rel="noopener" id="footGitHub"></a>
+                <a class="btn" href="https://{{PRIMARY_SOURCE}}" target="_blank" rel="noopener" id="footSource"></a>
+                <a class="btn" href="/api.html" id="footApi"></a>
+                <a class="btn" href="mailto:{{AUTHOR}}" id="footFeedback"></a>
+
+                <button class="btn primary" id="pwaInstallBtn" type="button" aria-disabled="true" hidden>PWA</button>
+                <small id="pwaInstallHint" class="muted" hidden></small>
+
+                <span class="lang" aria-label="Language">
+            <label id="langLabelFoot" for="langSelectFoot"></label>
+            <select id="langSelectFoot"></select>
+          </span>
+            </div>
+        </div>
+
+        <div class="footcol">
+            <div><b id="compatTitle"></b> <span id="compatText"></span></div>
+            <div class="legal" id="legalBlock"></div>
+            <div style="margin-top:10px;">© <span id="year"></span> <span id="copyrightOwner"></span></div>
+        </div>
+    </div>
+</footer>
+<script src="/js/index.js"></script>
+<noscript>
+    <div class="container" style="padding:16px;">
+        <div class="panel">
+            JavaScript is required for the multilingual UI on this page.
+        </div>
+    </div>
+</noscript>
+
+<script src="/js/pwa-register.js"></script>
+</body>
+</html>
