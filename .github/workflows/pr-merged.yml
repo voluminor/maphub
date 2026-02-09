@@ -1,4 +1,4 @@
-name: "PR merged to master"
+name: "PR merged to main"
 
 permissions:
   contents: write
@@ -7,12 +7,12 @@ permissions:
 on:
   pull_request:
     types: [closed]
-    branches: [master]
+    branches: [main]
 
 env:
   NODE_VERSION: "20.19.0"
   NPM_VERSION: "9.2.0"
-  PUSH_BRANCH: "master"
+  PUSH_BRANCH: "main"
   CI: "true"
   NPM_CONFIG_FUND: "false"
   NPM_CONFIG_AUDIT: "false"
