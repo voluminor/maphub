@@ -44,7 +44,7 @@ The work is not finished yet; you could say that the work of restructuring the J
 
 ![to\_dwellings](.github/img/to_dwellings.png)
 
-#### Dwellings Village
+#### Village Generator
 
 ![to\_village](.github/img/to_village.png)
 
