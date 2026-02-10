@@ -4,7 +4,7 @@ import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
 import * as FuncProto from "./shared/proto.js";
 
-import * as DataGeo from "./shared/data/geo.js";
+import * as DataGeo from "./shared/data/data.js";
 import * as DataViewer from "./shared/data/Viewer.js";
 
 import * as ParamsProto from "./struct/params.js";
@@ -15622,7 +15622,7 @@ if (params !== null) (function (S, u) {
                     try {
                         var fr = T.__cast(a.target, Of);
                         var pvo = DataViewer.decodePaletteFile(fr.name, fr.data);
-                        var legacyJson = DataViewer.paletteLegacyJsonFromPaletteViewerObj(pvo);
+                        var legacyJson = DataViewer.paletteLegacyJsonFromObj(pvo);
                         this.loadPalette(Lb.fromJSON(legacyJson));
                     } catch (b) {
                         Ia.lastError = b;
@@ -15720,12 +15720,12 @@ if (params !== null) (function (S, u) {
                     return a
                 },
                 onSave: function (a, fmt) {
-                    var pvo = DataViewer.paletteViewerObjFromLegacyJsonText(a.json());
+                    var pvo = DataViewer.paletteObjFromLegacyJsonText(a.json());
                     if (fmt === "proto") {
-                        var bytes = DataViewer.paletteProtoBytesFromPaletteViewerObj(pvo);
+                        var bytes = DataProto.data.PaletteViewerObj.encode(pvo).finish();
                         Og.saveText(bytes, this.getName(a) + ".palette.vr.pb", "application/octet-stream");
                     } else {
-                        var json = DataViewer.paletteLegacyJsonFromPaletteViewerObj(pvo);
+                        var json = DataViewer.paletteLegacyJsonFromObj(pvo);
                         Og.saveText(json, this.getName(a) + ".palette.vr.json", "application/json");
                     }
                 },

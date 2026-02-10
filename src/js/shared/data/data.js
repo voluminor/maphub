@@ -141,6 +141,73 @@ export function bytesToUtf8Text(data) {
     return data != null && typeof data.toString === "function" ? data.toString() : "";
 }
 
+const ROOT_DATA_TYPES = [
+    "GeoObj", "DwellingsObj", "PaletteMfcgObj", "PaletteVillageObj",
+    "PaletteGladeObj", "PaletteViewerObj", "PaletteDwellingsObj", "PaletteCaveObj"
+];
+
+function stripLengthDelimited(buf) {
+    let pos = 0, len = 0, shift = 0;
+    while (pos < buf.length && shift < 35) {
+        let c = buf[pos++];
+        len |= (c & 127) << shift;
+        if ((c & 128) === 0) break;
+        shift += 7;
+    }
+    if (pos <= 0 || pos >= buf.length) return null;
+    if (len <= 0 || pos + len > buf.length) return null;
+    return buf.subarray(pos, pos + len);
+}
+
+function tryDecodeProto(MessageType, buf) {
+    try { return { msg: MessageType.decode(buf), err: null }; } catch (e) {}
+    let inner = stripLengthDelimited(buf);
+    if (inner != null) {
+        try { return { msg: MessageType.decode(inner), err: null }; } catch (e2) {}
+    }
+    return { msg: null, err: null };
+}
+
+export function decodeDataFromFile(expectedTypeName, legacyJsonTextParser, data) {
+    let text = bytesToUtf8Text(data);
+    let isJson = false;
+    try {
+        JSON.parse(text);
+        isJson = true;
+    } catch (e) {}
+
+    if (isJson) {
+        try {
+            return legacyJsonTextParser(text);
+        } catch (e) {
+            let msg = e && e.message ? e.message : String(e);
+            if (msg.indexOf("An error occurred") === 0 || msg.indexOf("These are ") === 0 ||
+                msg.indexOf("Unknown data format") === 0 || msg.indexOf("Invalid") === 0 ||
+                msg.indexOf("Palette has valid fields") === 0 || msg.indexOf("Expected ") === 0) throw e;
+            throw new Error("An error occurred while parsing: " + msg);
+        }
+    }
+
+    let b = toUint8Array(data);
+    if (b == null) throw new Error("illegal buffer");
+
+    let expectedType = DataProto.data[expectedTypeName];
+    let result = tryDecodeProto(expectedType, b);
+    if (result.msg != null) return result.msg;
+
+    for (let i = 0; i < ROOT_DATA_TYPES.length; i++) {
+        if (ROOT_DATA_TYPES[i] === expectedTypeName) continue;
+        let otherType = DataProto.data[ROOT_DATA_TYPES[i]];
+        if (otherType == null) continue;
+        let otherResult = tryDecodeProto(otherType, b);
+        if (otherResult.msg != null) {
+            throw new Error("Expected " + expectedTypeName + ", but loaded " + ROOT_DATA_TYPES[i]);
+        }
+    }
+
+    throw new Error("An error occurred while parsing: unknown protobuf decode error");
+}
+
 export function decodeCityFromJsonText(text) {
     let obj = null;
     try {
@@ -166,77 +233,13 @@ export function decodeCityFromJsonText(text) {
     }
 }
 
-export function decodeCityFromProtoBytes(bytes) {
-    let b = toUint8Array(bytes);
-    if (b == null) throw new Error("illegal buffer");
-
-    let lastErr = null;
-
-    function stripLengthDelimited(buf) {
-        let pos = 0, len = 0, shift = 0;
-        while (pos < buf.length && shift < 35) {
-            let c = buf[pos++];
-            len |= (c & 127) << shift;
-            if ((c & 128) === 0) break;
-            shift += 7;
-        }
-        if (pos <= 0 || pos >= buf.length) return null;
-        if (len <= 0 || pos + len > buf.length) return null;
-        return buf.subarray(pos, pos + len);
-    }
-
-    function tryDecode(MessageType, buf) {
-        try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
-
-        let inner = stripLengthDelimited(buf);
-        if (inner != null) {
-            try { return { msg: MessageType.decode(inner), err: null }; } catch (e3) { lastErr = e3; }
-        }
-        return { msg: null, err: lastErr };
-    }
-
-    function looksLikeCityGeoJson(o) {
-        return (
-            o != null &&
-            typeof o === "object" &&
-            o.type === "FeatureCollection" &&
-            Array.isArray(o.features) &&
-            o.features.length > 0
-        );
-    }
-
-    let geo = tryDecode(DataProto.data.GeoObj, b);
-    if (geo.msg != null) {
-        let cityObj = geoJsonFromProtoMessage(geo.msg);
-
-        if (looksLikeCityGeoJson(cityObj)) {
-            return cityObj;
-        }
-
-        let d1 = tryDecode(DataProto.data.DwellingsObj, b);
-        if (d1.msg != null) {
-            throw new Error("These are Dwellings, not City/Village.");
-        }
-
-        throw new Error("Unknown data format - expected City/Village: " + lastErr);
-    }
-
-    let dwell = tryDecode(DataProto.data.DwellingsObj, b);
-    if (dwell.msg != null) {
-        throw new Error("These are Dwellings, not City/Village.");
-    }
-
-    let errText = geo.err && geo.err.message ? geo.err.message : "unknown protobuf decode error";
-    throw new Error("An error occurred while parsing: " + errText);
+function decodeCityFromJsonTextAsProto(text) {
+    let obj = decodeCityFromJsonText(text);
+    let protoObj = geoJsonToProtoObject(obj);
+    return DataProto.data.GeoObj.fromObject(protoObj);
 }
 
 export function decodeCityFile(name, data) {
-    let ext = "";
-    if (name != null) {
-        let parts = String(name).split(".");
-        if (parts.length > 1) ext = String(parts.pop()).toLowerCase();
-    }
-    if (ext === "proto" || ext === "pb" || ext === "bin") return decodeCityFromProtoBytes(data);
-    let text = bytesToUtf8Text(data);
-    return decodeCityFromJsonText(text);
+    let msg = decodeDataFromFile("GeoObj", decodeCityFromJsonTextAsProto, data);
+    return geoJsonFromProtoMessage(msg);
 }

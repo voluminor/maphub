@@ -1,5 +1,5 @@
 import * as DataProto from "../../struct/data.js";
-import { toUint8Array, bytesToUtf8Text } from "./geo.js";
+import { decodeDataFromFile } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
 export const fileExt = "gl";
@@ -222,7 +222,7 @@ function fromX100(v) {
     return PaletteFunc.fromX100Float(v);
 }
 
-export function legacyJsonFromPaletteObj(p) {
+export function paletteLegacyJsonFromObj(p) {
     const m = DataProto.data.PaletteGladeObj.fromObject(p);
 
     const c = m.colors || {};
@@ -268,94 +268,6 @@ export function legacyJsonFromPaletteObj(p) {
     return JSON.stringify(out, null, "  ");
 }
 
-function stripLengthDelimited(buf) {
-    let pos = 0, len = 0, shift = 0;
-    while (pos < buf.length && shift < 35) {
-        const c = buf[pos++];
-        len |= (c & 127) << shift;
-        if ((c & 128) === 0) break;
-        shift += 7;
-    }
-    if (pos <= 0 || pos >= buf.length) return null;
-    if (len <= 0 || pos + len > buf.length) return null;
-    return buf.subarray(pos, pos + len);
-}
-
-function tryDecode(MessageType, buf) {
-    try { return { msg: MessageType.decode(buf), err: null }; } catch (e) {}
-    const inner = stripLengthDelimited(buf);
-    if (inner != null) {
-        try { return { msg: MessageType.decode(inner), err: null }; } catch (e2) {}
-    }
-    return { msg: null, err: new Error("decode failed") };
-}
-
 export function decodePaletteFile(name, data) {
-    const lower = typeof name === "string" ? name.toLowerCase() : "";
-    if (lower.endsWith(".json")) return paletteObjFromLegacyJsonText(bytesToUtf8Text(data));
-    if (lower.endsWith(".pb")) return decodePaletteFromProtoBytes(data);
-
-    try {
-        return decodePaletteFromProtoBytes(data);
-    } catch (e) {
-        return paletteObjFromLegacyJsonText(bytesToUtf8Text(data));
-    }
-}
-
-function decodePaletteFromProtoBytes(bytes) {
-    const b = toUint8Array(bytes);
-    if (b == null) throw new Error("illegal buffer");
-
-    const gl = tryDecode(DataProto.data.PaletteGladeObj, b);
-    if (gl.msg != null) return gl.msg;
-
-    const cave = tryDecode(DataProto.data.PaletteCaveObj, b);
-    if (cave.msg != null) {
-        const c = cave.msg.colors || {};
-        const ink = c.ink || intToRgbObj(66054);
-        const floor = c.floor || intToRgbObj(6258538);
-        const water = c.water || intToRgbObj(4491468);
-        const page = c.page || intToRgbObj(10269317);
-
-        const converted = {
-            colors: {
-                ground: page,
-                ink: ink,
-                marks: ink,
-                tree: [floor],
-                treeDetails: ink,
-                thicket: floor,
-                waterDeep: water,
-                waterShallow: water,
-                sand: ink,
-                shadowColor: intToRgbObj(9869742),
-                road: floor,
-                roadOutline: ink
-            },
-            trees: { varianceX100: Math.round(0.2 * 100), bands: 3, shape: "Cotton" },
-            shadow: { lengthX10: Math.round(1 * 10), angleDeg: 60 },
-            strokes: { normalX10: Math.round(1 * 10), thinX10: Math.round(0.5 * 10), gridX10: Math.round(0.3 * 10) },
-            misc: { grassLength: 8, roadWidthX100: Math.round(0.5 * 100), roadWiggleX100: Math.round(0.5 * 100) }
-        };
-
-        const err = DataProto.data.PaletteGladeObj.verify(converted);
-        if (err) throw PaletteFunc.unknownPalette(err);
-        return DataProto.data.PaletteGladeObj.fromObject(converted);
-    }
-
-    throw PaletteFunc.unknownPalette("expected Glade palette");
-}
-
-export function protoBytesFromPaletteObj(p) {
-    const msg = DataProto.data.PaletteGladeObj.fromObject(p);
-    return DataProto.data.PaletteGladeObj.encode(msg).finish();
-}
-
-
-export function decodePaletteCaveFile(name, data) {
-    return decodePaletteFile(name, data);
-}
-
-export function paletteLegacyJsonFromPaletteCaveObj(p) {
-    return legacyJsonFromPaletteObj(p);
+    return decodeDataFromFile("PaletteGladeObj", paletteObjFromLegacyJsonText, data);
 }

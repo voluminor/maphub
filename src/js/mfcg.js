@@ -4687,7 +4687,7 @@ var $lime_init = function (A, t) {
                     try {
                         var fr = va.__cast(a.target, Gf);
                         var pmo = DataMfcg.decodePaletteFile(fr.name, fr.data);
-                        var legacyJson = DataMfcg.paletteLegacyJsonFromPaletteMfcgObj(pmo);
+                        var legacyJson = DataMfcg.paletteLegacyJsonFromObj(pmo);
                         this.loadPalette(Xc.fromJSON(legacyJson));
                     } catch (b) {
                         q.show(b && b.message ? b.message : String(b));
@@ -4783,12 +4783,12 @@ var $lime_init = function (A, t) {
                     return a
                 },
                 onSave: function (a, fmt) {
-                    var pmo = DataMfcg.paletteMfcgObjFromLegacyJsonText(a.json());
+                    var pmo = DataMfcg.paletteObjFromLegacyJsonText(a.json());
                     if (fmt === "proto") {
-                        var bytes = DataMfcg.paletteProtoBytesFromPaletteMfcgObj(pmo);
+                        var bytes = DataMfcg.paletteProtoBytesFromObj(pmo);
                         ge.saveText(bytes, this.getName(a) + ".palette.mf.pb", "application/octet-stream");
                     } else {
-                        var json = DataMfcg.paletteLegacyJsonFromPaletteMfcgObj(pmo);
+                        var json = DataMfcg.paletteLegacyJsonFromObj(pmo);
                         ge.saveText(json, this.getName(a) + ".palette.mf.json", "application/json");
                     }
                 },

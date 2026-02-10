@@ -1,5 +1,5 @@
 import * as DataProto from "../../struct/data.js";
-import {toUint8Array, bytesToUtf8Text} from "./geo.js";
+import { decodeDataFromFile } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
 const PALETTE_COLOR_KEYS = ["ground","fields","greens","foliage","roads","water","walls1","walls2","roofs1","roofs2"];
@@ -31,7 +31,7 @@ function legacyTreeShapeToEnum(v) {
     throw new Error("Unknown data format - expected Palette.");
 }
 
-export function paletteViewerObjFromLegacyJsonText(text) {
+export function paletteObjFromLegacyJsonText(text) {
     let obj = null;
     try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
 
@@ -94,7 +94,7 @@ export function paletteViewerObjFromLegacyJsonText(text) {
     return DataProto.data.PaletteViewerObj.fromObject(protoObj);
 }
 
-export function paletteLegacyJsonFromPaletteViewerObj(pvo) {
+export function paletteLegacyJsonFromObj(pvo) {
     let c = pvo?.colors, l = pvo?.lighting, s = pvo?.shapes;
     if (c == null || l == null || s == null) throw new Error("Unknown data format - expected Palette.");
     let out = {};
@@ -128,108 +128,7 @@ export function paletteLegacyJsonFromPaletteViewerObj(pvo) {
     return JSON.stringify(out, null, "  ");
 }
 
-export function paletteProtoBytesFromPaletteViewerObj(pvo) {
-    return DataProto.data.PaletteViewerObj.encode(pvo).finish();
-}
-
-function looksLikePaletteViewerObj(m) {
-    if (m == null || m.colors == null || m.lighting == null || m.shapes == null) return false;
-
-    function okRgb(x) {
-        return (
-            x != null &&
-            x.r != null && x.g != null && x.b != null &&
-            x.r >= 0 && x.r <= 255 &&
-            x.g >= 0 && x.g <= 255 &&
-            x.b >= 0 && x.b <= 255
-        );
-    }
-
-    for (let i = 0; i < PALETTE_COLOR_KEYS.length; i++) if (!okRgb(m.colors[PALETTE_COLOR_KEYS[i]])) return false;
-    for (let j = 0; j < PALETTE_LIGHTING_COLOR_KEYS.length; j++) if (!okRgb(m.lighting[PALETTE_LIGHTING_COLOR_KEYS[j]])) return false;
-
-    if (m.lighting.sunPosX10 == null || m.lighting.sunPosX10 < 0 || m.lighting.sunPosX10 > 900) return false;
-    if (m.lighting.ambienceX10 == null || m.lighting.ambienceX10 < 0 || m.lighting.ambienceX10 > 10) return false;
-    if (m.lighting.lightedX10 == null || m.lighting.lightedX10 < 0 || m.lighting.lightedX10 > 10) return false;
-
-    if (m.shapes.pitchX10 == null || m.shapes.pitchX10 < 0 || m.shapes.pitchX10 > 20) return false;
-    if (m.shapes.roofedTowers == null) return false;
-    if (m.shapes.towers == null || m.shapes.towers === DataProto.data.PaletteTowerPlanType.PALETTE_TOWER_PLAN_UNSPECIFIED) return false;
-    if (m.shapes.treeShape == null || m.shapes.treeShape === DataProto.data.PaletteTreeShapeType.PALETTE_TREE_SHAPE_UNSPECIFIED) return false;
-
-    return true;
-}
-
-export function decodePaletteFromProtoBytes(bytes) {
-    let b = toUint8Array(bytes);
-    if (b == null) throw new Error("illegal buffer");
-
-    let lastErr = null;
-
-    function stripLengthDelimited(buf) {
-        let pos = 0, len = 0, shift = 0;
-        while (pos < buf.length && shift < 35) {
-            let c = buf[pos++];
-            len |= (c & 127) << shift;
-            if ((c & 128) === 0) break;
-            shift += 7;
-        }
-        if (pos <= 0 || pos >= buf.length) return null;
-        if (len <= 0 || pos + len > buf.length) return null;
-        return buf.subarray(pos, pos + len);
-    }
-
-    function tryDecode(MessageType, buf) {
-        try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
-        let inner = stripLengthDelimited(buf);
-        if (inner != null) {
-            try { return { msg: MessageType.decode(inner), err: null }; } catch (e3) { lastErr = e3; }
-        }
-        return { msg: null, err: lastErr };
-    }
-
-    let pal = tryDecode(DataProto.data.PaletteViewerObj, b);
-    if (pal.msg != null) {
-        if (looksLikePaletteViewerObj(pal.msg)) return pal.msg;
-
-        let city = tryDecode(DataProto.data.GeoObj, b);
-        if (city.msg != null) throw new Error("These are City/Village, not Palette.");
-
-        let dwell = tryDecode(DataProto.data.DwellingsObj, b);
-        if (dwell.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-        throw new Error("Unknown data format - expected Palette: " + lastErr);
-    }
-
-    let city2 = tryDecode(DataProto.data.GeoObj, b);
-    if (city2.msg != null) throw new Error("These are City/Village, not Palette.");
-
-    let dwell2 = tryDecode(DataProto.data.DwellingsObj, b);
-    if (dwell2.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-    let errText = pal.err && pal.err.message ? pal.err.message : "unknown protobuf decode error";
-    throw new Error("An error occurred while parsing: " + errText);
-}
-
-export function decodePaletteFromJsonText(text) {
-    try {
-        return paletteViewerObjFromLegacyJsonText(text);
-    } catch (e) {
-        let msg = e && e.message ? e.message : String(e);
-        if (msg.indexOf("Unknown data format") === 0) throw e;
-        if (msg.indexOf("These are ") === 0) throw e;
-        throw new Error("An error occurred while parsing: " + msg);
-    }
-}
-
 export function decodePaletteFile(name, data) {
-    let ext = "";
-    if (name != null) {
-        let parts = String(name).split(".");
-        if (parts.length > 1) ext = String(parts.pop()).toLowerCase();
-    }
-    if (ext === "pb") return decodePaletteFromProtoBytes(data);
-    let text = bytesToUtf8Text(data);
-    return decodePaletteFromJsonText(text);
+    return decodeDataFromFile("PaletteViewerObj", paletteObjFromLegacyJsonText, data);
 }
 

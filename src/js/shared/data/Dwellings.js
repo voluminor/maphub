@@ -1,5 +1,5 @@
 import * as DataProto from "../../struct/data.js";
-import {toUint8Array, bytesToUtf8Text} from "./geo.js";
+import { decodeDataFromFile } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
 const DW_COLOR_SPECS = [
@@ -32,38 +32,6 @@ function isDwellingsObjJson(obj) {
 
 function isCityGeoJson(obj) {
     return obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features);
-}
-
-function okRgb(x) {
-    return (
-        x != null &&
-        x.r != null && x.g != null && x.b != null &&
-        x.r >= 0 && x.r <= 255 &&
-        x.g >= 0 && x.g <= 255 &&
-        x.b >= 0 && x.b <= 255
-    );
-}
-
-function looksLikePaletteDwellingsObj(m) {
-    if (m == null || m.colors == null || m.strokes == null || m.misc == null) return false;
-
-    for (let i = 0; i < DW_COLOR_SPECS.length; i++) {
-        if (!okRgb(m.colors[DW_COLOR_SPECS[i].proto])) return false;
-    }
-
-    if (m.strokes.normalX100 == null || m.strokes.normalX100 < 1 || m.strokes.normalX100 > 50) return false;
-    if (m.strokes.gridX100 == null || m.strokes.gridX100 < 1 || m.strokes.gridX100 > 50) return false;
-
-    if (m.misc.alphaGridX100 == null || m.misc.alphaGridX100 > 100) return false;
-    if (m.misc.alphaAoX100 == null || m.misc.alphaAoX100 > 100) return false;
-    if (m.misc.alphaLightsX100 == null || m.misc.alphaLightsX100 > 100) return false;
-
-    if (m.misc.fontRoom == null) return false;
-    if (m.misc.fontRoom.size == null || m.misc.fontRoom.size === 0) return false;
-
-    if (m.misc.hatching == null) return false;
-
-    return true;
 }
 
 export function paletteDwellingsObjFromLegacyJson(json) {
@@ -126,13 +94,13 @@ export function paletteDwellingsObjFromLegacyJson(json) {
     return DataProto.data.PaletteDwellingsObj.fromObject(protoObj);
 }
 
-export function paletteDwellingsObjFromLegacyJsonText(text) {
+export function paletteObjFromLegacyJsonText(text) {
     let obj = null;
     try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
     return paletteDwellingsObjFromLegacyJson(obj);
 }
 
-export function paletteLegacyJsonFromPaletteDwellingsObj(pdo) {
+export function paletteLegacyJsonFromObj(pdo) {
     let c = pdo?.colors, s = pdo?.strokes, m = pdo?.misc;
     if (c == null || s == null || m == null) throw new Error("Unknown data format - expected Palette.");
     let out = {};
@@ -167,85 +135,6 @@ export function paletteLegacyJsonFromPaletteDwellingsObj(pdo) {
     return JSON.stringify(out, null, "  ");
 }
 
-export function paletteProtoBytesFromPaletteDwellingsObj(pdo) {
-    return DataProto.data.PaletteDwellingsObj.encode(pdo).finish();
-}
-
-export function decodeDwellingsPaletteFromProtoBytes(bytes) {
-    let b = toUint8Array(bytes);
-    if (b == null) throw new Error("illegal buffer");
-
-    let lastErr = null;
-
-    function stripLengthDelimited(buf) {
-        let pos = 0, len = 0, shift = 0;
-        while (pos < buf.length && shift < 35) {
-            let c = buf[pos++];
-            len |= (c & 127) << shift;
-            if ((c & 128) === 0) break;
-            shift += 7;
-        }
-        if (pos <= 0 || pos >= buf.length) return null;
-        if (len <= 0 || pos + len > buf.length) return null;
-        return buf.subarray(pos, pos + len);
-    }
-
-    function tryDecode(MessageType, buf) {
-        try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
-        let inner = stripLengthDelimited(buf);
-        if (inner != null) {
-            try { return { msg: MessageType.decode(inner), err: null }; } catch (e3) { lastErr = e3; }
-        }
-        return { msg: null, err: lastErr };
-    }
-
-    let pal = tryDecode(DataProto.data.PaletteDwellingsObj, b);
-    if (pal.msg != null) {
-        if (looksLikePaletteDwellingsObj(pal.msg)) return pal.msg;
-
-        let city = tryDecode(DataProto.data.GeoObj, b);
-        if (city.msg != null) throw new Error("These are City/Village, not Palette.");
-
-        let dwell = tryDecode(DataProto.data.DwellingsObj, b);
-        if (dwell.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-        let viewerPal = tryDecode(DataProto.data.PaletteViewerObj, b);
-        if (viewerPal.msg != null) throw new Error("These are Palette (City/Village), not Palette.");
-
-        throw new Error("Unknown data format - expected Palette: " + lastErr);
-    }
-
-    let city2 = tryDecode(DataProto.data.GeoObj, b);
-    if (city2.msg != null) throw new Error("These are City/Village, not Palette.");
-
-    let dwell2 = tryDecode(DataProto.data.DwellingsObj, b);
-    if (dwell2.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-    let viewerPal2 = tryDecode(DataProto.data.PaletteViewerObj, b);
-    if (viewerPal2.msg != null) throw new Error("These are Palette (City/Village), not Palette.");
-
-    let errText = pal.err && pal.err.message ? pal.err.message : "unknown protobuf decode error";
-    throw new Error("An error occurred while parsing: " + errText);
-}
-
-export function decodeDwellingsPaletteFromJsonText(text) {
-    try {
-        return paletteDwellingsObjFromLegacyJsonText(text);
-    } catch (e) {
-        let msg = e && e.message ? e.message : String(e);
-        if (msg.indexOf("Unknown data format") === 0) throw e;
-        if (msg.indexOf("These are ") === 0) throw e;
-        throw new Error("An error occurred while parsing: " + msg);
-    }
-}
-
-export function decodeDwellingsPaletteFile(name, data) {
-    let ext = "";
-    if (name != null) {
-        let parts = String(name).split(".");
-        if (parts.length > 1) ext = String(parts.pop()).toLowerCase();
-    }
-    if (ext === "pb") return decodeDwellingsPaletteFromProtoBytes(data);
-    let text = bytesToUtf8Text(data);
-    return decodeDwellingsPaletteFromJsonText(text);
+export function decodePaletteFile(name, data) {
+    return decodeDataFromFile("PaletteDwellingsObj", paletteObjFromLegacyJsonText, data);
 }

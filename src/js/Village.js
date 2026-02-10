@@ -4823,7 +4823,7 @@ var $lime_init = function (E, u) {
                     try {
                         var fr = Ka.__cast(a.target, Bg);
                         var pvo = DataVillage.decodePaletteFile(fr.name, fr.data);
-                        var legacyJson = DataVillage.paletteLegacyJsonFromPaletteVillageObj(pvo);
+                        var legacyJson = DataVillage.paletteLegacyJsonFromObj(pvo);
                         this.loadPalette(Rb.fromJSON(legacyJson));
                     } catch (b) {
                         b = U.caught(b).unwrap();
@@ -4923,14 +4923,14 @@ var $lime_init = function (E, u) {
 
                     var doSave = function(fmt) {
                         if (fmt === "JSON") {
-                            var pvo = DataVillage.paletteVillageObjFromLegacyJsonText(a.json());
-                            var json = DataVillage.paletteLegacyJsonFromPaletteVillageObj(pvo);
+                            var pvo = DataVillage.paletteObjFromLegacyJsonText(a.json());
+                            var json = DataVillage.paletteLegacyJsonFromObj(pvo);
                             Sd.saveText(json, self.getName(a) + ".palette.vg.json", "application/json");
                             return;
                         }
                         if (fmt === "PROTO") {
-                            var pvo = DataVillage.paletteVillageObjFromLegacyJsonText(a.json());
-                            var bytes = DataVillage.paletteProtoBytesFromPaletteVillageObj(pvo);
+                            var pvo = DataVillage.paletteObjFromLegacyJsonText(a.json());
+                            var bytes = DataProto.data.PaletteVillageObj.encode(pvo).finish();
                             Sd.saveText(bytes, self.getName(a) + ".palette.vg.pb", "application/octet-stream");
                             return;
                         }

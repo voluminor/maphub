@@ -7,9 +7,6 @@ import * as FuncProto from "./shared/proto.js";
 import * as DataCave from "./shared/data/Cave.js";
 import * as DataGlade from "./shared/data/Glade.js";
 
-import * as ParamsProto from "./struct/params.js";
-import * as DataProto from "./struct/data.js";
-
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_CAVE}}`));
 
 var $lime_init = function (A, r) {
@@ -8817,8 +8814,8 @@ var $lime_init = function (A, r) {
                     try {
                         var fr = Pa.__cast(a.target, jg);
                         if (null != this.paletteCodec) {
-                            var p = this.paletteCodec.decodePaletteCaveFile(fr.name, fr.data);
-                            var legacyJson = this.paletteCodec.paletteLegacyJsonFromPaletteCaveObj(p);
+                            var p = this.paletteCodec.decodePaletteFile(fr.name, fr.data);
+                            var legacyJson = this.paletteCodec.paletteLegacyJsonFromObj(p);
                             this.loadPalette(ec.fromJSON(legacyJson));
                         } else {
                             this.loadPalette(ec.fromJSON(fr.data.toString()));
@@ -8926,13 +8923,11 @@ var $lime_init = function (A, r) {
                         return;
                     }
 
-                    var ext = self.paletteCodec.fileExt || "cv";
-
                     var saveJson = function () {
                         try {
                             var p = self.paletteCodec.paletteObjFromLegacyJsonText(a.json());
-                            var text = self.paletteCodec.legacyJsonFromPaletteObj(p);
-                            Ld.saveText(text, self.getName(a) + ".palette." + ext + ".json", "application/json");
+                            var text = self.paletteCodec.paletteLegacyJsonFromObj(p);
+                            Ld.saveText(text, self.getName(a) + ".palette.cv.json", "application/json");
                         } catch (e) {
                             Ac.show(e && e.message ? e.message : String(e));
                         }
@@ -8941,8 +8936,8 @@ var $lime_init = function (A, r) {
                     var saveProto = function () {
                         try {
                             var p = self.paletteCodec.paletteObjFromLegacyJsonText(a.json());
-                            var bytes = self.paletteCodec.protoBytesFromPaletteObj(p);
-                            var fname = self.getName(a) + ".palette." + ext + ".pb";
+                            var bytes = self.paletteCodec.paletteProtoBytesFromObj(p);
+                            var fname = self.getName(a) + ".palette.cv.pb";
                             window.saveAs(new Blob([bytes], { type: "application/x-protobuf" }), Ld.fixName(fname), !0);
                         } catch (e) {
                             Ac.show(e && e.message ? e.message : String(e));

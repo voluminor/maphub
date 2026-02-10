@@ -1,5 +1,5 @@
 import * as DataProto from "../../struct/data.js";
-import { toUint8Array, bytesToUtf8Text } from "./geo.js";
+import { decodeDataFromFile } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
 function hasVal(o, k) {
@@ -147,7 +147,7 @@ function enumToLegacyTreeShape(e) {
     throw new Error("Invalid palette structure.");
 }
 
-export function paletteVillageObjFromLegacyJsonText(text) {
+export function paletteObjFromLegacyJsonText(text) {
     let obj = null;
     try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
 
@@ -234,7 +234,7 @@ export function paletteVillageObjFromLegacyJsonText(text) {
     return DataProto.data.PaletteVillageObj.fromObject(protoObj);
 }
 
-export function paletteLegacyJsonFromPaletteVillageObj(p) {
+export function paletteLegacyJsonFromObj(p) {
     let t = p?.terrain, h = p?.houses, r = p?.roads, f = p?.fields, w = p?.water, tr = p?.trees, l = p?.lighting, tx = p?.text, m = p?.misc;
     if (t == null || h == null || r == null || f == null || w == null || tr == null || l == null || tx == null || m == null) throw new Error("Invalid palette structure.");
 
@@ -290,126 +290,6 @@ export function paletteLegacyJsonFromPaletteVillageObj(p) {
     return JSON.stringify(out, null, "  ");
 }
 
-export function paletteProtoBytesFromPaletteVillageObj(pvo) {
-    return DataProto.data.PaletteVillageObj.encode(pvo).finish();
-}
-
-function looksLikePaletteVillageObj(m) {
-    function okRgb(x) {
-        return x != null && x.r != null && x.g != null && x.b != null && x.r >= 0 && x.r <= 255 && x.g >= 0 && x.g <= 255 && x.b >= 0 && x.b <= 255;
-    }
-    function okList(a) {
-        if (!Array.isArray(a) || a.length === 0) return false;
-        for (let i = 0; i < a.length; i++) if (!okRgb(a[i])) return false;
-        return true;
-    }
-    function okFont(f) {
-        return f != null && f.size != null && f.size > 0 && f.embedded != null && f.embedded !== "";
-    }
-
-    if (m == null || m.terrain == null || m.houses == null || m.roads == null || m.fields == null || m.water == null || m.trees == null || m.lighting == null || m.text == null || m.misc == null) return false;
-
-    if (!okList(m.terrain.ground)) return false;
-    if (!okRgb(m.terrain.sand) || !okRgb(m.terrain.plank)) return false;
-    if (m.terrain.relief == null || m.terrain.relief === DataProto.data.PaletteVillageReliefType.PALETTE_VILLAGE_RELIEF_UNSPECIFIED) return false;
-
-    if (!okList(m.houses.roofLight) || !okRgb(m.houses.roofStroke)) return false;
-    if (m.houses.roofType == null || m.houses.roofType === DataProto.data.PaletteVillageRoofType.PALETTE_VILLAGE_ROOF_UNSPECIFIED) return false;
-
-    if (!okRgb(m.roads.road)) return false;
-    if (m.roads.outlineRoads == null || m.roads.outlineRoads === DataProto.data.PaletteVillageOutlineType.PALETTE_VILLAGE_OUTLINE_UNSPECIFIED) return false;
-
-    if (!okList(m.fields.fieldLight) || !okRgb(m.fields.fieldFurrow)) return false;
-    if (m.fields.outlineFields == null || m.fields.outlineFields === DataProto.data.PaletteVillageOutlineType.PALETTE_VILLAGE_OUTLINE_UNSPECIFIED) return false;
-
-    if (!okRgb(m.water.waterShallow) || !okRgb(m.water.waterDeep) || !okRgb(m.water.waterTide)) return false;
-
-    if (!okList(m.trees.tree) || !okRgb(m.trees.thicket) || !okRgb(m.trees.treeDetails)) return false;
-    if (m.trees.treeShape == null || m.trees.treeShape === DataProto.data.PaletteVillageTreeShapeType.PALETTE_VILLAGE_TREE_SHAPE_UNSPECIFIED) return false;
-
-    if (!okRgb(m.lighting.shadowColor) || !okRgb(m.lighting.lights)) return false;
-    if (m.lighting.shadowAngleDeg == null || m.lighting.shadowAngleDeg > 360) return false;
-
-    if (!okFont(m.text.fontHeader) || !okFont(m.text.fontPopulation) || !okFont(m.text.fontNumber)) return false;
-
-    if (!okRgb(m.misc.ink) || !okRgb(m.misc.paper)) return false;
-
-    return true;
-}
-
-export function decodePaletteFromProtoBytes(bytes) {
-    let b = toUint8Array(bytes);
-    if (b == null) throw new Error("illegal buffer");
-
-    let lastErr = null;
-
-    function stripLengthDelimited(buf) {
-        let pos = 0, len = 0, shift = 0;
-        while (pos < buf.length && shift < 35) {
-            let c = buf[pos++];
-            len |= (c & 127) << shift;
-            if ((c & 128) === 0) break;
-            shift += 7;
-        }
-        if (pos <= 0 || pos >= buf.length) return null;
-        if (len <= 0 || pos + len > buf.length) return null;
-        return buf.subarray(pos, pos + len);
-    }
-
-    function tryDecode(MessageType, buf) {
-        try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
-        let inner = stripLengthDelimited(buf);
-        if (inner != null) {
-            try { return { msg: MessageType.decode(inner), err: null }; } catch (e2) { lastErr = e2; }
-        }
-        return { msg: null, err: lastErr };
-    }
-
-    let pal = tryDecode(DataProto.data.PaletteVillageObj, b);
-    if (pal.msg != null) {
-        if (looksLikePaletteVillageObj(pal.msg)) return pal.msg;
-
-        let city = tryDecode(DataProto.data.GeoObj, b);
-        if (city.msg != null) throw new Error("These are City/Village, not Palette.");
-
-        let dwell = tryDecode(DataProto.data.DwellingsObj, b);
-        if (dwell.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-        let viewer = tryDecode(DataProto.data.PaletteViewerObj, b);
-        if (viewer.msg != null) throw new Error("These are Viewer Palette, not Village Palette.");
-
-        throw new Error("Invalid palette structure: " + lastErr);
-    }
-
-    let city2 = tryDecode(DataProto.data.GeoObj, b);
-    if (city2.msg != null) throw new Error("These are City/Village, not Palette.");
-
-    let dwell2 = tryDecode(DataProto.data.DwellingsObj, b);
-    if (dwell2.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-    let errText = pal.err && pal.err.message ? pal.err.message : "unknown protobuf decode error";
-    throw new Error("An error occurred while parsing: " + errText);
-}
-
-export function decodePaletteFromJsonText(text) {
-    try {
-        return paletteVillageObjFromLegacyJsonText(text);
-    } catch (e) {
-        let msg = e && e.message ? e.message : String(e);
-        if (msg.indexOf("Invalid palette structure") === 0) throw e;
-        if (msg.indexOf("These are ") === 0) throw e;
-        if (msg.indexOf("Palette has valid fields") === 0) throw e;
-        throw new Error("An error occurred while parsing: " + msg);
-    }
-}
-
 export function decodePaletteFile(name, data) {
-    let ext = "";
-    if (name != null) {
-        let parts = String(name).split(".");
-        if (parts.length > 1) ext = String(parts.pop()).toLowerCase();
-    }
-    if (ext === "pb") return decodePaletteFromProtoBytes(data);
-    let text = bytesToUtf8Text(data);
-    return decodePaletteFromJsonText(text);
+    return decodeDataFromFile("PaletteVillageObj", paletteObjFromLegacyJsonText, data);
 }

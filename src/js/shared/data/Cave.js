@@ -1,5 +1,5 @@
 import * as DataProto from "../../struct/data.js";
-import {toUint8Array, bytesToUtf8Text} from "./geo.js";
+import { decodeDataFromFile } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
 function looksLikePaletteCaveObj(m) {
@@ -29,7 +29,7 @@ function looksLikePaletteCaveObj(m) {
     return true;
 }
 
-export function paletteCaveObjFromLegacyJsonText(text) {
+export function paletteObjFromLegacyJsonText(text) {
 
     let obj = null;
     try {
@@ -95,12 +95,12 @@ export function paletteCaveObjFromLegacyJsonText(text) {
     if (err) throw PaletteFunc.unknownPalette(err);
 
     let msg = DataProto.data.PaletteCaveObj.fromObject(protoObj);
-    if (!looksLikePaletteCaveObj(msg)) throw PaletteFunc.unknownPalette("not looks-like PaletteCaveObj in paletteCaveObjFromLegacyJsonText");
+    if (!looksLikePaletteCaveObj(msg)) throw PaletteFunc.unknownPalette("not looks-like PaletteCaveObj in paletteObjFromLegacyJsonText");
     return msg;
 }
 
-export function paletteLegacyJsonFromPaletteCaveObj(m) {
-    if (!looksLikePaletteCaveObj(m)) throw PaletteFunc.unknownPalette("not looks-like PaletteCaveObj in paletteLegacyJsonFromPaletteCaveObj");
+export function paletteLegacyJsonFromObj(m) {
+    if (!looksLikePaletteCaveObj(m)) throw PaletteFunc.unknownPalette("not looks-like PaletteCaveObj in paletteLegacyJsonFromObj");
 
     let out = {};
     out.colorPage = PaletteFunc.rgbObjToHex(m.colors.page);
@@ -125,101 +125,12 @@ export function paletteLegacyJsonFromPaletteCaveObj(m) {
     return JSON.stringify(out, null, "  ");
 }
 
-export function paletteProtoBytesFromPaletteCaveObj(m) {
-    if (!looksLikePaletteCaveObj(m)) throw PaletteFunc.unknownPalette("not looks-like PaletteCaveObj in paletteProtoBytesFromPaletteCaveObj");
+export function paletteProtoBytesFromObj(m) {
+    if (!looksLikePaletteCaveObj(m)) throw PaletteFunc.unknownPalette("not looks-like PaletteCaveObj in paletteProtoBytesFromObj");
     return DataProto.data.PaletteCaveObj.encode(m).finish();
 }
 
-export function decodePaletteCaveFromJsonText(text) {
-    try {
-        return paletteCaveObjFromLegacyJsonText(text);
-    } catch (e) {
-        let msg = e && e.message ? e.message : String(e);
-        if (msg.indexOf("Unknown data format") === 0) throw e;
-        if (msg.indexOf("These are ") === 0) throw e;
-        if (msg.indexOf("Palette has valid fields") === 0) throw e;
-        throw new Error("An error occurred while parsing: " + msg);
-    }
-}
-
-export function decodePaletteCaveFromProtoBytes(bytes) {
-    let b = toUint8Array(bytes);
-    if (b == null) throw new Error("illegal buffer");
-
-    let lastErr = null;
-
-    function stripLengthDelimited(buf) {
-        let pos = 0, len = 0, shift = 0;
-        while (pos < buf.length && shift < 35) {
-            let c = buf[pos++];
-            len |= (c & 127) << shift;
-            if ((c & 128) === 0) break;
-            shift += 7;
-        }
-        if (pos <= 0 || pos >= buf.length) return null;
-        if (len <= 0 || pos + len > buf.length) return null;
-        return buf.subarray(pos, pos + len);
-    }
-
-    function tryDecode(MessageType, buf) {
-        try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
-
-        let inner = stripLengthDelimited(buf);
-        if (inner != null) {
-            try { return { msg: MessageType.decode(inner), err: null }; } catch (e3) { lastErr = e3; }
-        }
-        return { msg: null, err: lastErr };
-    }
-
-    let pal = tryDecode(DataProto.data.PaletteCaveObj, b);
-    if (pal.msg != null) {
-        if (looksLikePaletteCaveObj(pal.msg)) return pal.msg;
-
-        let city = tryDecode(DataProto.data.GeoObj, b);
-        if (city.msg != null) throw new Error("These are City/Village, not Palette.");
-
-        let dwell = tryDecode(DataProto.data.DwellingsObj, b);
-        if (dwell.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-        throw PaletteFunc.unknownPalette(lastErr && lastErr.message ? lastErr.message : null);
-    }
-
-    let city2 = tryDecode(DataProto.data.GeoObj, b);
-    if (city2.msg != null) throw new Error("These are City/Village, not Palette.");
-
-    let dwell2 = tryDecode(DataProto.data.DwellingsObj, b);
-    if (dwell2.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-    let errText = pal.err && pal.err.message ? pal.err.message : "unknown protobuf decode error";
-    throw new Error("An error occurred while parsing: " + errText);
-}
-
-export function decodePaletteCaveFile(name, data) {
-    let ext = "";
-    if (name != null) {
-        let parts = String(name).split(".");
-        if (parts.length > 1) ext = String(parts.pop()).toLowerCase();
-    }
-    if (ext === "pb") return decodePaletteCaveFromProtoBytes(data);
-    return decodePaletteCaveFromJsonText(bytesToUtf8Text(data));
-}
-
-// //
-
-export const fileExt = "cv";
-
 export function decodePaletteFile(name, data) {
-    return decodePaletteCaveFile(name, data);
+    return decodeDataFromFile("PaletteCaveObj", paletteObjFromLegacyJsonText, data);
 }
 
-export function paletteObjFromLegacyJsonText(text) {
-    return paletteCaveObjFromLegacyJsonText(text);
-}
-
-export function legacyJsonFromPaletteObj(p) {
-    return paletteLegacyJsonFromPaletteCaveObj(p);
-}
-
-export function protoBytesFromPaletteObj(p) {
-    return paletteProtoBytesFromPaletteCaveObj(p);
-}

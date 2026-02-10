@@ -1,5 +1,5 @@
 import * as DataProto from "../../struct/data.js";
-import { toUint8Array, bytesToUtf8Text } from "./geo.js";
+import { decodeDataFromFile } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
 const LEGACY_KEYS = [
@@ -100,7 +100,7 @@ function normalizePaletteMfcgObjLike(pmoLike) {
     return DataProto.data.PaletteMfcgObj.fromObject(protoObj);
 }
 
-export function paletteMfcgObjFromLegacyJsonText(text) {
+export function paletteObjFromLegacyJsonText(text) {
     let obj = null;
     try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
 
@@ -161,7 +161,7 @@ export function paletteMfcgObjFromLegacyJsonText(text) {
     return normalizePaletteMfcgObjLike(pmoLike);
 }
 
-export function paletteLegacyJsonFromPaletteMfcgObj(pmo) {
+export function paletteLegacyJsonFromObj(pmo) {
     let n = normalizePaletteMfcgObjLike(pmo);
     let c = n.colors;
     let t = n.tints;
@@ -185,109 +185,11 @@ export function paletteLegacyJsonFromPaletteMfcgObj(pmo) {
     return JSON.stringify(out, null, "  ");
 }
 
-export function paletteProtoBytesFromPaletteMfcgObj(pmo) {
+export function paletteProtoBytesFromObj(pmo) {
     let n = normalizePaletteMfcgObjLike(pmo);
     return DataProto.data.PaletteMfcgObj.encode(n).finish();
 }
 
-function looksLikePaletteMfcgObj(m) {
-    let c = m?.colors;
-    let t = m?.tints;
-    if (c == null || t == null) return false;
-
-    function okRgb(x) {
-        return (
-            x != null &&
-            x.r != null && x.g != null && x.b != null &&
-            x.r >= 0 && x.r <= 255 &&
-            x.g >= 0 && x.g <= 255 &&
-            x.b >= 0 && x.b <= 255
-        );
-    }
-
-    if (!okRgb(c.paper) || !okRgb(c.light) || !okRgb(c.dark)) return false;
-
-    if (t.method == null || t.method === DataProto.data.PaletteMfcgTintMethodType.PALETTE_MFCG_TINT_METHOD_UNSPECIFIED) return false;
-
-    let s = t.strength;
-    let w = t.weathering;
-    if (s != null && (s < 0 || s > 100)) return false;
-    if (w != null && (w < 0 || w > 100)) return false;
-
-    return true;
-}
-
-export function decodePaletteFromProtoBytes(bytes) {
-    let b = toUint8Array(bytes);
-    if (b == null) throw new Error("illegal buffer");
-
-    let lastErr = null;
-
-    function stripLengthDelimited(buf) {
-        let pos = 0, len = 0, shift = 0;
-        while (pos < buf.length && shift < 35) {
-            let c = buf[pos++];
-            len |= (c & 127) << shift;
-            if ((c & 128) === 0) break;
-            shift += 7;
-        }
-        if (pos <= 0 || pos >= buf.length) return null;
-        if (len <= 0 || pos + len > buf.length) return null;
-        return buf.subarray(pos, pos + len);
-    }
-
-    function tryDecode(MessageType, buf) {
-        try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
-        let inner = stripLengthDelimited(buf);
-        if (inner != null) {
-            try { return { msg: MessageType.decode(inner), err: null }; } catch (e3) { lastErr = e3; }
-        }
-        return { msg: null, err: lastErr };
-    }
-
-    let pal = tryDecode(DataProto.data.PaletteMfcgObj, b);
-    if (pal.msg != null) {
-        if (looksLikePaletteMfcgObj(pal.msg)) return normalizePaletteMfcgObjLike(pal.msg);
-
-        let city = tryDecode(DataProto.data.GeoObj, b);
-        if (city.msg != null) throw new Error("These are City/Village, not Palette.");
-
-        let dwell = tryDecode(DataProto.data.DwellingsObj, b);
-        if (dwell.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-        throw new Error("Invalid structure - expected Palette.");
-    }
-
-    let city2 = tryDecode(DataProto.data.GeoObj, b);
-    if (city2.msg != null) throw new Error("These are City/Village, not Palette.");
-
-    let dwell2 = tryDecode(DataProto.data.DwellingsObj, b);
-    if (dwell2.msg != null) throw new Error("These are Dwellings, not Palette.");
-
-    let errText = pal.err && pal.err.message ? pal.err.message : "unknown protobuf decode error";
-    throw new Error("An error occurred while parsing: " + errText);
-}
-
-export function decodePaletteFromJsonText(text) {
-    try {
-        return paletteMfcgObjFromLegacyJsonText(text);
-    } catch (e) {
-        let msg = e && e.message ? e.message : String(e);
-        if (msg.indexOf("Invalid structure") === 0) throw e;
-        if (msg.indexOf("These are ") === 0) throw e;
-        if (msg.indexOf("Palette has valid fields") === 0) throw e;
-        if (msg.indexOf("Unknown data format") === 0) throw e;
-        throw new Error("An error occurred while parsing: " + msg);
-    }
-}
-
 export function decodePaletteFile(name, data) {
-    let ext = "";
-    if (name != null) {
-        let parts = String(name).split(".");
-        if (parts.length > 1) ext = String(parts.pop()).toLowerCase();
-    }
-    if (ext === "pb" || ext === "proto" || ext === "bin") return decodePaletteFromProtoBytes(data);
-    let text = bytesToUtf8Text(data);
-    return decodePaletteFromJsonText(text);
+    return decodeDataFromFile("PaletteMfcgObj", paletteObjFromLegacyJsonText, data);
 }

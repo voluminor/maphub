@@ -4919,8 +4919,8 @@ var $lime_init = function (K, v) {
                 onPaletteLoaded: function (a) {
                     try {
                         var fr = Ua.__cast(a.target, Zg);
-                        var pdo = DataDwellings.decodeDwellingsPaletteFile(fr.name, fr.data);
-                        var legacyJson = DataDwellings.paletteLegacyJsonFromPaletteDwellingsObj(pdo);
+                        var pdo = DataDwellings.decodePaletteFile(fr.name, fr.data);
+                        var legacyJson = DataDwellings.paletteLegacyJsonFromObj(pdo);
                         this.loadPalette($c.fromJSON(legacyJson));
                     } catch (b) {
                         b = aa.caught(b).unwrap();
@@ -5018,12 +5018,12 @@ var $lime_init = function (K, v) {
                     return a
                 },
                 onSave: function (a, fmt) {
-                    var pdo = DataDwellings.paletteDwellingsObjFromLegacyJsonText(a.json());
+                    var pdo = DataDwellings.paletteObjFromLegacyJsonText(a.json());
                     if (fmt === "proto") {
-                        var bytes = DataDwellings.paletteProtoBytesFromPaletteDwellingsObj(pdo);
+                        var bytes = DataProto.data.PaletteDwellingsObj.encode(pdo).finish();
                         id.saveText(bytes, this.getName(a) + ".palette.dw.pb", "application/octet-stream");
                     } else {
-                        var json = DataDwellings.paletteLegacyJsonFromPaletteDwellingsObj(pdo);
+                        var json = DataDwellings.paletteLegacyJsonFromObj(pdo);
                         id.saveText(json, this.getName(a) + ".palette.dw.json", "application/json");
                     }
                 },
