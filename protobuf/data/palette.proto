@@ -4,6 +4,8 @@ package data;
 
 import "data/palette_viewer.proto";
 import "data/palette_cave.proto";
+import "data/palette_dwellings.proto";
+import "data/palette_mfcg.proto";
 
 // // // //
 

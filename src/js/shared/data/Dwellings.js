@@ -155,7 +155,7 @@ export function paletteLegacyJsonFromPaletteDwellingsObj(pdo) {
     out.alphaLights = PaletteFunc.fromX100Float(m.alphaLightsX100);
 
     out.fontRoom = {
-        face: m.fontRoom?.face || "",
+        face: m.fontRoom?.face || "Share Tech Regular",
         size: m.fontRoom?.size || 0,
         bold: m.fontRoom?.bold === true,
         italic: m.fontRoom?.italic === true,
