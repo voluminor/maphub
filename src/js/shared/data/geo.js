@@ -187,12 +187,10 @@ export function decodeCityFromProtoBytes(bytes) {
 
     function tryDecode(MessageType, buf) {
         try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
-        try { return { msg: MessageType.decodeDelimited(buf), err: null }; } catch (e2) { lastErr = e2; }
 
         let inner = stripLengthDelimited(buf);
         if (inner != null) {
             try { return { msg: MessageType.decode(inner), err: null }; } catch (e3) { lastErr = e3; }
-            try { return { msg: MessageType.decodeDelimited(inner), err: null }; } catch (e4) { lastErr = e4; }
         }
         return { msg: null, err: lastErr };
     }

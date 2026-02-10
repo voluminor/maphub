@@ -2,8 +2,10 @@ import * as LimeShared from "./shared/lime.js";
 import * as OpenflShared from "./shared/openfl.js";
 import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
-
 import * as FuncProto from "./shared/proto.js";
+
+import * as CavePaletteCodec from "./shared/data/Cave.js";
+
 import * as ParamsProto from "./struct/params.js";
 import * as DataProto from "./struct/data.js";
 
@@ -6038,6 +6040,7 @@ var $lime_init = function (A, r) {
                             a.applyPalette(b)
                         }, "Parchment parchment Moonlight moonlight B&W bw".split(" "));
                         b.getName = $b.swatches("cave", ["colorPage", "colorFloor"]);
+                        b.paletteCodec = CavePaletteCodec;
                         ja.fillForm(b);
                         Fa.showDialog(b, "Style")
                     }
@@ -8798,7 +8801,7 @@ var $lime_init = function (A, r) {
                         b.addEventListener("complete", l(a, a.onPaletteLoaded));
                         b.load()
                     });
-                    var c = [new Ji("Palette", "*.json")];
+                    var c = [new Ji("Palette", "*.json;*.pb")]
                     b.browse(c)
                 },
                 loadPreset: function (a) {
@@ -8807,9 +8810,17 @@ var $lime_init = function (A, r) {
                 },
                 onPaletteLoaded: function (a) {
                     try {
-                        this.loadPalette(ec.fromJSON(Pa.__cast(a.target, jg).data.toString()))
-                    } catch (b) {
-                        Ac.show("Invalid palette file")
+                        var fr = Pa.__cast(a.target, jg);
+                        if (null != this.paletteCodec) {
+                            var p = this.paletteCodec.decodePaletteCaveFile(fr.name, fr.data);
+                            var legacyJson = this.paletteCodec.paletteLegacyJsonFromPaletteCaveObj(p);
+                            this.loadPalette(ec.fromJSON(legacyJson));
+                        } else {
+                            this.loadPalette(ec.fromJSON(fr.data.toString()));
+                        }
+                    } catch (e) {
+                        var msg = e && e.message ? e.message : "Invalid palette file";
+                        Ac.show(msg);
                     }
                 },
                 loadPalette: function (a) {
@@ -8904,7 +8915,36 @@ var $lime_init = function (A, r) {
                     return a
                 },
                 onSave: function (a) {
-                    Ld.saveText(a.json(), this.getName(a) + ".palette.cv.json", "application/json")
+                    if (null == this.paletteCodec) {
+                        Ld.saveText(a.json(), this.getName(a) + ".palette.cv.json", "application/json");
+                        return;
+                    }
+
+                    var self = this;
+                    var menu = new Yc;
+
+                    menu.addItem("JSON", function () {
+                        try {
+                            var p = self.paletteCodec.paletteCaveObjFromLegacyJsonText(a.json());
+                            var text = self.paletteCodec.paletteLegacyJsonFromPaletteCaveObj(p);
+                            Ld.saveText(text, self.getName(a) + ".palette.cv.json", "application/json");
+                        } catch (e) {
+                            Ac.show(e && e.message ? e.message : String(e));
+                        }
+                    });
+
+                    menu.addItem("PROTO", function () {
+                        try {
+                            var p = self.paletteCodec.paletteCaveObjFromLegacyJsonText(a.json());
+                            var bytes = self.paletteCodec.paletteProtoBytesFromPaletteCaveObj(p);
+                            var fname = self.getName(a) + ".palette.cv.pb";
+                            window.saveAs(new Blob([bytes], { type: "application/x-protobuf" }), Ld.fixName(fname), !0);
+                        } catch (e) {
+                            Ac.show(e && e.message ? e.message : String(e));
+                        }
+                    });
+
+                    Fa.showMenu(menu);
                 },
                 __class__: $b
             });

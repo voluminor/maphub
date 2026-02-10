@@ -1,5 +1,6 @@
 import * as DataProto from "../../struct/data.js";
 import {toUint8Array, bytesToUtf8Text} from "./geo.js";
+import * as PaletteFunc from "./palette.js";
 
 const PALETTE_COLOR_KEYS = ["ground","fields","greens","foliage","roads","water","walls1","walls2","roofs1","roofs2"];
 const PALETTE_LIGHTING_COLOR_KEYS = ["sky1","sky2","sun","windows"];
@@ -9,35 +10,6 @@ const PALETTE_FLOAT_SPECS = {
     lighted: { min: 0, max: 1, prop: "lightedX10" },
     pitch: { min: 0, max: 2, prop: "pitchX10" }
 };
-
-function legacyFloatToX10(v, key) {
-    if (v === null || v === undefined) return null;
-    if (v === "null") return null;
-    let n = typeof v === "number" ? v : (typeof v === "string" ? parseFloat(v) : NaN);
-    if (!Number.isFinite(n)) throw new Error("Unknown data format - expected Palette.");
-    let spec = PALETTE_FLOAT_SPECS[key];
-    if (n < spec.min || n > spec.max) throw new Error("Unknown data format - expected Palette.");
-    return Math.round(n * 10);
-}
-
-function x10ToLegacyFloatString(v) {
-    if (v === null || v === undefined) return "null";
-    let n = v / 10;
-    let s = String(n);
-    if (s.indexOf(".") === -1) s += ".0";
-    return s;
-}
-
-function legacyBool(v) {
-    if (v === null || v === undefined) return null;
-    if (v === "null") return null;
-    if (typeof v === "boolean") return v;
-    if (typeof v === "string") {
-        if (v === "true") return true;
-        if (v === "false") return false;
-    }
-    throw new Error("Unknown data format - expected Palette.");
-}
 
 function legacyTowersToEnum(v) {
     if (v === null || v === undefined) return null;
@@ -79,7 +51,7 @@ export function paletteViewerObjFromLegacyJsonText(text) {
     for (let i = 0; i < PALETTE_COLOR_KEYS.length; i++) {
         let k = PALETTE_COLOR_KEYS[i];
         if (!Object.prototype.hasOwnProperty.call(obj, k) || obj[k] == null || obj[k] === "null") { missing.push(k); continue; }
-        let rgb = hexToRgbObj(obj[k]);
+        let rgb = PaletteFunc.hexToRgbObj(obj[k]);
         if (rgb == null) throw new Error("Unknown data format - expected Palette.");
         colors[k] = rgb;
     }
@@ -88,7 +60,7 @@ export function paletteViewerObjFromLegacyJsonText(text) {
     for (let j = 0; j < PALETTE_LIGHTING_COLOR_KEYS.length; j++) {
         let k2 = PALETTE_LIGHTING_COLOR_KEYS[j];
         if (!Object.prototype.hasOwnProperty.call(obj, k2) || obj[k2] == null || obj[k2] === "null") { missing.push(k2); continue; }
-        let rgb2 = hexToRgbObj(obj[k2]);
+        let rgb2 = PaletteFunc.hexToRgbObj(obj[k2]);
         if (rgb2 == null) throw new Error("Unknown data format - expected Palette.");
         lighting[k2] = rgb2;
     }
@@ -96,12 +68,12 @@ export function paletteViewerObjFromLegacyJsonText(text) {
     for (let k3 in PALETTE_FLOAT_SPECS) {
         let spec = PALETTE_FLOAT_SPECS[k3];
         if (!Object.prototype.hasOwnProperty.call(obj, k3) || obj[k3] == null || obj[k3] === "null") { missing.push(k3); continue; }
-        lighting[spec.prop] = legacyFloatToX10(obj[k3], k3);
+        lighting[spec.prop] = PaletteFunc.toX10Float(obj[k3], spec.min, spec.max);
     }
 
     let shapes = {};
     if (!Object.prototype.hasOwnProperty.call(obj, "roofedTowers") || obj.roofedTowers == null || obj.roofedTowers === "null") missing.push("roofedTowers");
-    else shapes.roofedTowers = legacyBool(obj.roofedTowers);
+    else shapes.roofedTowers = PaletteFunc.legacyBool(obj.roofedTowers);
 
     if (!Object.prototype.hasOwnProperty.call(obj, "towers") || obj.towers == null || obj.towers === "null") missing.push("towers");
     else shapes.towers = legacyTowersToEnum(obj.towers);
@@ -110,7 +82,7 @@ export function paletteViewerObjFromLegacyJsonText(text) {
     else shapes.treeShape = legacyTreeShapeToEnum(obj.tree_shape);
 
     if (!Object.prototype.hasOwnProperty.call(obj, "pitch") || obj.pitch == null || obj.pitch === "null") missing.push("pitch");
-    else shapes.pitchX10 = legacyFloatToX10(obj.pitch, "pitch");
+    else shapes.pitchX10 = PaletteFunc.toX10Float(obj.pitch, "pitch");
 
     if (missing.length) {
         throw new Error("Palette has valid fields, but not enough data to apply: " + missing.join(", "));
@@ -127,27 +99,27 @@ export function paletteLegacyJsonFromPaletteViewerObj(pvo) {
     if (c == null || l == null || s == null) throw new Error("Unknown data format - expected Palette.");
     let out = {};
 
-    out.ground = rgbObjToHex(c.ground);
-    out.fields = rgbObjToHex(c.fields);
-    out.greens = rgbObjToHex(c.greens);
-    out.foliage = rgbObjToHex(c.foliage);
-    out.roads = rgbObjToHex(c.roads);
-    out.water = rgbObjToHex(c.water);
-    out.walls1 = rgbObjToHex(c.walls1);
-    out.walls2 = rgbObjToHex(c.walls2);
-    out.roofs1 = rgbObjToHex(c.roofs1);
-    out.roofs2 = rgbObjToHex(c.roofs2);
+    out.ground = PaletteFunc.rgbObjToHex(c.ground);
+    out.fields = PaletteFunc.rgbObjToHex(c.fields);
+    out.greens = PaletteFunc.rgbObjToHex(c.greens);
+    out.foliage = PaletteFunc.rgbObjToHex(c.foliage);
+    out.roads = PaletteFunc.rgbObjToHex(c.roads);
+    out.water = PaletteFunc.rgbObjToHex(c.water);
+    out.walls1 = PaletteFunc.rgbObjToHex(c.walls1);
+    out.walls2 = PaletteFunc.rgbObjToHex(c.walls2);
+    out.roofs1 = PaletteFunc.rgbObjToHex(c.roofs1);
+    out.roofs2 = PaletteFunc.rgbObjToHex(c.roofs2);
 
-    out.sky1 = rgbObjToHex(l.sky1);
-    out.sky2 = rgbObjToHex(l.sky2);
-    out.sun = rgbObjToHex(l.sun);
-    out.windows = rgbObjToHex(l.windows);
+    out.sky1 = PaletteFunc.rgbObjToHex(l.sky1);
+    out.sky2 = PaletteFunc.rgbObjToHex(l.sky2);
+    out.sun = PaletteFunc.rgbObjToHex(l.sun);
+    out.windows = PaletteFunc.rgbObjToHex(l.windows);
 
-    out.sun_pos = x10ToLegacyFloatString(l.sunPosX10);
-    out.ambience = x10ToLegacyFloatString(l.ambienceX10);
-    out.lighted = x10ToLegacyFloatString(l.lightedX10);
+    out.sun_pos = PaletteFunc.fromX10Float(l.sunPosX10);
+    out.ambience = PaletteFunc.fromX10Float(l.ambienceX10);
+    out.lighted = PaletteFunc.fromX10Float(l.lightedX10);
 
-    out.pitch = x10ToLegacyFloatString(s.pitchX10);
+    out.pitch = PaletteFunc.fromX10Float(s.pitchX10);
     out.roofedTowers = s.roofedTowers === true ? "true" : "false";
 
     out.towers = s.towers === DataProto.data.PaletteTowerPlanType.square ? "Square" : "Round";
@@ -209,11 +181,9 @@ export function decodePaletteFromProtoBytes(bytes) {
 
     function tryDecode(MessageType, buf) {
         try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
-        try { return { msg: MessageType.decodeDelimited(buf), err: null }; } catch (e2) { lastErr = e2; }
         let inner = stripLengthDelimited(buf);
         if (inner != null) {
             try { return { msg: MessageType.decode(inner), err: null }; } catch (e3) { lastErr = e3; }
-            try { return { msg: MessageType.decodeDelimited(inner), err: null }; } catch (e4) { lastErr = e4; }
         }
         return { msg: null, err: lastErr };
     }
@@ -258,30 +228,8 @@ export function decodePaletteFile(name, data) {
         let parts = String(name).split(".");
         if (parts.length > 1) ext = String(parts.pop()).toLowerCase();
     }
-    if (ext === "proto" || ext === "pb" || ext === "bin") return decodePaletteFromProtoBytes(data);
+    if (ext === "pb") return decodePaletteFromProtoBytes(data);
     let text = bytesToUtf8Text(data);
     return decodePaletteFromJsonText(text);
 }
 
-// //
-
-export function rgbObjToHex(rgb) {
-    let r = rgb?.r, g = rgb?.g, b = rgb?.b;
-    if (typeof r !== "number" || typeof g !== "number" || typeof b !== "number") throw new Error("Unknown data format - expected Palette.");
-    if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) throw new Error("Unknown data format - expected Palette.");
-    let n = (r << 16) | (g << 8) | b;
-    return "#" + n.toString(16).padStart(6, "0");
-}
-
-export function hexToRgbObj(v) {
-    if (typeof v !== "string") return null;
-    if (v === "null") return null;
-    let s = v.trim();
-    if (s.charAt(0) !== "#") return null;
-    s = s.substring(1);
-    if (s.length === 3) s = s.charAt(0)+s.charAt(0) + s.charAt(1)+s.charAt(1) + s.charAt(2)+s.charAt(2);
-    if (s.length !== 6) return null;
-    let n = parseInt(s, 16);
-    if (!Number.isFinite(n)) return null;
-    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
-}
