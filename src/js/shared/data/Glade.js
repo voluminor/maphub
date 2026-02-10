@@ -2,77 +2,6 @@ import * as DataProto from "../../struct/data.js";
 import { decodeDataFromFile } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
-export const fileExt = "gl";
-
-function intToRgbObj(n) {
-    n = (n | 0) >>> 0;
-    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
-}
-
-function rgbObjToHex(o) {
-    return PaletteFunc.rgbObjToHex(o);
-}
-
-function parseColor(v, fallbackInt) {
-    if (v === null || v === undefined || v === "null") return intToRgbObj(fallbackInt);
-    if (typeof v === "number") return intToRgbObj(v);
-    if (typeof v === "string") {
-        const rgb = PaletteFunc.hexToRgbObj(v);
-        if (rgb) return rgb;
-        const s = v.trim();
-        if (s.startsWith("0x")) {
-            const n = parseInt(s.slice(2), 16);
-            if (Number.isFinite(n)) return intToRgbObj(n);
-        }
-        const n2 = parseInt(s, 10);
-        if (Number.isFinite(n2)) return intToRgbObj(n2);
-    }
-    if (typeof v === "object") {
-        const r = v?.r, g = v?.g, b = v?.b;
-        if (typeof r === "number" && typeof g === "number" && typeof b === "number") return { r: r | 0, g: g | 0, b: b | 0 };
-    }
-    throw PaletteFunc.unknownPalette("color");
-}
-
-function parseFloatNum(v, fallback) {
-    if (v === null || v === undefined || v === "null") return fallback;
-    if (typeof v === "number") return Number.isFinite(v) ? v : fallback;
-    if (typeof v === "string") {
-        const n = parseFloat(v);
-        return Number.isFinite(n) ? n : fallback;
-    }
-    return fallback;
-}
-
-function parseIntNum(v, fallback) {
-    if (v === null || v === undefined || v === "null") return fallback;
-    if (typeof v === "number") return Number.isFinite(v) ? (v | 0) : fallback;
-    if (typeof v === "string") {
-        const n = parseInt(v, 10);
-        return Number.isFinite(n) ? (n | 0) : fallback;
-    }
-    return fallback;
-}
-
-function clampInt(n, min, max) {
-    n = n | 0;
-    if (n < min) return min;
-    if (n > max) return max;
-    return n;
-}
-
-function toX10(n, min, max, fallback) {
-    const v = parseFloatNum(n, fallback);
-    const clamped = Math.min(max, Math.max(min, v));
-    return Math.round(clamped * 10);
-}
-
-function toX100(n, min, max, fallback) {
-    const v = parseFloatNum(n, fallback);
-    const clamped = Math.min(max, Math.max(min, v));
-    return Math.round(clamped * 100);
-}
-
 function getProp(obj, key) {
     if (obj && typeof obj === "object") {
         if (Object.prototype.hasOwnProperty.call(obj, key)) return obj[key];
@@ -82,87 +11,58 @@ function getProp(obj, key) {
     return undefined;
 }
 
-function defaults() {
-    return {
-        ground: 10269317,
-        ink: 66054,
-        marks: null,
-        tree: [6258538],
-        treeDetails: null,
-        treeVariance: 0.2,
-        treeBands: 3,
-        treeShape: "Cotton",
-        thicket: null,
-        water: 4491468,
-        shallow: null,
-        sand: null,
-        shadowColor: 9869742,
-        shadowLength: 1,
-        shadowAngle: 60,
-        strokeNormal: 1,
-        strokeThin: 0.5,
-        strokeGrid: 0.3,
-        grassLength: 8,
-        road: 13418915,
-        roadOutline: null,
-        roadWidth: 0.5,
-        roadWiggle: 0.5
-    };
-}
-
 function paletteGladeObjFromLegacyJsonData(obj) {
     if (obj == null || typeof obj !== "object" || Array.isArray(obj)) throw PaletteFunc.unknownPalette("expected object");
 
-    const d = defaults();
-
-    const inkRgb = parseColor(getProp(obj, "ink"), d.ink);
-    const marksRgb = parseColor(getProp(obj, "marks"), ((inkRgb.r << 16) | (inkRgb.g << 8) | inkRgb.b));
+    const inkRgb = PaletteFunc.hexToRgbObj(getProp(obj, "ink"));
+    const marksRgb = PaletteFunc.hexToRgbObj(getProp(obj, "marks"));
     const treeRaw = getProp(obj, "tree");
     let treeArr = [];
     if (Array.isArray(treeRaw)) {
-        for (let i = 0; i < treeRaw.length; i++) treeArr.push(parseColor(treeRaw[i], d.tree[0]));
+        for (let i = 0; i < treeRaw.length; i++) treeArr.push(PaletteFunc.hexToRgbObj(treeRaw[i]));
     } else if (treeRaw != null) {
-        treeArr.push(parseColor(treeRaw, d.tree[0]));
+        treeArr.push(PaletteFunc.hexToRgbObj(treeRaw));
     }
-    if (treeArr.length === 0) treeArr = [intToRgbObj(d.tree[0])];
 
-    const tree0Int = (treeArr[0].r << 16) | (treeArr[0].g << 8) | treeArr[0].b;
+    const groundRgb = PaletteFunc.hexToRgbObj(getProp(obj, "ground"));
+    const treeDetailsRgb = PaletteFunc.hexToRgbObj(getProp(obj, "treeDetails"));
+    const thicketRgb = PaletteFunc.hexToRgbObj(getProp(obj, "thicket"));
 
-    const groundRgb = parseColor(getProp(obj, "ground"), d.ground);
-    const treeDetailsRgb = parseColor(getProp(obj, "treeDetails"), ((inkRgb.r << 16) | (inkRgb.g << 8) | inkRgb.b));
-    const thicketRgb = parseColor(getProp(obj, "thicket"), tree0Int);
+    const waterDeepRgb = PaletteFunc.hexToRgbObj(getProp(obj, "water"));
+    const shallowRgb = PaletteFunc.hexToRgbObj(getProp(obj, "shallow"));
+    const sandRgb = PaletteFunc.hexToRgbObj(getProp(obj, "sand"));
 
-    const waterDeepRgb = parseColor(getProp(obj, "water"), d.water);
-    const shallowRgb = parseColor(getProp(obj, "shallow"), ((waterDeepRgb.r << 16) | (waterDeepRgb.g << 8) | waterDeepRgb.b));
-    const sandRgb = parseColor(getProp(obj, "sand"), ((inkRgb.r << 16) | (inkRgb.g << 8) | inkRgb.b));
+    const shadowColorRgb = PaletteFunc.hexToRgbObj(getProp(obj, "shadowColor"));
 
-    const shadowColorRgb = parseColor(getProp(obj, "shadowColor"), d.shadowColor);
+    const roadRgb = PaletteFunc.hexToRgbObj(getProp(obj, "road"));
+    const roadOutlineRgb = PaletteFunc.hexToRgbObj(getProp(obj, "roadOutline"));
 
-    const roadRgb = parseColor(getProp(obj, "road"), d.road);
-    const roadOutlineRgb = parseColor(getProp(obj, "roadOutline"), ((inkRgb.r << 16) | (inkRgb.g << 8) | inkRgb.b));
-
-    const treeVarianceX100 = toX100(getProp(obj, "treeVariance"), 0, 1, d.treeVariance);
-    const treeBands = clampInt(parseIntNum(getProp(obj, "treeBands"), d.treeBands), 2, 5);
+    const treeVariance = PaletteFunc.toFloat(getProp(obj, "treeVariance"), 0, 1);
+    const treeBands = PaletteFunc.legacyInt(getProp(obj, "treeBands"));
     const treeShape = (() => {
         const v = getProp(obj, "treeShape");
         if (typeof v === "string" && v.length) return v;
         return d.treeShape;
     })();
 
-    const shadowLengthX10 = toX10(getProp(obj, "shadowLength"), 0, 3, d.shadowLength);
+    const shadowLength = PaletteFunc.toFloat(getProp(obj, "shadowLength"), 0, 3);
+    
+    let angle2 = PaletteFunc.legacyInt(getProp(obj, "shadowDir"));
+    let angle1 = PaletteFunc.legacyInt(getProp(obj, "shadowAngle"));
+    let angle = 0;
+    if(angle1 > 0 || angle2 > 0){
+        if (angle1 > 0){angle = angle1;}
+        if (angle2 > 0){angle = angle2;}
+    }
 
-    let angle = parseIntNum(getProp(obj, "shadowAngle"), 361);
-    if (angle === 361) angle = parseIntNum(getProp(obj, "shadowDir"), d.shadowAngle);
-    angle = clampInt(angle, 0, 360);
+    const strokeNormal = PaletteFunc.toFloat(getProp(obj, "strokeNormal"), 0.1, 10);
+    const strokeThin = PaletteFunc.toFloat(getProp(obj, "strokeThin"), 0.1, 10);
+    const strokeGrid = PaletteFunc.toFloat(getProp(obj, "strokeGrid"), 0.1, 10);
 
-    const strokeNormalX10 = toX10(getProp(obj, "strokeNormal"), 0.1, 10, d.strokeNormal);
-    const strokeThinX10 = toX10(getProp(obj, "strokeThin"), 0.1, 10, d.strokeThin);
-    const strokeGridX10 = toX10(getProp(obj, "strokeGrid"), 0.1, 10, d.strokeGrid);
+    const grassLength = PaletteFunc.legacyInt(getProp(obj, "grassLength"));
 
-    const grassLength = clampInt(parseIntNum(getProp(obj, "grassLength"), d.grassLength), 0, 9999);
-
-    const roadWidthX100 = toX100(getProp(obj, "roadWidth"), 0, 1, d.roadWidth);
-    const roadWiggleX100 = toX100(getProp(obj, "roadWiggle"), 0, 1, d.roadWiggle);
+    const roadWidth = PaletteFunc.toFloat(getProp(obj, "roadWidth"), 0, 1);
+    const roadWiggle = PaletteFunc.toFloat(getProp(obj, "roadWiggle"), 0, 1);
 
     return {
         colors: {
@@ -180,23 +80,23 @@ function paletteGladeObjFromLegacyJsonData(obj) {
             roadOutline: roadOutlineRgb
         },
         trees: {
-            varianceX100: treeVarianceX100,
+            variance: treeVariance,
             bands: treeBands,
             shape: treeShape
         },
         shadow: {
-            lengthX10: shadowLengthX10,
+            length: shadowLength,
             angleDeg: angle
         },
         strokes: {
-            normalX10: strokeNormalX10,
-            thinX10: strokeThinX10,
-            gridX10: strokeGridX10
+            normal: strokeNormal,
+            thin: strokeThin,
+            grid: strokeGrid
         },
         misc: {
             grassLength: grassLength,
-            roadWidthX100: roadWidthX100,
-            roadWiggleX100: roadWiggleX100
+            roadWidth: roadWidth,
+            roadWiggle: roadWiggle
         }
     };
 }
@@ -214,14 +114,6 @@ export function paletteObjFromLegacyJsonText(text) {
     return DataProto.data.PaletteGladeObj.fromObject(protoObj);
 }
 
-function fromX10(v) {
-    return PaletteFunc.fromX10Float(v);
-}
-
-function fromX100(v) {
-    return PaletteFunc.fromX100Float(v);
-}
-
 export function paletteLegacyJsonFromObj(p) {
     const m = DataProto.data.PaletteGladeObj.fromObject(p);
 
@@ -233,41 +125,45 @@ export function paletteLegacyJsonFromObj(p) {
 
     const out = {};
 
-    out.thicket = rgbObjToHex(c.thicket || intToRgbObj(6258538));
-    out.ground = rgbObjToHex(c.ground || intToRgbObj(10269317));
-    out.ink = rgbObjToHex(c.ink || intToRgbObj(66054));
-    out.marks = rgbObjToHex(c.marks || c.ink || intToRgbObj(66054));
+    out.thicket = PaletteFunc.rgbObjToHex(c.thicket);
+    out.ground = PaletteFunc.rgbObjToHex(c.ground);
+    out.ink = PaletteFunc.rgbObjToHex(c.ink );
+    out.marks = PaletteFunc.rgbObjToHex(c.marks || c.ink);
 
-    const treeArr = Array.isArray(c.tree) && c.tree.length ? c.tree : [intToRgbObj(6258538)];
-    out.tree = treeArr.map(rgbObjToHex);
+    const treeArr = Array.isArray(c.tree) && c.tree.length ? c.tree : [];
+    out.tree = treeArr.map(PaletteFunc.rgbObjToHex);
 
-    out.treeDetails = rgbObjToHex(c.treeDetails || c.ink || intToRgbObj(66054));
-    out.treeVariance = fromX100(t.varianceX100 != null ? t.varianceX100 : Math.round(0.2 * 100));
+    out.treeDetails = PaletteFunc.rgbObjToHex(c.treeDetails || c.ink );
+    out.treeVariance = PaletteFunc.fromFloat(t.variance);
     out.treeBands = String(t.bands != null ? (t.bands | 0) : 3);
     out.treeShape = (t.shape != null && String(t.shape).length) ? String(t.shape) : "Cotton";
 
-    out.water = rgbObjToHex(c.waterDeep || intToRgbObj(4491468));
-    out.shallow = rgbObjToHex(c.waterShallow || c.waterDeep || intToRgbObj(4491468));
-    out.sand = rgbObjToHex(c.sand || c.ink || intToRgbObj(66054));
+    out.water = PaletteFunc.rgbObjToHex(c.waterDeep );
+    out.shallow = PaletteFunc.rgbObjToHex(c.waterShallow || c.waterDeep );
+    out.sand = PaletteFunc.rgbObjToHex(c.sand || c.ink );
 
-    out.shadowColor = rgbObjToHex(c.shadowColor || intToRgbObj(9869742));
-    out.shadowLength = fromX10(s.lengthX10 != null ? s.lengthX10 : Math.round(1 * 10));
-    out.shadowAngle = String(s.angleDeg != null ? (s.angleDeg | 0) : 60);
+    out.shadowColor = PaletteFunc.rgbObjToHex(c.shadowColor );
+    out.shadowLength = PaletteFunc.fromFloat(s.length);
+    out.shadowAngle = String(s.angleDeg );
 
-    out.road = rgbObjToHex(c.road || intToRgbObj(13418915));
-    out.roadOutline = rgbObjToHex(c.roadOutline || c.ink || intToRgbObj(66054));
-    out.roadWidth = fromX100(ms.roadWidthX100 != null ? ms.roadWidthX100 : Math.round(0.5 * 100));
-    out.roadWiggle = fromX100(ms.roadWiggleX100 != null ? ms.roadWiggleX100 : Math.round(0.5 * 100));
+    out.road = PaletteFunc.rgbObjToHex(c.road);
+    out.roadOutline = PaletteFunc.rgbObjToHex(c.roadOutline || c.ink);
+    out.roadWidth = PaletteFunc.fromFloat(ms.roadWidth );
+    out.roadWiggle = PaletteFunc.fromFloat(ms.roadWiggle );
 
-    out.strokeNormal = fromX10(st.normalX10 != null ? st.normalX10 : Math.round(1 * 10));
-    out.strokeThin = fromX10(st.thinX10 != null ? st.thinX10 : Math.round(0.5 * 10));
-    out.strokeGrid = fromX10(st.gridX10 != null ? st.gridX10 : Math.round(0.3 * 10));
+    out.strokeNormal = PaletteFunc.fromFloat(st.normal);
+    out.strokeThin = PaletteFunc.fromFloat(st.thin );
+    out.strokeGrid = PaletteFunc.fromFloat(st.grid);
 
-    out.grassLength = String(ms.grassLength != null ? (ms.grassLength | 0) : 8);
+    out.grassLength = String(ms.grassLength);
 
     return JSON.stringify(out, null, "  ");
 }
 
 export function decodePaletteFile(name, data) {
     return decodeDataFromFile("PaletteGladeObj", paletteObjFromLegacyJsonText, data);
+}
+
+export function paletteProtoBytesFromObj(m) {
+    return DataProto.data.PaletteGladeObj.encode(m).finish();
 }

@@ -19,14 +19,14 @@ message PaletteDwellingsColorsObj {
 }
 
 message PaletteDwellingsStrokesObj {
-  uint32 normal_x100 = 1;
-  uint32 grid_x100 = 2;
+  float normal = 1;
+  float grid = 2;
 }
 
 message PaletteDwellingsMiscObj {
-  uint32 alpha_grid_x100 = 1;
-  uint32 alpha_ao_x100 = 2;
-  uint32 alpha_lights_x100 = 3;
+  float alpha_grid = 1;
+  float alpha_ao = 2;
+  float alpha_lights = 3;
   PaletteFontObj font_room = 4;
   bool hatching = 5;
 }

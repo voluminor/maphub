@@ -20,7 +20,6 @@ enum PaletteTreeShapeType {
 
 // //
 
-
 message PaletteColorsObj {
   PaletteRgbObj ground = 1;
   PaletteRgbObj fields = 2;
@@ -38,14 +37,14 @@ message PaletteLightingObj {
   PaletteRgbObj sky1 = 1;
   PaletteRgbObj sky2 = 2;
   PaletteRgbObj sun = 3;
-  optional uint32 sun_pos_x10 = 4;
-  optional uint32 ambience_x10 = 5;
+  optional float sun_pos = 4;
+  optional float ambience = 5;
   PaletteRgbObj windows = 6;
-  optional uint32 lighted_x10 = 7;
+  optional float lighted = 7;
 }
 
 message PaletteShapesObj {
-  optional uint32 pitch_x10 = 1;
+  optional float pitch = 1;
   optional bool roofed_towers = 2;
   optional PaletteTowerPlanType towers = 3;
   optional PaletteTreeShapeType tree_shape = 4;

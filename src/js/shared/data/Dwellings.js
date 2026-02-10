@@ -15,11 +15,11 @@ const DW_COLOR_SPECS = [
 ];
 
 const DW_FLOAT_SPECS = [
-    { legacy: "strNormal10", min: 0.01, max: 0.5, target: ["strokes", "normalX100"] },
-    { legacy: "strGrid10", min: 0.01, max: 0.5, target: ["strokes", "gridX100"] },
-    { legacy: "alphaGrid", min: 0, max: 1, target: ["misc", "alphaGridX100"] },
-    { legacy: "alphaAO", min: 0, max: 1, target: ["misc", "alphaAoX100"] },
-    { legacy: "alphaLights", min: 0, max: 1, target: ["misc", "alphaLightsX100"] }
+    { legacy: "strNormal10", min: 0.01, max: 0.5, target: ["strokes", "normal"] },
+    { legacy: "strGrid10", min: 0.01, max: 0.5, target: ["strokes", "grid"] },
+    { legacy: "alphaGrid", min: 0, max: 1, target: ["misc", "alphaGrid"] },
+    { legacy: "alphaAO", min: 0, max: 1, target: ["misc", "alphaAo"] },
+    { legacy: "alphaLights", min: 0, max: 1, target: ["misc", "alphaLights"] }
 ];
 
 function isPaletteViewerLegacyJson(obj) {
@@ -63,7 +63,7 @@ export function paletteDwellingsObjFromLegacyJson(json) {
         let s = DW_FLOAT_SPECS[i2];
         let k2 = s.legacy;
         if (!Object.prototype.hasOwnProperty.call(obj, k2) || obj[k2] == null || obj[k2] === "null") { missing.push(k2); continue; }
-        let v = PaletteFunc.toX100Float(obj[k2], s.min, s.max);
+        let v = PaletteFunc.toFloat(obj[k2], s.min, s.max);
         if (s.target[0] === "strokes") strokes[s.target[1]] = v;
         else misc[s.target[1]] = v;
     }
@@ -115,12 +115,12 @@ export function paletteLegacyJsonFromObj(pdo) {
     out.colorRoof = PaletteFunc.rgbObjToHex(c.roof);
     out.colorLabels = PaletteFunc.rgbObjToHex(c.labels);
 
-    out.strNormal10 = PaletteFunc.fromX100Float(s.normalX100);
-    out.strGrid10 = PaletteFunc.fromX100Float(s.gridX100);
+    out.strNormal10 = PaletteFunc.fromFloat(s.normal);
+    out.strGrid10 = PaletteFunc.fromFloat(s.grid);
 
-    out.alphaGrid = PaletteFunc.fromX100Float(m.alphaGridX100);
-    out.alphaAO = PaletteFunc.fromX100Float(m.alphaAoX100);
-    out.alphaLights = PaletteFunc.fromX100Float(m.alphaLightsX100);
+    out.alphaGrid = PaletteFunc.fromFloat(m.alphaGrid);
+    out.alphaAO = PaletteFunc.fromFloat(m.alphaAo);
+    out.alphaLights = PaletteFunc.fromFloat(m.alphaLights);
 
     out.fontRoom = {
         face: m.fontRoom?.face || "Share Tech Regular",

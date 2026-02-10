@@ -2,6 +2,9 @@ export function unknownPalette(msg) {
     return new Error(msg ? ("Unknown data format - expected Palette: " + msg) : "Unknown data format - expected Palette.");
 }
 
+
+// // // //
+
 export function rgbObjToHex(rgb) {
     let r = rgb?.r, g = rgb?.g, b = rgb?.b;
     if (typeof r !== "number" || typeof g !== "number" || typeof b !== "number") throw new Error("Unknown data format rgb - not number.");
@@ -22,6 +25,8 @@ export function hexToRgbObj(v) {
     if (!Number.isFinite(n)) return null;
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
+
+//
 
 export function legacyBool(v) {
     if (v === null || v === undefined) return null;
@@ -45,37 +50,21 @@ export function legacyInt(v) {
     return null;
 }
 
-export function toX10Float(v, min, max) {
+export function toFloat(v, min, max) {
     if (v === null || v === undefined) return null;
     if (v === "null") return null;
     let n = typeof v === "number" ? v : (typeof v === "string" ? parseFloat(v) : NaN);
-    if (!Number.isFinite(n)) throw unknownPalette("toX10Float - min:"+min+" max:"+max+" val:"+v);
-    return Math.round(n * 10);
+    if (!Number.isFinite(n)) throw unknownPalette("toFloat - min:"+min+" max:"+max+" val:"+v);
+    if (n < min || n > max) throw unknownPalette("toFloat - min:"+min+" max:"+max+" val:"+v);
+    return n;
 }
 
-export function fromX10Float(v) {
+export function fromFloat(v) {
     if (v === null || v === undefined) return "null";
-    let n = v / 10;
-    let s = String(n);
-    if (s.indexOf(".") === -1) s += ".0";
-    return s;
-}
-
-// // //
-
-export function toX100Float(v, min, max) {
-    if (v === null || v === undefined) return null;
-    if (v === "null") return null;
-    let n = typeof v === "number" ? v : (typeof v === "string" ? parseFloat(v) : NaN);
-    if (!Number.isFinite(n)) throw unknownPalette("toX100Float - min:"+min+" max:"+max+" val:"+v);
-    if (n < min || n > max) throw unknownPalette("toX100Float - min:"+min+" max:"+max+" val:"+v);
-    return Math.round(n * 100);
-}
-
-export function fromX100Float(v) {
-    if (v === null || v === undefined) return "null";
-    let n = v / 100;
-    let s = String(n);
-    if (s.indexOf(".") === -1) s += ".0";
+    if (typeof v === "string") return v;
+    if (!Number.isFinite(v)) return String(v);
+    let s = v.toFixed(4);
+    s = s.replace(/(\.\d*?)0+$/, "$1");
+    s = s.replace(/\.$/, ".0");
     return s;
 }

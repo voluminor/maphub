@@ -23,8 +23,8 @@ function parseRgbList(v) {
     throw new Error("Invalid palette structure.");
 }
 
-function toX10Checked(v, min, max) {
-    let n = PaletteFunc.toX10Float(v, min, max);
+function toChecked(v, min, max) {
+    let n = PaletteFunc.toFloat(v, min, max);
     if (n == null) return null;
     if (typeof min === "number" && n < Math.round(min * 10)) throw new Error("Invalid palette structure.");
     if (typeof max === "number" && n > Math.round(max * 10)) throw new Error("Invalid palette structure.");
@@ -173,14 +173,14 @@ export function paletteObjFromLegacyJsonText(text) {
         if (r == null || r.length === 0) missing.push("roofLight"); else houses.roofLight = r;
     }
     if (!hasVal(obj, "roofStroke")) missing.push("roofStroke"); else houses.roofStroke = parseRgb(obj.roofStroke);
-    if (!hasVal(obj, "roofVariance")) missing.push("roofVariance"); else houses.roofVarianceX10 = toX10Checked(obj.roofVariance, 0, 1);
-    if (!hasVal(obj, "roofSlope")) missing.push("roofSlope"); else houses.roofSlopeX10 = toX10Checked(obj.roofSlope, 0, 1);
+    if (!hasVal(obj, "roofVariance")) missing.push("roofVariance"); else houses.roofVariance = toChecked(obj.roofVariance, 0, 1);
+    if (!hasVal(obj, "roofSlope")) missing.push("roofSlope"); else houses.roofSlope = toChecked(obj.roofSlope, 0, 1);
     if (!hasVal(obj, "roofType")) missing.push("roofType"); else houses.roofType = legacyRoofToEnum(obj.roofType);
 
     let roads = {};
     if (!hasVal(obj, "road")) missing.push("road"); else roads.road = parseRgb(obj.road);
-    if (!hasVal(obj, "largeRoad")) missing.push("largeRoad"); else roads.largeRoadX10 = toX10Checked(obj.largeRoad, 0, 8);
-    if (!hasVal(obj, "smallRoad")) missing.push("smallRoad"); else roads.smallRoadX10 = toX10Checked(obj.smallRoad, 0, 8);
+    if (!hasVal(obj, "largeRoad")) missing.push("largeRoad"); else roads.largeRoad = toChecked(obj.largeRoad, 0, 8);
+    if (!hasVal(obj, "smallRoad")) missing.push("smallRoad"); else roads.smallRoad = toChecked(obj.smallRoad, 0, 8);
     if (!hasVal(obj, "outlineRoads")) missing.push("outlineRoads"); else roads.outlineRoads = legacyOutlineToEnum(obj.outlineRoads);
     if (!hasVal(obj, "mergeRoads")) missing.push("mergeRoads"); else roads.mergeRoads = toBoolChecked(obj.mergeRoads);
 
@@ -190,7 +190,7 @@ export function paletteObjFromLegacyJsonText(text) {
         if (fl == null || fl.length === 0) missing.push("fieldLight"); else fields.fieldLight = fl;
     }
     if (!hasVal(obj, "fieldFurrow")) missing.push("fieldFurrow"); else fields.fieldFurrow = parseRgb(obj.fieldFurrow);
-    if (!hasVal(obj, "fieldVariance")) missing.push("fieldVariance"); else fields.fieldVarianceX10 = toX10Checked(obj.fieldVariance, 0, 1);
+    if (!hasVal(obj, "fieldVariance")) missing.push("fieldVariance"); else fields.fieldVariance = toChecked(obj.fieldVariance, 0, 1);
     if (!hasVal(obj, "outlineFields")) missing.push("outlineFields"); else fields.outlineFields = legacyOutlineToEnum(obj.outlineFields);
 
     let water = {};
@@ -206,12 +206,12 @@ export function paletteObjFromLegacyJsonText(text) {
     }
     if (!hasVal(obj, "thicket")) missing.push("thicket"); else trees.thicket = parseRgb(obj.thicket);
     if (!hasVal(obj, "treeDetails")) missing.push("treeDetails"); else trees.treeDetails = parseRgb(obj.treeDetails);
-    if (!hasVal(obj, "treeVariance")) missing.push("treeVariance"); else trees.treeVarianceX10 = toX10Checked(obj.treeVariance, 0, 1);
+    if (!hasVal(obj, "treeVariance")) missing.push("treeVariance"); else trees.treeVariance = toChecked(obj.treeVariance, 0, 1);
     if (!hasVal(obj, "treeShape")) missing.push("treeShape"); else trees.treeShape = legacyTreeShapeToEnum(obj.treeShape);
 
     let lighting = {};
     if (!hasVal(obj, "shadowColor")) missing.push("shadowColor"); else lighting.shadowColor = parseRgb(obj.shadowColor);
-    if (!hasVal(obj, "shadowLength")) missing.push("shadowLength"); else lighting.shadowLengthX10 = toX10Checked(obj.shadowLength, 0, 4);
+    if (!hasVal(obj, "shadowLength")) missing.push("shadowLength"); else lighting.shadowLength = toChecked(obj.shadowLength, 0, 4);
     if (!hasVal(obj, "shadowAngle")) missing.push("shadowAngle"); else lighting.shadowAngleDeg = toIntChecked(obj.shadowAngle, 0, 360);
     if (!hasVal(obj, "lights")) missing.push("lights"); else lighting.lights = parseRgb(obj.lights);
 
@@ -223,8 +223,8 @@ export function paletteObjFromLegacyJsonText(text) {
     let misc = {};
     if (!hasVal(obj, "ink")) missing.push("ink"); else misc.ink = parseRgb(obj.ink);
     if (!hasVal(obj, "paper")) missing.push("paper"); else misc.paper = parseRgb(obj.paper);
-    if (!hasVal(obj, "strokeNormal")) missing.push("strokeNormal"); else misc.strokeNormalX10 = toX10Checked(obj.strokeNormal, 0.1, 4);
-    if (!hasVal(obj, "strokeThin")) missing.push("strokeThin"); else misc.strokeThinX10 = toX10Checked(obj.strokeThin, 0.1, 4);
+    if (!hasVal(obj, "strokeNormal")) missing.push("strokeNormal"); else misc.strokeNormal = toChecked(obj.strokeNormal, 0.1, 4);
+    if (!hasVal(obj, "strokeThin")) missing.push("strokeThin"); else misc.strokeThin = toChecked(obj.strokeThin, 0.1, 4);
 
     if (missing.length) throw new Error("Palette has valid fields, but not enough data to apply: " + missing.join(", "));
 
@@ -247,19 +247,19 @@ export function paletteLegacyJsonFromObj(p) {
 
     out.roofLight = rgbListToHex(h.roofLight);
     out.roofStroke = PaletteFunc.rgbObjToHex(h.roofStroke);
-    out.roofVariance = PaletteFunc.fromX10Float(h.roofVarianceX10);
-    out.roofSlope = PaletteFunc.fromX10Float(h.roofSlopeX10);
+    out.roofVariance = PaletteFunc.fromFloat(h.roofVariance);
+    out.roofSlope = PaletteFunc.fromFloat(h.roofSlope);
     out.roofType = enumToLegacyRoof(h.roofType);
 
     out.road = PaletteFunc.rgbObjToHex(r.road);
-    out.largeRoad = PaletteFunc.fromX10Float(r.largeRoadX10);
-    out.smallRoad = PaletteFunc.fromX10Float(r.smallRoadX10);
+    out.largeRoad = PaletteFunc.fromFloat(r.largeRoad);
+    out.smallRoad = PaletteFunc.fromFloat(r.smallRoad);
     out.outlineRoads = enumToLegacyOutline(r.outlineRoads);
     out.mergeRoads = r.mergeRoads === true ? "true" : "false";
 
     out.fieldLight = rgbListToHex(f.fieldLight);
     out.fieldFurrow = PaletteFunc.rgbObjToHex(f.fieldFurrow);
-    out.fieldVariance = PaletteFunc.fromX10Float(f.fieldVarianceX10);
+    out.fieldVariance = PaletteFunc.fromFloat(f.fieldVariance);
     out.outlineFields = enumToLegacyOutline(f.outlineFields);
 
     out.waterShallow = PaletteFunc.rgbObjToHex(w.waterShallow);
@@ -270,11 +270,11 @@ export function paletteLegacyJsonFromObj(p) {
     out.tree = rgbListToHex(tr.tree);
     out.thicket = PaletteFunc.rgbObjToHex(tr.thicket);
     out.treeDetails = PaletteFunc.rgbObjToHex(tr.treeDetails);
-    out.treeVariance = PaletteFunc.fromX10Float(tr.treeVarianceX10);
+    out.treeVariance = PaletteFunc.fromFloat(tr.treeVariance);
     out.treeShape = enumToLegacyTreeShape(tr.treeShape);
 
     out.shadowColor = PaletteFunc.rgbObjToHex(l.shadowColor);
-    out.shadowLength = PaletteFunc.fromX10Float(l.shadowLengthX10);
+    out.shadowLength = PaletteFunc.fromFloat(l.shadowLength);
     out.shadowAngle = String(l.shadowAngleDeg);
     out.lights = PaletteFunc.rgbObjToHex(l.lights);
 
@@ -284,8 +284,8 @@ export function paletteLegacyJsonFromObj(p) {
 
     out.ink = PaletteFunc.rgbObjToHex(m.ink);
     out.paper = PaletteFunc.rgbObjToHex(m.paper);
-    out.strokeNormal = PaletteFunc.fromX10Float(m.strokeNormalX10);
-    out.strokeThin = PaletteFunc.fromX10Float(m.strokeThinX10);
+    out.strokeNormal = PaletteFunc.fromFloat(m.strokeNormal);
+    out.strokeThin = PaletteFunc.fromFloat(m.strokeThin);
 
     return JSON.stringify(out, null, "  ");
 }

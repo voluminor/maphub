@@ -4,7 +4,6 @@ package data;
 
 // // // //
 
-
 message PaletteRgbObj {
   optional uint32 r = 1;
   optional uint32 g = 2;

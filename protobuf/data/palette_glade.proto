@@ -22,26 +22,26 @@ message PaletteGladeColorsObj {
 }
 
 message PaletteGladeTreesObj {
-  optional int32 variance_x100 = 1;
+  optional float variance = 1;
   optional int32 bands = 2;
   optional string shape = 3;
 }
 
 message PaletteGladeShadowObj {
-  optional int32 length_x10 = 1;
+  optional float length = 1;
   optional int32 angle_deg = 2;
 }
 
 message PaletteGladeStrokesObj {
-  optional int32 normal_x10 = 1;
-  optional int32 thin_x10 = 2;
-  optional int32 grid_x10 = 3;
+  optional float normal = 1;
+  optional float thin = 2;
+  optional float grid = 3;
 }
 
 message PaletteGladeMiscObj {
   optional int32 grass_length = 1;
-  optional int32 road_width_x100 = 2;
-  optional int32 road_wiggle_x100 = 3;
+  optional float road_width = 2;
+  optional float road_wiggle = 3;
 }
 
 //

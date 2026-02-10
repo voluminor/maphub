@@ -49,15 +49,15 @@ message PaletteVillageTerrainObj {
 message PaletteVillageHousesObj {
   repeated PaletteRgbObj roofLight = 1;
   PaletteRgbObj roofStroke = 2;
-  uint32 roofVarianceX10 = 3;
-  uint32 roofSlopeX10 = 4;
+  float roofVariance = 3;
+  float roofSlope = 4;
   PaletteVillageRoofType roofType = 5;
 }
 
 message PaletteVillageRoadsObj {
   PaletteRgbObj road = 1;
-  uint32 largeRoadX10 = 2;
-  uint32 smallRoadX10 = 3;
+  float largeRoad = 2;
+  float smallRoad = 3;
   PaletteVillageOutlineType outlineRoads = 4;
   bool mergeRoads = 5;
 }
@@ -65,7 +65,7 @@ message PaletteVillageRoadsObj {
 message PaletteVillageFieldsObj {
   repeated PaletteRgbObj fieldLight = 1;
   PaletteRgbObj fieldFurrow = 2;
-  uint32 fieldVarianceX10 = 3;
+  float fieldVariance = 3;
   PaletteVillageOutlineType outlineFields = 4;
 }
 
@@ -80,13 +80,13 @@ message PaletteVillageTreesObj {
   repeated PaletteRgbObj tree = 1;
   PaletteRgbObj thicket = 2;
   PaletteRgbObj treeDetails = 3;
-  uint32 treeVarianceX10 = 4;
+  float treeVariance = 4;
   PaletteVillageTreeShapeType treeShape = 5;
 }
 
 message PaletteVillageLightingObj {
   PaletteRgbObj shadowColor = 1;
-  uint32 shadowLengthX10 = 2;
+  float shadowLength = 2;
   uint32 shadowAngleDeg = 3;
   PaletteRgbObj lights = 4;
 }
@@ -100,8 +100,8 @@ message PaletteVillageTextObj {
 message PaletteVillageMiscObj {
   PaletteRgbObj ink = 1;
   PaletteRgbObj paper = 2;
-  uint32 strokeNormalX10 = 3;
-  uint32 strokeThinX10 = 4;
+  float strokeNormal = 3;
+  float strokeThin = 4;
 }
 
 //

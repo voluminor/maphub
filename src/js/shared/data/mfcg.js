@@ -45,10 +45,7 @@ function needKey(obj, k, missing) {
 }
 
 function pickRgb(obj, key) {
-    if (!Object.prototype.hasOwnProperty.call(obj, key) || obj[key] == null || obj[key] === "null") return null;
-    let rgb = PaletteFunc.hexToRgbObj(obj[key]);
-    if (rgb == null) throw PaletteFunc.unknownPalette();
-    return rgb;
+    return PaletteFunc.hexToRgbObj(obj[key]);
 }
 
 function normalizePaletteMfcgObjLike(pmoLike) {

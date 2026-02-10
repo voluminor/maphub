@@ -5,10 +5,10 @@ import * as PaletteFunc from "./palette.js";
 const PALETTE_COLOR_KEYS = ["ground","fields","greens","foliage","roads","water","walls1","walls2","roofs1","roofs2"];
 const PALETTE_LIGHTING_COLOR_KEYS = ["sky1","sky2","sun","windows"];
 const PALETTE_FLOAT_SPECS = {
-    sun_pos: { min: 0, max: 90, prop: "sunPosX10" },
-    ambience: { min: 0, max: 1, prop: "ambienceX10" },
-    lighted: { min: 0, max: 1, prop: "lightedX10" },
-    pitch: { min: 0, max: 2, prop: "pitchX10" }
+    sun_pos: { min: 0, max: 90, prop: "sunPos" },
+    ambience: { min: 0, max: 1, prop: "ambience" },
+    lighted: { min: 0, max: 1, prop: "lighted" },
+    pitch: { min: 0, max: 2, prop: "pitch" }
 };
 
 function legacyTowersToEnum(v) {
@@ -68,7 +68,7 @@ export function paletteObjFromLegacyJsonText(text) {
     for (let k3 in PALETTE_FLOAT_SPECS) {
         let spec = PALETTE_FLOAT_SPECS[k3];
         if (!Object.prototype.hasOwnProperty.call(obj, k3) || obj[k3] == null || obj[k3] === "null") { missing.push(k3); continue; }
-        lighting[spec.prop] = PaletteFunc.toX10Float(obj[k3], spec.min, spec.max);
+        lighting[spec.prop] = PaletteFunc.toFloat(obj[k3], spec.min, spec.max);
     }
 
     let shapes = {};
@@ -82,7 +82,7 @@ export function paletteObjFromLegacyJsonText(text) {
     else shapes.treeShape = legacyTreeShapeToEnum(obj.tree_shape);
 
     if (!Object.prototype.hasOwnProperty.call(obj, "pitch") || obj.pitch == null || obj.pitch === "null") missing.push("pitch");
-    else shapes.pitchX10 = PaletteFunc.toX10Float(obj.pitch, "pitch");
+    else shapes.pitch = PaletteFunc.toFloat(obj.pitch, "pitch");
 
     if (missing.length) {
         throw new Error("Palette has valid fields, but not enough data to apply: " + missing.join(", "));
@@ -115,11 +115,11 @@ export function paletteLegacyJsonFromObj(pvo) {
     out.sun = PaletteFunc.rgbObjToHex(l.sun);
     out.windows = PaletteFunc.rgbObjToHex(l.windows);
 
-    out.sun_pos = PaletteFunc.fromX10Float(l.sunPosX10);
-    out.ambience = PaletteFunc.fromX10Float(l.ambienceX10);
-    out.lighted = PaletteFunc.fromX10Float(l.lightedX10);
+    out.sun_pos = PaletteFunc.fromFloat(l.sunPos);
+    out.ambience = PaletteFunc.fromFloat(l.ambience);
+    out.lighted = PaletteFunc.fromFloat(l.lighted);
 
-    out.pitch = PaletteFunc.fromX10Float(s.pitchX10);
+    out.pitch = PaletteFunc.fromFloat(s.pitch);
     out.roofedTowers = s.roofedTowers === true ? "true" : "false";
 
     out.towers = s.towers === DataProto.data.PaletteTowerPlanType.square ? "Square" : "Round";
