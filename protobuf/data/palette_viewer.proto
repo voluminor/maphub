@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package data;
 
+import "data/palette.proto";
 
 // // // //
 
@@ -19,19 +20,6 @@ enum PaletteTreeShapeType {
 
 // //
 
-message PaletteRgbObj {
-  optional uint32 r = 1;
-  optional uint32 g = 2;
-  optional uint32 b = 3;
-}
-
-message PaletteFontObj {
-  string face = 1;
-  uint32 size = 2;
-  bool bold = 3;
-  bool italic = 4;
-  string embedded = 5;
-}
 
 message PaletteColorsObj {
   PaletteRgbObj ground = 1;
@@ -44,7 +32,6 @@ message PaletteColorsObj {
   PaletteRgbObj walls2 = 8;
   PaletteRgbObj roofs1 = 9;
   PaletteRgbObj roofs2 = 10;
-  reserved 11 to 49;
 }
 
 message PaletteLightingObj {
@@ -55,7 +42,6 @@ message PaletteLightingObj {
   optional uint32 ambience_x10 = 5;
   PaletteRgbObj windows = 6;
   optional uint32 lighted_x10 = 7;
-  reserved 8 to 49;
 }
 
 message PaletteShapesObj {
@@ -63,7 +49,6 @@ message PaletteShapesObj {
   optional bool roofed_towers = 2;
   optional PaletteTowerPlanType towers = 3;
   optional PaletteTreeShapeType tree_shape = 4;
-  reserved 5 to 49;
 }
 
 //

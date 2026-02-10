@@ -2,14 +2,18 @@ syntax = "proto3";
 
 package data;
 
-import "data/palette_viewer.proto";
+import "data/palette.proto";
 
 // // // //
 
-message PaletteMfcgObj {
-  PaletteMfcgColorsObj colors = 1;
-  PaletteMfcgTintsObj tints = 2;
+enum PaletteMfcgTintMethodType {
+  PALETTE_MFCG_TINT_METHOD_UNSPECIFIED = 0;
+  spectrum = 1;
+  brightness = 2;
+  overlay = 3;
 }
+
+// //
 
 message PaletteMfcgColorsObj {
   PaletteRgbObj paper = 1;
@@ -30,9 +34,9 @@ message PaletteMfcgTintsObj {
   uint32 weathering = 3;
 }
 
-enum PaletteMfcgTintMethodType {
-  PALETTE_MFCG_TINT_METHOD_UNSPECIFIED = 0;
-  spectrum = 1;
-  brightness = 2;
-  overlay = 3;
+//
+
+message PaletteMfcgObj {
+  PaletteMfcgColorsObj colors = 1;
+  PaletteMfcgTintsObj tints = 2;
 }

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package data;
 
-import "data/palette_viewer.proto";
+import "data/palette.proto";
 
 // // // //
 
@@ -36,6 +36,8 @@ enum PaletteVillageTreeShapeType {
   palm = 3;
 }
 
+
+// //
 
 message PaletteVillageTerrainObj {
   repeated PaletteRgbObj ground = 1;
@@ -101,6 +103,8 @@ message PaletteVillageMiscObj {
   uint32 strokeNormalX10 = 3;
   uint32 strokeThinX10 = 4;
 }
+
+//
 
 message PaletteVillageObj {
   PaletteVillageTerrainObj terrain = 1;

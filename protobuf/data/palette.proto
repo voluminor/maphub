@@ -2,20 +2,19 @@ syntax = "proto3";
 
 package data;
 
-import "data/palette_viewer.proto";
-import "data/palette_cave.proto";
-import "data/palette_dwellings.proto";
-import "data/palette_mfcg.proto";
-import "data/palette_village.proto";
-
 // // // //
 
-message PaletteObj {
-  oneof payload {
-    PaletteViewerObj viewer = 1;
-    PaletteCaveObj cave = 2;
-    PaletteDwellingsObj dwellings = 3;
-    PaletteMfcgObj mfcg = 4;
-    PaletteVillageObj village = 5;
-  }
+
+message PaletteRgbObj {
+  optional uint32 r = 1;
+  optional uint32 g = 2;
+  optional uint32 b = 3;
+}
+
+message PaletteFontObj {
+  string face = 1;
+  uint32 size = 2;
+  bool bold = 3;
+  bool italic = 4;
+  string embedded = 5;
 }

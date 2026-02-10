@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package data;
 
-import "data/palette_viewer.proto";
+import "data/palette.proto";
 
 // // // //
 
@@ -11,14 +11,12 @@ message PaletteCaveColorsObj {
   PaletteRgbObj floor = 2;
   PaletteRgbObj water = 3;
   PaletteRgbObj ink = 4;
-  reserved 5 to 49;
 }
 
 message PaletteCaveShadowObj {
   optional uint32 shade_alpha_x10 = 1;
   optional uint32 shadow_alpha_x10 = 2;
   optional uint32 shadow_dist_x10 = 3;
-  reserved 4 to 49;
 }
 
 message PaletteCaveStrokesObj {
@@ -26,7 +24,6 @@ message PaletteCaveStrokesObj {
   optional uint32 detail_x10 = 2;
   optional uint32 hatch_x10 = 3;
   optional uint32 grid_x10 = 4;
-  reserved 5 to 49;
 }
 
 message PaletteCaveHatchingObj {
@@ -34,13 +31,13 @@ message PaletteCaveHatchingObj {
   optional uint32 size_x10 = 2;
   optional uint32 distance_x10 = 3;
   optional uint32 stones_x10 = 4;
-  reserved 5 to 49;
 }
+
+//
 
 message PaletteCaveObj {
   PaletteCaveColorsObj colors = 1;
   PaletteCaveShadowObj shadow = 2;
   PaletteCaveStrokesObj strokes = 3;
   PaletteCaveHatchingObj hatching = 4;
-  reserved 5 to 49;
 }

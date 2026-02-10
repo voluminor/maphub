@@ -4,7 +4,7 @@ import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
 import * as FuncProto from "./shared/proto.js";
 
-import * as CavePaletteCodec from "./shared/data/Cave.js";
+import * as DataCave from "./shared/data/Cave.js";
 
 import * as ParamsProto from "./struct/params.js";
 import * as DataProto from "./struct/data.js";
@@ -6040,7 +6040,7 @@ var $lime_init = function (A, r) {
                             a.applyPalette(b)
                         }, "Parchment parchment Moonlight moonlight B&W bw".split(" "));
                         b.getName = $b.swatches("cave", ["colorPage", "colorFloor"]);
-                        b.paletteCodec = CavePaletteCodec;
+                        b.paletteCodec = DataCave;
                         ja.fillForm(b);
                         Fa.showDialog(b, "Style")
                     }

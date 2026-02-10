@@ -3,7 +3,7 @@ import * as OpenflShared from "./shared/openfl.js";
 import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
 
-import * as DataDwellingsPalette from "./shared/data/Dwellings.js";
+import * as DataDwellings from "./shared/data/Dwellings.js";
 
 import * as FuncProto from "./shared/proto.js";
 import * as ParamsProto from "./struct/params.js";
@@ -4919,8 +4919,8 @@ var $lime_init = function (K, v) {
                 onPaletteLoaded: function (a) {
                     try {
                         var fr = Ua.__cast(a.target, Zg);
-                        var pdo = DataDwellingsPalette.decodeDwellingsPaletteFile(fr.name, fr.data);
-                        var legacyJson = DataDwellingsPalette.paletteLegacyJsonFromPaletteDwellingsObj(pdo);
+                        var pdo = DataDwellings.decodeDwellingsPaletteFile(fr.name, fr.data);
+                        var legacyJson = DataDwellings.paletteLegacyJsonFromPaletteDwellingsObj(pdo);
                         this.loadPalette($c.fromJSON(legacyJson));
                     } catch (b) {
                         b = aa.caught(b).unwrap();
@@ -5018,12 +5018,12 @@ var $lime_init = function (K, v) {
                     return a
                 },
                 onSave: function (a, fmt) {
-                    var pdo = DataDwellingsPalette.paletteDwellingsObjFromLegacyJsonText(a.json());
+                    var pdo = DataDwellings.paletteDwellingsObjFromLegacyJsonText(a.json());
                     if (fmt === "proto") {
-                        var bytes = DataDwellingsPalette.paletteProtoBytesFromPaletteDwellingsObj(pdo);
+                        var bytes = DataDwellings.paletteProtoBytesFromPaletteDwellingsObj(pdo);
                         id.saveText(bytes, this.getName(a) + ".palette.dw.pb", "application/octet-stream");
                     } else {
-                        var json = DataDwellingsPalette.paletteLegacyJsonFromPaletteDwellingsObj(pdo);
+                        var json = DataDwellings.paletteLegacyJsonFromPaletteDwellingsObj(pdo);
                         id.saveText(json, this.getName(a) + ".palette.dw.json", "application/json");
                     }
                 },

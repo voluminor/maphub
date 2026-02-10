@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package data;
 
-import "data/palette_viewer.proto";
+import "data/palette.proto";
 
 // // // //
 
@@ -30,6 +30,8 @@ message PaletteDwellingsMiscObj {
   PaletteFontObj font_room = 4;
   bool hatching = 5;
 }
+
+//
 
 message PaletteDwellingsObj {
   PaletteDwellingsColorsObj colors = 1;

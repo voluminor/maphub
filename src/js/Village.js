@@ -4550,11 +4550,12 @@ var $lime_init = function (E, u) {
                 this.add(this.form);
                 this.tabs = new rh;
                 this.form.add(this.tabs);
-                var d = [new pb("Load", r(this, this.onLoad)), new pb("Apply", function () {
-                    a(c.getPalette())
-                }), new pb("Save", function () {
-                    c.onSave(c.getPalette())
-                })];
+                var saveFormats = ["JSON", "PROTO"];
+                var saveBtn = new he("Save", saveFormats, saveFormats);
+                saveBtn.action.add(function (fmt) {
+                    c.onSave(c.getPalette(), fmt);
+                });
+                var d = [new pb("Load", r(this, this.onLoad)), new pb("Apply", function () {a(c.getPalette())}), saveBtn];
                 if (null != b) {
                     for (var f = [], h = []; 0 < b.length;) f.push(b.shift()), h.push(b.shift());
                     b = new he("Preset", f, h);
@@ -4917,21 +4918,33 @@ var $lime_init = function (E, u) {
                     }
                     return a
                 },
-                onSave: function (a) {
+                onSave: function (a, format) {
                     var self = this;
-                    var menu = new Qc;
-                    menu.addItem("JSON", function () {
-                        var pvo = DataVillage.paletteVillageObjFromLegacyJsonText(a.json());
-                        var json = DataVillage.paletteLegacyJsonFromPaletteVillageObj(pvo);
-                        Sd.saveText(json, self.getName(a) + ".palette.vg.json", "application/json");
-                    });
-                    menu.addItem("PROTO", function () {
-                        var pvo = DataVillage.paletteVillageObjFromLegacyJsonText(a.json());
-                        var bytes = DataVillage.paletteProtoBytesFromPaletteVillageObj(pvo);
-                        Sd.saveText(bytes, self.getName(a) + ".palette.vg.pb", "application/octet-stream");
-                    });
-                    w.showMenu(menu);
+
+                    var doSave = function(fmt) {
+                        if (fmt === "JSON") {
+                            var pvo = DataVillage.paletteVillageObjFromLegacyJsonText(a.json());
+                            var json = DataVillage.paletteLegacyJsonFromPaletteVillageObj(pvo);
+                            Sd.saveText(json, self.getName(a) + ".palette.vg.json", "application/json");
+                            return;
+                        }
+                        if (fmt === "PROTO") {
+                            var pvo = DataVillage.paletteVillageObjFromLegacyJsonText(a.json());
+                            var bytes = DataVillage.paletteProtoBytesFromPaletteVillageObj(pvo);
+                            Sd.saveText(bytes, self.getName(a) + ".palette.vg.pb", "application/octet-stream");
+                            return;
+                        }
+                    };
+                    if (format == null) {
+                        var menu = new Qc;
+                        menu.addItem("JSON", function () { doSave("JSON"); });
+                        menu.addItem("PROTO", function () { doSave("PROTO"); });
+                        w.showMenu(menu);
+                        return;
+                    }
+                    doSave(format);
                 },
+
                 __class__: uc
             });
             var sh = function (a) {
