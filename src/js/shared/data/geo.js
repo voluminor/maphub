@@ -1,4 +1,4 @@
-import * as DataProto from "../struct/data.js";
+import * as DataProto from "../../struct/data.js";
 
 export function jsToProtoValue(v) {
     if (v === null || v === undefined) return { nullValue: 0 };

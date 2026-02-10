@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package data;
+
+import "data/palette_viewer.proto";
+
+// // // //
+
+message PaletteObj {
+  oneof payload {
+    PaletteViewerObj viewer = 1;
+    //PaletteCaveObj cave = 2;
+    //PaletteDwellingsObj dwellings = 3;
+    //PaletteMfcgObj mfcg = 4;
+    //PaletteVillageObj village = 5;
+  }
+}
