@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package data;
+
+import "data/palette_viewer.proto";
+
+// // // //
+
+message PaletteFontObj {
+  string face = 1;
+  uint32 size = 2;
+  bool bold = 3;
+  bool italic = 4;
+  string embedded = 5;
+}
+
+message PaletteDwellingsColorsObj {
+  PaletteRgbObj ink = 1;
+  PaletteRgbObj paper = 2;
+  PaletteRgbObj floor = 3;
+  PaletteRgbObj walls = 4;
+  PaletteRgbObj props = 5;
+  PaletteRgbObj windows = 6;
+  PaletteRgbObj stairs = 7;
+  PaletteRgbObj roof = 8;
+  PaletteRgbObj labels = 9;
+}
+
+message PaletteDwellingsStrokesObj {
+  uint32 normal_x100 = 1;
+  uint32 grid_x100 = 2;
+}
+
+message PaletteDwellingsMiscObj {
+  uint32 alpha_grid_x100 = 1;
+  uint32 alpha_ao_x100 = 2;
+  uint32 alpha_lights_x100 = 3;
+  PaletteFontObj font_room = 4;
+  bool hatching = 5;
+}
+
+message PaletteDwellingsObj {
+  PaletteDwellingsColorsObj colors = 1;
+  PaletteDwellingsStrokesObj strokes = 2;
+  PaletteDwellingsMiscObj misc = 3;
+}

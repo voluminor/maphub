@@ -60,3 +60,22 @@ export function fromX10Float(v) {
     if (s.indexOf(".") === -1) s += ".0";
     return s;
 }
+
+// // //
+
+export function toX100Float(v, min, max) {
+    if (v === null || v === undefined) return null;
+    if (v === "null") return null;
+    let n = typeof v === "number" ? v : (typeof v === "string" ? parseFloat(v) : NaN);
+    if (!Number.isFinite(n)) throw unknownPalette("toX100Float - min:"+min+" max:"+max+" val:"+v);
+    if (n < min || n > max) throw unknownPalette("toX100Float - min:"+min+" max:"+max+" val:"+v);
+    return Math.round(n * 100);
+}
+
+export function fromX100Float(v) {
+    if (v === null || v === undefined) return "null";
+    let n = v / 100;
+    let s = String(n);
+    if (s.indexOf(".") === -1) s += ".0";
+    return s;
+}

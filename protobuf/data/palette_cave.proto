@@ -4,6 +4,8 @@ package data;
 
 import "data/palette_viewer.proto";
 
+// // // //
+
 message PaletteCaveColorsObj {
   PaletteRgbObj page = 1;
   PaletteRgbObj floor = 2;
