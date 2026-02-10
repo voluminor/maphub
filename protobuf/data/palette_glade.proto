@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package data;
+
+import "data/palette.proto";
+
+// // // //
+
+message PaletteGladeColorsObj {
+  optional PaletteRgbObj ground = 1;
+  optional PaletteRgbObj ink = 2;
+  optional PaletteRgbObj marks = 3;
+  repeated PaletteRgbObj tree = 4;
+  optional PaletteRgbObj tree_details = 5;
+  optional PaletteRgbObj thicket = 6;
+  optional PaletteRgbObj water_deep = 7;
+  optional PaletteRgbObj water_shallow = 8;
+  optional PaletteRgbObj sand = 9;
+  optional PaletteRgbObj shadow_color = 10;
+  optional PaletteRgbObj road = 11;
+  optional PaletteRgbObj road_outline = 12;
+}
+
+message PaletteGladeTreesObj {
+  optional int32 variance_x100 = 1;
+  optional int32 bands = 2;
+  optional string shape = 3;
+}
+
+message PaletteGladeShadowObj {
+  optional int32 length_x10 = 1;
+  optional int32 angle_deg = 2;
+}
+
+message PaletteGladeStrokesObj {
+  optional int32 normal_x10 = 1;
+  optional int32 thin_x10 = 2;
+  optional int32 grid_x10 = 3;
+}
+
+message PaletteGladeMiscObj {
+  optional int32 grass_length = 1;
+  optional int32 road_width_x100 = 2;
+  optional int32 road_wiggle_x100 = 3;
+}
+
+//
+
+message PaletteGladeObj {
+  optional PaletteGladeColorsObj colors = 1;
+  optional PaletteGladeTreesObj trees = 2;
+  optional PaletteGladeShadowObj shadow = 3;
+  optional PaletteGladeStrokesObj strokes = 4;
+  optional PaletteGladeMiscObj misc = 5;
+}
+

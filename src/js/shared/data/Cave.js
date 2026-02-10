@@ -203,3 +203,23 @@ export function decodePaletteCaveFile(name, data) {
     if (ext === "pb") return decodePaletteCaveFromProtoBytes(data);
     return decodePaletteCaveFromJsonText(bytesToUtf8Text(data));
 }
+
+// //
+
+export const fileExt = "cv";
+
+export function decodePaletteFile(name, data) {
+    return decodePaletteCaveFile(name, data);
+}
+
+export function paletteObjFromLegacyJsonText(text) {
+    return paletteCaveObjFromLegacyJsonText(text);
+}
+
+export function legacyJsonFromPaletteObj(p) {
+    return paletteLegacyJsonFromPaletteCaveObj(p);
+}
+
+export function protoBytesFromPaletteObj(p) {
+    return paletteProtoBytesFromPaletteCaveObj(p);
+}
