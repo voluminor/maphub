@@ -3,6 +3,8 @@ import * as OpenflShared from "./shared/openfl.js";
 import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
 
+import * as DataMfcg from "./shared/data/mfcg.js";
+
 import * as FuncProto from "./shared/proto.js";
 import * as ParamsProto from "./struct/params.js";
 import * as DataProto from "./struct/data.js";
@@ -4507,11 +4509,16 @@ var $lime_init = function (A, t) {
                 this.tabs =
                     new ig;
                 this.form.add(this.tabs);
-                var d = [new fb("Load", l(this, this.onLoad)), new fb("Apply", function () {
-                    a(c.getPalette())
-                }), new fb("Save", function () {
-                    c.onSave(c.getPalette())
-                })];
+                var exportBtn = new fe("Save", ["JSON","PROTO"], ["json","proto"]);
+                exportBtn.action.add(function (fmt) {
+                    c.onSave(c.getPalette(), fmt);
+                });
+
+                var d = [
+                    new fb("Load", l(this, this.onLoad)),
+                    new fb("Apply", function () { a(c.getPalette()); }),
+                    exportBtn
+                ];
                 if (null != b) {
                     for (var f = [], h = []; 0 < b.length;) f.push(b.shift()), h.push(b.shift());
                     b = new fe("Preset", f, h);
@@ -4669,8 +4676,8 @@ var $lime_init = function (A, t) {
                         b.addEventListener("complete", l(a, a.onPaletteLoaded));
                         b.load()
                     });
-                    var c = [new Th("Palette", "*.json")];
-                    b.browse(c)
+                    var c = [new Th("Palette", "*.json;*.pb;")];
+                    b.browse(c);
                 },
                 loadPreset: function (a) {
                     if (ac.exists(a)) this.loadPalette(Xc.fromJSON(ac.getText(a)));
@@ -4678,9 +4685,12 @@ var $lime_init = function (A, t) {
                 },
                 onPaletteLoaded: function (a) {
                     try {
-                        this.loadPalette(Xc.fromJSON(va.__cast(a.target, Gf).data.toString()))
+                        var fr = va.__cast(a.target, Gf);
+                        var pmo = DataMfcg.decodePaletteFile(fr.name, fr.data);
+                        var legacyJson = DataMfcg.paletteLegacyJsonFromPaletteMfcgObj(pmo);
+                        this.loadPalette(Xc.fromJSON(legacyJson));
                     } catch (b) {
-                        q.show("Invalid palette file")
+                        q.show(b && b.message ? b.message : String(b));
                     }
                 },
                 loadPalette: function (a) {
@@ -4772,8 +4782,15 @@ var $lime_init = function (A, t) {
                     }
                     return a
                 },
-                onSave: function (a) {
-                    ge.saveText(a.json(), this.getName(a) + ".palette.mf.json", "application/json")
+                onSave: function (a, fmt) {
+                    var pmo = DataMfcg.paletteMfcgObjFromLegacyJsonText(a.json());
+                    if (fmt === "proto") {
+                        var bytes = DataMfcg.paletteProtoBytesFromPaletteMfcgObj(pmo);
+                        ge.saveText(bytes, this.getName(a) + ".palette.mf.pb", "application/octet-stream");
+                    } else {
+                        var json = DataMfcg.paletteLegacyJsonFromPaletteMfcgObj(pmo);
+                        ge.saveText(json, this.getName(a) + ".palette.mf.json", "application/json");
+                    }
                 },
                 __class__: Hc
             });

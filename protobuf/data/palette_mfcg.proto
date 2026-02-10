@@ -6,3 +6,33 @@ import "data/palette_viewer.proto";
 
 // // // //
 
+message PaletteMfcgObj {
+  PaletteMfcgColorsObj colors = 1;
+  PaletteMfcgTintsObj tints = 2;
+}
+
+message PaletteMfcgColorsObj {
+  PaletteRgbObj paper = 1;
+  PaletteRgbObj light = 2;
+  PaletteRgbObj dark = 3;
+  PaletteRgbObj roof = 4;
+  PaletteRgbObj water = 5;
+  PaletteRgbObj green = 6;
+  PaletteRgbObj road = 7;
+  PaletteRgbObj wall = 8;
+  PaletteRgbObj tree = 9;
+  PaletteRgbObj label = 10;
+}
+
+message PaletteMfcgTintsObj {
+  PaletteMfcgTintMethodType method = 1;
+  uint32 strength = 2;
+  uint32 weathering = 3;
+}
+
+enum PaletteMfcgTintMethodType {
+  PALETTE_MFCG_TINT_METHOD_UNSPECIFIED = 0;
+  spectrum = 1;
+  brightness = 2;
+  overlay = 3;
+}
