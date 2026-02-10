@@ -8,7 +8,7 @@ function hasVal(o, k) {
 
 function parseRgb(v) {
     let rgb = PaletteFunc.hexToRgbObj(v);
-    if (rgb == null) throw new Error("Invalid palette structure.");
+    if (rgb == null) throw new Error("[parseRgb] Invalid palette structure.");
     return rgb;
 }
 
@@ -20,14 +20,14 @@ function parseRgbList(v) {
         return out;
     }
     if (typeof v === "string") return [parseRgb(v)];
-    throw new Error("Invalid palette structure.");
+    throw new Error("[parseRgbList] Invalid palette structure.");
 }
 
 function toChecked(v, min, max) {
     let n = PaletteFunc.toFloat(v, min, max);
     if (n == null) return null;
-    if (typeof min === "number" && n < Math.round(min * 10)) throw new Error("Invalid palette structure.");
-    if (typeof max === "number" && n > Math.round(max * 10)) throw new Error("Invalid palette structure.");
+    if (typeof min === "number" && n < min) throw new Error("Invalid palette structure.");
+    if (typeof max === "number" && n > max) throw new Error("Invalid palette structure.");
     return n;
 }
 

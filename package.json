@@ -29,7 +29,9 @@
     "build:rewrite:hash-url": "node scripts/add-query-hash.mjs",
     "build:list": "run-s build:gen:index-pages build:gen:icons build:gen:languages build:gen:openapi build:rewrite:tags build:rewrite:minify build:rewrite:hash-url",
     "build": "vite build && npm run build:list",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -41,7 +43,8 @@
     "protobufjs-cli": "^2.0.0",
     "rimraf": "^6.1.2",
     "sharp": "^0.34.5",
-    "vite": "^5.1.6"
+    "vite": "^5.1.6",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "file-saver": "^2.0.5",
