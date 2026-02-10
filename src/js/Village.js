@@ -4825,7 +4825,8 @@ var $lime_init = function (E, u) {
                         var legacyJson = DataVillage.paletteLegacyJsonFromPaletteVillageObj(pvo);
                         this.loadPalette(Rb.fromJSON(legacyJson));
                     } catch (b) {
-                        t.show("Invalid palette file")
+                        b = U.caught(b).unwrap();
+                        t.show(D.string(b));
                     }
                 },
                 loadPalette: function (a) {
