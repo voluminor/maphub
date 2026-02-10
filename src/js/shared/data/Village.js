@@ -1,0 +1,415 @@
+import * as DataProto from "../../struct/data.js";
+import { toUint8Array, bytesToUtf8Text } from "./geo.js";
+import * as PaletteFunc from "./palette.js";
+
+function hasVal(o, k) {
+    return Object.prototype.hasOwnProperty.call(o, k) && o[k] != null && o[k] !== "null";
+}
+
+function parseRgb(v) {
+    let rgb = PaletteFunc.hexToRgbObj(v);
+    if (rgb == null) throw new Error("Invalid palette structure.");
+    return rgb;
+}
+
+function parseRgbList(v) {
+    if (v == null || v === "null") return null;
+    if (Array.isArray(v)) {
+        let out = [];
+        for (let i = 0; i < v.length; i++) out.push(parseRgb(v[i]));
+        return out;
+    }
+    if (typeof v === "string") return [parseRgb(v)];
+    throw new Error("Invalid palette structure.");
+}
+
+function toX10Checked(v, min, max) {
+    let n = PaletteFunc.toX10Float(v, min, max);
+    if (n == null) return null;
+    if (typeof min === "number" && n < Math.round(min * 10)) throw new Error("Invalid palette structure.");
+    if (typeof max === "number" && n > Math.round(max * 10)) throw new Error("Invalid palette structure.");
+    return n;
+}
+
+function toIntChecked(v, min, max) {
+    let n = PaletteFunc.legacyInt(v);
+    if (n == null) return null;
+    if (typeof min === "number" && n < min) throw new Error("Invalid palette structure.");
+    if (typeof max === "number" && n > max) throw new Error("Invalid palette structure.");
+    return n;
+}
+
+function toBoolChecked(v) {
+    return PaletteFunc.legacyBool(v);
+}
+
+function legacyReliefToEnum(v) {
+    if (typeof v === "number") return v;
+    if (typeof v !== "string") throw new Error("Invalid palette structure.");
+    let s = v.trim().toLowerCase();
+    if (s === "hachures") return DataProto.data.PaletteVillageReliefType.hachures;
+    if (s === "contours") return DataProto.data.PaletteVillageReliefType.contours;
+    if (s === "grass") return DataProto.data.PaletteVillageReliefType.grass;
+    throw new Error("Invalid palette structure.");
+}
+
+function legacyOutlineToEnum(v) {
+    if (typeof v === "number") return v;
+    if (typeof v !== "string") throw new Error("Invalid palette structure.");
+    let s = v.trim().toLowerCase();
+    if (s === "hard") return DataProto.data.PaletteVillageOutlineType.hard;
+    if (s === "soft") return DataProto.data.PaletteVillageOutlineType.soft;
+    if (s === "none") return DataProto.data.PaletteVillageOutlineType.none;
+    throw new Error("Invalid palette structure.");
+}
+
+function legacyRoofToEnum(v) {
+    if (typeof v === "number") return v;
+    if (typeof v !== "string") throw new Error("Invalid palette structure.");
+    let s = v.trim().toLowerCase();
+    if (s === "gable") return DataProto.data.PaletteVillageRoofType.gable;
+    if (s === "hip") return DataProto.data.PaletteVillageRoofType.hip;
+    if (s === "flat") return DataProto.data.PaletteVillageRoofType.flat;
+    if (s === "ruin") return DataProto.data.PaletteVillageRoofType.ruin;
+    throw new Error("Invalid palette structure.");
+}
+
+function legacyTreeShapeToEnum(v) {
+    if (typeof v === "number") return v;
+    if (typeof v !== "string") throw new Error("Invalid palette structure.");
+    let s = v.trim().toLowerCase();
+    if (s === "cotton") return DataProto.data.PaletteVillageTreeShapeType.cotton;
+    if (s === "conifer") return DataProto.data.PaletteVillageTreeShapeType.conifer;
+    if (s === "palm") return DataProto.data.PaletteVillageTreeShapeType.palm;
+    throw new Error("Invalid palette structure.");
+}
+
+function parseFont(v) {
+    if (v == null || typeof v !== "object" || Array.isArray(v)) throw new Error("Invalid palette structure.");
+    let size = toIntChecked(v.size, 1, 1000);
+    let bold = typeof v.bold === "boolean" ? v.bold : toBoolChecked(v.bold);
+    let italic = typeof v.italic === "boolean" ? v.italic : toBoolChecked(v.italic);
+    let embedded = typeof v.embedded === "string" ? v.embedded : null;
+    if (size == null || bold == null || italic == null || embedded == null || embedded === "null") throw new Error("Invalid palette structure.");
+
+    let out = { size: size, bold: bold, italic: italic, embedded: embedded };
+    if (v.face != null && v.face !== "null") {
+        if (typeof v.face !== "string") throw new Error("Invalid palette structure.");
+        if (v.face.trim() !== "") out.face = v.face;
+    }
+    return out;
+}
+
+function fontToLegacy(f) {
+    if (f == null) throw new Error("Invalid palette structure.");
+    return {
+        face: f.face != null && String(f.face).trim() !== "" ? f.face : null,
+        size: f.size,
+        bold: f.bold === true,
+        italic: f.italic === true,
+        embedded: f.embedded
+    };
+}
+
+function rgbListToHex(list) {
+    if (!Array.isArray(list) || list.length === 0) throw new Error("Invalid palette structure.");
+    let out = [];
+    for (let i = 0; i < list.length; i++) out.push(PaletteFunc.rgbObjToHex(list[i]));
+    return out;
+}
+
+function enumToLegacyRelief(e) {
+    if (e === DataProto.data.PaletteVillageReliefType.hachures) return "Hachures";
+    if (e === DataProto.data.PaletteVillageReliefType.contours) return "Contours";
+    if (e === DataProto.data.PaletteVillageReliefType.grass) return "Grass";
+    throw new Error("Invalid palette structure.");
+}
+
+function enumToLegacyOutline(e) {
+    if (e === DataProto.data.PaletteVillageOutlineType.hard) return "Hard";
+    if (e === DataProto.data.PaletteVillageOutlineType.soft) return "Soft";
+    if (e === DataProto.data.PaletteVillageOutlineType.none) return "None";
+    throw new Error("Invalid palette structure.");
+}
+
+function enumToLegacyRoof(e) {
+    if (e === DataProto.data.PaletteVillageRoofType.gable) return "Gable";
+    if (e === DataProto.data.PaletteVillageRoofType.hip) return "Hip";
+    if (e === DataProto.data.PaletteVillageRoofType.flat) return "Flat";
+    if (e === DataProto.data.PaletteVillageRoofType.ruin) return "Ruin";
+    throw new Error("Invalid palette structure.");
+}
+
+function enumToLegacyTreeShape(e) {
+    if (e === DataProto.data.PaletteVillageTreeShapeType.cotton) return "Cotton";
+    if (e === DataProto.data.PaletteVillageTreeShapeType.conifer) return "Conifer";
+    if (e === DataProto.data.PaletteVillageTreeShapeType.palm) return "Palm";
+    throw new Error("Invalid palette structure.");
+}
+
+export function paletteVillageObjFromLegacyJsonText(text) {
+    let obj = null;
+    try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
+
+    if (obj != null && typeof obj === "object" && Array.isArray(obj.floors) && obj.features == null) throw new Error("These are Dwellings, not Palette.");
+    if (obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features)) throw new Error("These are City/Village, not Palette.");
+
+    if (obj == null || typeof obj !== "object" || Array.isArray(obj)) throw new Error("Invalid palette structure.");
+
+    let missing = [];
+
+    let terrain = {};
+    if (!hasVal(obj, "ground")) missing.push("ground"); else {
+        let g = parseRgbList(obj.ground);
+        if (g == null || g.length === 0) missing.push("ground"); else terrain.ground = g;
+    }
+    if (!hasVal(obj, "relief")) missing.push("relief"); else terrain.relief = legacyReliefToEnum(obj.relief);
+    if (!hasVal(obj, "sand")) missing.push("sand"); else terrain.sand = parseRgb(obj.sand);
+    if (!hasVal(obj, "plank")) missing.push("plank"); else terrain.plank = parseRgb(obj.plank);
+
+    let houses = {};
+    if (!hasVal(obj, "roofLight")) missing.push("roofLight"); else {
+        let r = parseRgbList(obj.roofLight);
+        if (r == null || r.length === 0) missing.push("roofLight"); else houses.roofLight = r;
+    }
+    if (!hasVal(obj, "roofStroke")) missing.push("roofStroke"); else houses.roofStroke = parseRgb(obj.roofStroke);
+    if (!hasVal(obj, "roofVariance")) missing.push("roofVariance"); else houses.roofVarianceX10 = toX10Checked(obj.roofVariance, 0, 1);
+    if (!hasVal(obj, "roofSlope")) missing.push("roofSlope"); else houses.roofSlopeX10 = toX10Checked(obj.roofSlope, 0, 1);
+    if (!hasVal(obj, "roofType")) missing.push("roofType"); else houses.roofType = legacyRoofToEnum(obj.roofType);
+
+    let roads = {};
+    if (!hasVal(obj, "road")) missing.push("road"); else roads.road = parseRgb(obj.road);
+    if (!hasVal(obj, "largeRoad")) missing.push("largeRoad"); else roads.largeRoadX10 = toX10Checked(obj.largeRoad, 0, 8);
+    if (!hasVal(obj, "smallRoad")) missing.push("smallRoad"); else roads.smallRoadX10 = toX10Checked(obj.smallRoad, 0, 8);
+    if (!hasVal(obj, "outlineRoads")) missing.push("outlineRoads"); else roads.outlineRoads = legacyOutlineToEnum(obj.outlineRoads);
+    if (!hasVal(obj, "mergeRoads")) missing.push("mergeRoads"); else roads.mergeRoads = toBoolChecked(obj.mergeRoads);
+
+    let fields = {};
+    if (!hasVal(obj, "fieldLight")) missing.push("fieldLight"); else {
+        let fl = parseRgbList(obj.fieldLight);
+        if (fl == null || fl.length === 0) missing.push("fieldLight"); else fields.fieldLight = fl;
+    }
+    if (!hasVal(obj, "fieldFurrow")) missing.push("fieldFurrow"); else fields.fieldFurrow = parseRgb(obj.fieldFurrow);
+    if (!hasVal(obj, "fieldVariance")) missing.push("fieldVariance"); else fields.fieldVarianceX10 = toX10Checked(obj.fieldVariance, 0, 1);
+    if (!hasVal(obj, "outlineFields")) missing.push("outlineFields"); else fields.outlineFields = legacyOutlineToEnum(obj.outlineFields);
+
+    let water = {};
+    if (!hasVal(obj, "waterShallow")) missing.push("waterShallow"); else water.waterShallow = parseRgb(obj.waterShallow);
+    if (!hasVal(obj, "waterDeep")) missing.push("waterDeep"); else water.waterDeep = parseRgb(obj.waterDeep);
+    if (!hasVal(obj, "waterTide")) missing.push("waterTide"); else water.waterTide = parseRgb(obj.waterTide);
+    if (!hasVal(obj, "shallowBands")) missing.push("shallowBands"); else water.shallowBands = toIntChecked(obj.shallowBands, 0, 10);
+
+    let trees = {};
+    if (!hasVal(obj, "tree")) missing.push("tree"); else {
+        let tr = parseRgbList(obj.tree);
+        if (tr == null || tr.length === 0) missing.push("tree"); else trees.tree = tr;
+    }
+    if (!hasVal(obj, "thicket")) missing.push("thicket"); else trees.thicket = parseRgb(obj.thicket);
+    if (!hasVal(obj, "treeDetails")) missing.push("treeDetails"); else trees.treeDetails = parseRgb(obj.treeDetails);
+    if (!hasVal(obj, "treeVariance")) missing.push("treeVariance"); else trees.treeVarianceX10 = toX10Checked(obj.treeVariance, 0, 1);
+    if (!hasVal(obj, "treeShape")) missing.push("treeShape"); else trees.treeShape = legacyTreeShapeToEnum(obj.treeShape);
+
+    let lighting = {};
+    if (!hasVal(obj, "shadowColor")) missing.push("shadowColor"); else lighting.shadowColor = parseRgb(obj.shadowColor);
+    if (!hasVal(obj, "shadowLength")) missing.push("shadowLength"); else lighting.shadowLengthX10 = toX10Checked(obj.shadowLength, 0, 4);
+    if (!hasVal(obj, "shadowAngle")) missing.push("shadowAngle"); else lighting.shadowAngleDeg = toIntChecked(obj.shadowAngle, 0, 360);
+    if (!hasVal(obj, "lights")) missing.push("lights"); else lighting.lights = parseRgb(obj.lights);
+
+    let textObj = {};
+    if (!hasVal(obj, "fontHeader")) missing.push("fontHeader"); else textObj.fontHeader = parseFont(obj.fontHeader);
+    if (!hasVal(obj, "fontPopulation")) missing.push("fontPopulation"); else textObj.fontPopulation = parseFont(obj.fontPopulation);
+    if (!hasVal(obj, "fontNumber")) missing.push("fontNumber"); else textObj.fontNumber = parseFont(obj.fontNumber);
+
+    let misc = {};
+    if (!hasVal(obj, "ink")) missing.push("ink"); else misc.ink = parseRgb(obj.ink);
+    if (!hasVal(obj, "paper")) missing.push("paper"); else misc.paper = parseRgb(obj.paper);
+    if (!hasVal(obj, "strokeNormal")) missing.push("strokeNormal"); else misc.strokeNormalX10 = toX10Checked(obj.strokeNormal, 0.1, 4);
+    if (!hasVal(obj, "strokeThin")) missing.push("strokeThin"); else misc.strokeThinX10 = toX10Checked(obj.strokeThin, 0.1, 4);
+
+    if (missing.length) throw new Error("Palette has valid fields, but not enough data to apply: " + missing.join(", "));
+
+    let protoObj = { terrain: terrain, houses: houses, roads: roads, fields: fields, water: water, trees: trees, lighting: lighting, text: textObj, misc: misc };
+    let err = DataProto.data.PaletteVillageObj.verify(protoObj);
+    if (err) throw new Error("Invalid palette structure: " + err);
+    return DataProto.data.PaletteVillageObj.fromObject(protoObj);
+}
+
+export function paletteLegacyJsonFromPaletteVillageObj(p) {
+    let t = p?.terrain, h = p?.houses, r = p?.roads, f = p?.fields, w = p?.water, tr = p?.trees, l = p?.lighting, tx = p?.text, m = p?.misc;
+    if (t == null || h == null || r == null || f == null || w == null || tr == null || l == null || tx == null || m == null) throw new Error("Invalid palette structure.");
+
+    let out = {};
+
+    out.ground = rgbListToHex(t.ground);
+    out.relief = enumToLegacyRelief(t.relief);
+    out.sand = PaletteFunc.rgbObjToHex(t.sand);
+    out.plank = PaletteFunc.rgbObjToHex(t.plank);
+
+    out.roofLight = rgbListToHex(h.roofLight);
+    out.roofStroke = PaletteFunc.rgbObjToHex(h.roofStroke);
+    out.roofVariance = PaletteFunc.fromX10Float(h.roofVarianceX10);
+    out.roofSlope = PaletteFunc.fromX10Float(h.roofSlopeX10);
+    out.roofType = enumToLegacyRoof(h.roofType);
+
+    out.road = PaletteFunc.rgbObjToHex(r.road);
+    out.largeRoad = PaletteFunc.fromX10Float(r.largeRoadX10);
+    out.smallRoad = PaletteFunc.fromX10Float(r.smallRoadX10);
+    out.outlineRoads = enumToLegacyOutline(r.outlineRoads);
+    out.mergeRoads = r.mergeRoads === true ? "true" : "false";
+
+    out.fieldLight = rgbListToHex(f.fieldLight);
+    out.fieldFurrow = PaletteFunc.rgbObjToHex(f.fieldFurrow);
+    out.fieldVariance = PaletteFunc.fromX10Float(f.fieldVarianceX10);
+    out.outlineFields = enumToLegacyOutline(f.outlineFields);
+
+    out.waterShallow = PaletteFunc.rgbObjToHex(w.waterShallow);
+    out.waterDeep = PaletteFunc.rgbObjToHex(w.waterDeep);
+    out.waterTide = PaletteFunc.rgbObjToHex(w.waterTide);
+    out.shallowBands = String(w.shallowBands);
+
+    out.tree = rgbListToHex(tr.tree);
+    out.thicket = PaletteFunc.rgbObjToHex(tr.thicket);
+    out.treeDetails = PaletteFunc.rgbObjToHex(tr.treeDetails);
+    out.treeVariance = PaletteFunc.fromX10Float(tr.treeVarianceX10);
+    out.treeShape = enumToLegacyTreeShape(tr.treeShape);
+
+    out.shadowColor = PaletteFunc.rgbObjToHex(l.shadowColor);
+    out.shadowLength = PaletteFunc.fromX10Float(l.shadowLengthX10);
+    out.shadowAngle = String(l.shadowAngleDeg);
+    out.lights = PaletteFunc.rgbObjToHex(l.lights);
+
+    out.fontHeader = fontToLegacy(tx.fontHeader);
+    out.fontPopulation = fontToLegacy(tx.fontPopulation);
+    out.fontNumber = fontToLegacy(tx.fontNumber);
+
+    out.ink = PaletteFunc.rgbObjToHex(m.ink);
+    out.paper = PaletteFunc.rgbObjToHex(m.paper);
+    out.strokeNormal = PaletteFunc.fromX10Float(m.strokeNormalX10);
+    out.strokeThin = PaletteFunc.fromX10Float(m.strokeThinX10);
+
+    return JSON.stringify(out, null, "  ");
+}
+
+export function paletteProtoBytesFromPaletteVillageObj(pvo) {
+    return DataProto.data.PaletteVillageObj.encode(pvo).finish();
+}
+
+function looksLikePaletteVillageObj(m) {
+    function okRgb(x) {
+        return x != null && x.r != null && x.g != null && x.b != null && x.r >= 0 && x.r <= 255 && x.g >= 0 && x.g <= 255 && x.b >= 0 && x.b <= 255;
+    }
+    function okList(a) {
+        if (!Array.isArray(a) || a.length === 0) return false;
+        for (let i = 0; i < a.length; i++) if (!okRgb(a[i])) return false;
+        return true;
+    }
+    function okFont(f) {
+        return f != null && f.size != null && f.size > 0 && f.embedded != null && f.embedded !== "";
+    }
+
+    if (m == null || m.terrain == null || m.houses == null || m.roads == null || m.fields == null || m.water == null || m.trees == null || m.lighting == null || m.text == null || m.misc == null) return false;
+
+    if (!okList(m.terrain.ground)) return false;
+    if (!okRgb(m.terrain.sand) || !okRgb(m.terrain.plank)) return false;
+    if (m.terrain.relief == null || m.terrain.relief === DataProto.data.PaletteVillageReliefType.PALETTE_VILLAGE_RELIEF_UNSPECIFIED) return false;
+
+    if (!okList(m.houses.roofLight) || !okRgb(m.houses.roofStroke)) return false;
+    if (m.houses.roofType == null || m.houses.roofType === DataProto.data.PaletteVillageRoofType.PALETTE_VILLAGE_ROOF_UNSPECIFIED) return false;
+
+    if (!okRgb(m.roads.road)) return false;
+    if (m.roads.outlineRoads == null || m.roads.outlineRoads === DataProto.data.PaletteVillageOutlineType.PALETTE_VILLAGE_OUTLINE_UNSPECIFIED) return false;
+
+    if (!okList(m.fields.fieldLight) || !okRgb(m.fields.fieldFurrow)) return false;
+    if (m.fields.outlineFields == null || m.fields.outlineFields === DataProto.data.PaletteVillageOutlineType.PALETTE_VILLAGE_OUTLINE_UNSPECIFIED) return false;
+
+    if (!okRgb(m.water.waterShallow) || !okRgb(m.water.waterDeep) || !okRgb(m.water.waterTide)) return false;
+
+    if (!okList(m.trees.tree) || !okRgb(m.trees.thicket) || !okRgb(m.trees.treeDetails)) return false;
+    if (m.trees.treeShape == null || m.trees.treeShape === DataProto.data.PaletteVillageTreeShapeType.PALETTE_VILLAGE_TREE_SHAPE_UNSPECIFIED) return false;
+
+    if (!okRgb(m.lighting.shadowColor) || !okRgb(m.lighting.lights)) return false;
+    if (m.lighting.shadowAngleDeg == null || m.lighting.shadowAngleDeg > 360) return false;
+
+    if (!okFont(m.text.fontHeader) || !okFont(m.text.fontPopulation) || !okFont(m.text.fontNumber)) return false;
+
+    if (!okRgb(m.misc.ink) || !okRgb(m.misc.paper)) return false;
+
+    return true;
+}
+
+export function decodePaletteFromProtoBytes(bytes) {
+    let b = toUint8Array(bytes);
+    if (b == null) throw new Error("illegal buffer");
+
+    let lastErr = null;
+
+    function stripLengthDelimited(buf) {
+        let pos = 0, len = 0, shift = 0;
+        while (pos < buf.length && shift < 35) {
+            let c = buf[pos++];
+            len |= (c & 127) << shift;
+            if ((c & 128) === 0) break;
+            shift += 7;
+        }
+        if (pos <= 0 || pos >= buf.length) return null;
+        if (len <= 0 || pos + len > buf.length) return null;
+        return buf.subarray(pos, pos + len);
+    }
+
+    function tryDecode(MessageType, buf) {
+        try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
+        let inner = stripLengthDelimited(buf);
+        if (inner != null) {
+            try { return { msg: MessageType.decode(inner), err: null }; } catch (e2) { lastErr = e2; }
+        }
+        return { msg: null, err: lastErr };
+    }
+
+    let pal = tryDecode(DataProto.data.PaletteVillageObj, b);
+    if (pal.msg != null) {
+        if (looksLikePaletteVillageObj(pal.msg)) return pal.msg;
+
+        let city = tryDecode(DataProto.data.GeoObj, b);
+        if (city.msg != null) throw new Error("These are City/Village, not Palette.");
+
+        let dwell = tryDecode(DataProto.data.DwellingsObj, b);
+        if (dwell.msg != null) throw new Error("These are Dwellings, not Palette.");
+
+        let viewer = tryDecode(DataProto.data.PaletteViewerObj, b);
+        if (viewer.msg != null) throw new Error("These are Viewer Palette, not Village Palette.");
+
+        throw new Error("Invalid palette structure: " + lastErr);
+    }
+
+    let city2 = tryDecode(DataProto.data.GeoObj, b);
+    if (city2.msg != null) throw new Error("These are City/Village, not Palette.");
+
+    let dwell2 = tryDecode(DataProto.data.DwellingsObj, b);
+    if (dwell2.msg != null) throw new Error("These are Dwellings, not Palette.");
+
+    let errText = pal.err && pal.err.message ? pal.err.message : "unknown protobuf decode error";
+    throw new Error("An error occurred while parsing: " + errText);
+}
+
+export function decodePaletteFromJsonText(text) {
+    try {
+        return paletteVillageObjFromLegacyJsonText(text);
+    } catch (e) {
+        let msg = e && e.message ? e.message : String(e);
+        if (msg.indexOf("Invalid palette structure") === 0) throw e;
+        if (msg.indexOf("These are ") === 0) throw e;
+        if (msg.indexOf("Palette has valid fields") === 0) throw e;
+        throw new Error("An error occurred while parsing: " + msg);
+    }
+}
+
+export function decodePaletteFile(name, data) {
+    let ext = "";
+    if (name != null) {
+        let parts = String(name).split(".");
+        if (parts.length > 1) ext = String(parts.pop()).toLowerCase();
+    }
+    if (ext === "pb") return decodePaletteFromProtoBytes(data);
+    let text = bytesToUtf8Text(data);
+    return decodePaletteFromJsonText(text);
+}

@@ -3,8 +3,9 @@ import * as OpenflShared from "./shared/openfl.js";
 import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
 
+import * as DataVillage from "./shared/data/Village.js";
+
 import * as FuncProto from "./shared/proto.js";
-import * as ParamsProto from "./struct/params.js";
 import * as DataProto from "./struct/data.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VILLAGE}}`));
@@ -4810,7 +4811,7 @@ var $lime_init = function (E, u) {
                             r(a, a.onPaletteLoaded));
                         b.load()
                     });
-                    var c = [new gj("Palette", "*.json")];
+                    var c = [new gj("Palette", "*.json;*.pb;")];
                     b.browse(c)
                 },
                 loadPreset: function (a) {
@@ -4819,7 +4820,10 @@ var $lime_init = function (E, u) {
                 },
                 onPaletteLoaded: function (a) {
                     try {
-                        this.loadPalette(Rb.fromJSON(Ka.__cast(a.target, Bg).data.toString()))
+                        var fr = Ka.__cast(a.target, Bg);
+                        var pvo = DataVillage.decodePaletteFile(fr.name, fr.data);
+                        var legacyJson = DataVillage.paletteLegacyJsonFromPaletteVillageObj(pvo);
+                        this.loadPalette(Rb.fromJSON(legacyJson));
                     } catch (b) {
                         t.show("Invalid palette file")
                     }
@@ -4913,7 +4917,19 @@ var $lime_init = function (E, u) {
                     return a
                 },
                 onSave: function (a) {
-                    Sd.saveText(a.json(), this.getName(a) + ".palette.vg.json", "application/json")
+                    var self = this;
+                    var menu = new Qc;
+                    menu.addItem("JSON", function () {
+                        var pvo = DataVillage.paletteVillageObjFromLegacyJsonText(a.json());
+                        var json = DataVillage.paletteLegacyJsonFromPaletteVillageObj(pvo);
+                        Sd.saveText(json, self.getName(a) + ".palette.vg.json", "application/json");
+                    });
+                    menu.addItem("PROTO", function () {
+                        var pvo = DataVillage.paletteVillageObjFromLegacyJsonText(a.json());
+                        var bytes = DataVillage.paletteProtoBytesFromPaletteVillageObj(pvo);
+                        Sd.saveText(bytes, self.getName(a) + ".palette.vg.pb", "application/octet-stream");
+                    });
+                    w.showMenu(menu);
                 },
                 __class__: uc
             });
