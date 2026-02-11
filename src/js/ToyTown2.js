@@ -7,7 +7,6 @@ import * as FuncProto from "./shared/proto.js";
 import * as DataGeo from "./shared/data/data.js";
 import * as DataViewer from "./shared/data/Viewer.js";
 
-import * as ParamsProto from "./struct/params.js";
 import * as DataProto from "./struct/data.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VIEWER}}`));

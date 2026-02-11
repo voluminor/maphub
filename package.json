@@ -1,7 +1,7 @@
 {
   "name": "fantasy-maphub",
   "name_full": "Fantasy MapHub Generators",
-  "version": "1.1.2-add-data-pallete-proto-2.1",
+  "version": "1.1.2-add-data-pallete-proto-2.2",
   "description": "An offline-first hub that bundles several Watabou map generators into one consistent web app: same UI patterns, local assets, and modern import/export. It adds OpenAPI docs, proto-first serialization (including pure protobuf files), and a PWA build so everything works without an internet connection.",
   "license": "MPL-2.0",
   "author": "mail@sunsung.fun",
@@ -47,6 +47,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "eslint-plugin-unused-imports": "^4.4.1",
     "file-saver": "^2.0.5",
     "howler": "^2.2.4",
     "pako": "^2.1.0",

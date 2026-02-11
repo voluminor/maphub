@@ -2,11 +2,10 @@ import * as LimeShared from "./shared/lime.js";
 import * as OpenflShared from "./shared/openfl.js";
 import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
+import * as FuncProto from "./shared/proto.js";
 
 import * as DataMfcg from "./shared/data/mfcg.js";
 
-import * as FuncProto from "./shared/proto.js";
-import * as ParamsProto from "./struct/params.js";
 import * as DataProto from "./struct/data.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_MFCG}}`));
