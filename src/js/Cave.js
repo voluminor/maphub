@@ -11346,22 +11346,33 @@ var $lime_init = function (A, r) {
                 return Sa.baseURL + Sa.getParams()
             };
             Sa.update = function () {
-                window.history.replaceState(Sa.data, "", Sa.getParams())
+                if (Sa.__disabled) return;
+
+                Sa.init();
+                Sa.__pendingParams = Sa.getParams();
+                if (Sa.__timer != null) return;
+
+                var now = (window.performance && window.performance.now) ? window.performance.now() : Date.now();
+                var last = (Sa.__lastCall != null) ? Sa.__lastCall : 0;
+                var interval = (Sa.__minInterval != null) ? Sa.__minInterval : 250;
+                var wait = Math.max(0, last + interval - now);
+
+                Sa.__timer = window.setTimeout(function () {
+                    Sa.__timer = null;
+                    Sa.__lastCall = (window.performance && window.performance.now) ? window.performance.now() : Date.now();
+
+                    var params = Sa.__pendingParams;
+                    if (params === Sa.__lastParams) return;
+                    Sa.__lastParams = params;
+
+                    try {
+                        window.history.replaceState(Sa.data, "", params);
+                    } catch (e) {
+                        Sa.__disabled = true;
+                    }
+                }, wait);
             };
-            Sa.fromString = function (a) {
-                Sa.data = {};
-                a = S.substr(a, a.indexOf("?") + 1, null).split("&");
-                for (var b = 0; b < a.length;) {
-                    var c = a[b];
-                    ++b;
-                    var d = c.indexOf("="),
-                        f = S.substr(c, 0, d);
-                    c = S.substr(c, d + 1, null);
-                    c = decodeURIComponent(c.split("+").join(" "));
-                    Sa.data[f] = c
-                }
-                Sa.update()
-            };
+
             var rf = function (a) {
                 this.ruleSet = a;
                 this.clearState()
