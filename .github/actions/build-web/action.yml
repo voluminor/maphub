@@ -38,6 +38,12 @@ runs:
           build-cache-${{ runner.os }}-node-${{ inputs.node-version }}-
           build-cache-${{ runner.os }}-
 
+    - name: "🧪 Test"
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        npm test
+
     - name: "🏗️ Build"
       shell: bash
       run: |
