@@ -1,25 +1,29 @@
 import * as DataProto from "../../struct/data.js";
 
-const TYPE_LABELS = {
-    GeoObj: { label: "City/Village", kind: "data" },
-    DwellingsObj: { label: "Dwellings", kind: "data" },
-    PaletteMfcgObj: { label: "MFCG", kind: "styles" },
-    PaletteVillageObj: { label: "Village", kind: "styles" },
-    PaletteGladeObj: { label: "Glade", kind: "styles" },
-    PaletteViewerObj: { label: "City", kind: "styles" },
-    PaletteDwellingsObj: { label: "Dwellings", kind: "styles" },
-    PaletteCaveObj: { label: "Cave", kind: "styles" }
+const DT = DataProto.data.DataType;
+
+const DATA_TYPE_INFO = {
+    [DT.geo]:                { MessageType: DataProto.data.GeoObj,              label: "City/Village", kind: "data" },
+    [DT.dwellings]:          { MessageType: DataProto.data.DwellingsObj,        label: "Dwellings",    kind: "data" },
+    [DT.palette_mfcg]:       { MessageType: DataProto.data.PaletteMfcgObj,      label: "MFCG",         kind: "styles" },
+    [DT.palette_village]:    { MessageType: DataProto.data.PaletteVillageObj,   label: "Village",      kind: "styles" },
+    [DT.palette_glade]:      { MessageType: DataProto.data.PaletteGladeObj,     label: "Glade",        kind: "styles" },
+    [DT.palette_viewer]:     { MessageType: DataProto.data.PaletteViewerObj,    label: "City",         kind: "styles" },
+    [DT.palette_dwellings]:  { MessageType: DataProto.data.PaletteDwellingsObj, label: "Dwellings",    kind: "styles" },
+    [DT.palette_cave]:       { MessageType: DataProto.data.PaletteCaveObj,      label: "Cave",         kind: "styles" },
 };
 
-export function describeRootType(typeName) {
-    let d = TYPE_LABELS[typeName];
+const ALL_DATA_TYPES = Object.keys(DATA_TYPE_INFO).map(Number);
+
+export function describeRootType(dataType) {
+    let d = DATA_TYPE_INFO[dataType];
     if (d) return d;
-    return { label: String(typeName), kind: "data" };
+    return { label: String(dataType), kind: "data" };
 }
 
-export function createTypeMismatchError(expectedTypeName, actualTypeName) {
-    let e = describeRootType(expectedTypeName);
-    let a = describeRootType(actualTypeName);
+export function createTypeMismatchError(expectedDataType, actualDataType) {
+    let e = describeRootType(expectedDataType);
+    let a = describeRootType(actualDataType);
     let expectedText = e.kind === "styles" ? (e.label + " styles") : (e.label + " data");
     let actualText = a.kind === "styles" ? (a.label + " styles") : (a.label + " data");
     let verb = e.kind === "styles" ? "were" : "was";
@@ -36,29 +40,29 @@ function hasAnyKey(obj, keys) {
     return false;
 }
 
-export function detectLegacyRootTypeName(obj) {
-    if (obj != null && typeof obj === "object" && Array.isArray(obj.floors) && obj.features == null) return "DwellingsObj";
-    if (obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features)) return "GeoObj";
+export function detectLegacyRootType(obj) {
+    if (obj != null && typeof obj === "object" && Array.isArray(obj.floors) && obj.features == null) return DT.dwellings;
+    if (obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features)) return DT.geo;
     if (!isPlainObject(obj)) return null;
 
-    if (isPlainObject(obj.colors) && isPlainObject(obj.misc) && isPlainObject(obj.strokes)) return "PaletteDwellingsObj";
-    if (isPlainObject(obj.colors) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.hatching)) return "PaletteCaveObj";
+    if (isPlainObject(obj.colors) && isPlainObject(obj.misc) && isPlainObject(obj.strokes)) return DT.palette_dwellings;
+    if (isPlainObject(obj.colors) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.hatching)) return DT.palette_cave;
 
-    if (hasAnyKey(obj, ["walls1", "walls2", "roofs1", "roofs2", "sky1", "roofedTowers", "tree_shape"])) return "PaletteViewerObj";
-    if (hasAnyKey(obj, ["roofLight", "waterShallow", "waterDeep", "fontHeader", "outlineFields"])) return "PaletteVillageObj";
-    if (hasAnyKey(obj, ["thicket", "treeBands", "roadOutline", "grassLength"])) return "PaletteGladeObj";
-    if (hasAnyKey(obj, ["colorLight", "colorDark", "tintMethod", "weathering"])) return "PaletteMfcgObj";
+    if (hasAnyKey(obj, ["walls1", "walls2", "roofs1", "roofs2", "sky1", "roofedTowers", "tree_shape"])) return DT.palette_viewer;
+    if (hasAnyKey(obj, ["roofLight", "waterShallow", "waterDeep", "fontHeader", "outlineFields"])) return DT.palette_village;
+    if (hasAnyKey(obj, ["thicket", "treeBands", "roadOutline", "grassLength"])) return DT.palette_glade;
+    if (hasAnyKey(obj, ["colorLight", "colorDark", "tintMethod", "weathering"])) return DT.palette_mfcg;
 
-    if (hasAnyKey(obj, ["colorWalls", "colorProps", "colorWindows", "colorStairs", "colorRoof", "colorLabels", "strNormal10", "strGrid10", "alphaGrid", "alphaAO", "alphaLights", "fontRoom", "hatching"])) return "PaletteDwellingsObj";
+    if (hasAnyKey(obj, ["colorWalls", "colorProps", "colorWindows", "colorStairs", "colorRoof", "colorLabels", "strNormal10", "strGrid10", "alphaGrid", "alphaAO", "alphaLights", "fontRoom", "hatching"])) return DT.palette_dwellings;
 
-    if (hasAnyKey(obj, ["colorPage", "colorWater", "shadeAlpha", "shadowAlpha", "shadowDist", "strokeWall", "strokeDetail", "strokeHatch", "strokeGrid", "hatchingStrokes", "hatchingSize", "hatchingDistance", "hatchingStones"])) return "PaletteCaveObj";
+    if (hasAnyKey(obj, ["colorPage", "colorWater", "shadeAlpha", "shadowAlpha", "shadowDist", "strokeWall", "strokeDetail", "strokeHatch", "strokeGrid", "hatchingStrokes", "hatchingSize", "hatchingDistance", "hatchingStones"])) return DT.palette_cave;
 
     return null;
 }
 
-export function assertExpectedLegacyRootType(expectedTypeName, obj) {
-    let actual = detectLegacyRootTypeName(obj);
-    if (actual != null && actual !== expectedTypeName) throw createTypeMismatchError(expectedTypeName, actual);
+export function assertExpectedLegacyRootType(expectedDataType, obj) {
+    let actual = detectLegacyRootType(obj);
+    if (actual != null && actual !== expectedDataType) throw createTypeMismatchError(expectedDataType, actual);
 }
 
 export function jsToProtoValue(v) {
@@ -202,10 +206,6 @@ export function bytesToUtf8Text(data) {
     return data != null && typeof data.toString === "function" ? data.toString() : "";
 }
 
-const ROOT_DATA_TYPES = [
-    "GeoObj", "DwellingsObj", "PaletteMfcgObj", "PaletteVillageObj",
-    "PaletteGladeObj", "PaletteViewerObj", "PaletteDwellingsObj", "PaletteCaveObj"
-];
 
 function stripLengthDelimited(buf) {
     let pos = 0, len = 0, shift = 0;
@@ -229,7 +229,7 @@ function tryDecodeProto(MessageType, buf) {
     return { msg: null, err: null };
 }
 
-export function decodeDataFromFile(expectedTypeName, legacyJsonTextParser, data) {
+export function decodeDataFromFile(expectedDataType, legacyJsonTextParser, data) {
     let text = bytesToUtf8Text(data);
     let isJson = false;
     try {
@@ -252,16 +252,15 @@ export function decodeDataFromFile(expectedTypeName, legacyJsonTextParser, data)
     let b = toUint8Array(data);
     if (b == null) throw new Error("Invalid data buffer.");
 
-    let expectedType = DataProto.data[expectedTypeName];
-    let result = tryDecodeProto(expectedType, b);
+    let expectedInfo = DATA_TYPE_INFO[expectedDataType];
+    let result = tryDecodeProto(expectedInfo.MessageType, b);
     if (result.msg != null) return result.msg;
 
-    for (let i = 0; i < ROOT_DATA_TYPES.length; i++) {
-        if (ROOT_DATA_TYPES[i] === expectedTypeName) continue;
-        let otherType = DataProto.data[ROOT_DATA_TYPES[i]];
-        if (otherType == null) continue;
-        let otherResult = tryDecodeProto(otherType, b);
-        if (otherResult.msg != null) throw createTypeMismatchError(expectedTypeName, ROOT_DATA_TYPES[i]);
+    for (let i = 0; i < ALL_DATA_TYPES.length; i++) {
+        if (ALL_DATA_TYPES[i] === expectedDataType) continue;
+        let otherInfo = DATA_TYPE_INFO[ALL_DATA_TYPES[i]];
+        let otherResult = tryDecodeProto(otherInfo.MessageType, b);
+        if (otherResult.msg != null) throw createTypeMismatchError(expectedDataType, ALL_DATA_TYPES[i]);
     }
 
     throw new Error("An error occurred while parsing: unknown protobuf decode error");
@@ -275,7 +274,7 @@ export function decodeCityFromJsonText(text) {
         throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e)));
     }
 
-    assertExpectedLegacyRootType("GeoObj", obj);
+    assertExpectedLegacyRootType(DT.geo, obj);
 
     try {
         let protoObj = geoJsonToProtoObject(obj);
@@ -297,6 +296,6 @@ function decodeCityFromJsonTextAsProto(text) {
 }
 
 export function decodeCityFile(name, data) {
-    let msg = decodeDataFromFile("GeoObj", decodeCityFromJsonTextAsProto, data);
+    let msg = decodeDataFromFile(DT.geo, decodeCityFromJsonTextAsProto, data);
     return geoJsonFromProtoMessage(msg);
 }

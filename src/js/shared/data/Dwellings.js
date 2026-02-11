@@ -120,7 +120,7 @@ function paletteDwellingsObjFromLegacyJsonInternal(obj) {
     if (!isPlainObject(obj)) throw PaletteFunc.unknownPalette();
     if (Array.isArray(obj.floors) && obj.features == null) throw new Error("Dwellings, not Palette.");
 
-    assertExpectedLegacyRootType("PaletteDwellingsObj", obj);
+    assertExpectedLegacyRootType(DataProto.data.DataType.palette_dwellings, obj);
 
     if (isPlainObject(obj.colors) && isPlainObject(obj.strokes) && isPlainObject(obj.misc)) {
         return normalizePaletteDwellingsObjLike(obj);
@@ -216,6 +216,6 @@ export function paletteProtoBytesFromObj(pdo) {
 }
 
 export function decodePaletteFile(name, data) {
-    let msg = decodeDataFromFile("PaletteDwellingsObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile(DataProto.data.DataType.palette_dwellings, paletteObjFromLegacyJsonText, data);
     return normalizePaletteDwellingsObjLike(msg);
 }

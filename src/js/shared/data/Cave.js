@@ -85,7 +85,7 @@ export function paletteObjFromLegacyJsonText(text) {
 
     if (!isPlainObject(obj)) throw PaletteFunc.unknownPalette();
 
-    assertExpectedLegacyRootType("PaletteCaveObj", obj);
+    assertExpectedLegacyRootType(DataProto.data.DataType.palette_cave, obj);
 
     if (isPlainObject(obj.colors) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.hatching)) {
         return normalizePaletteCaveObjLike(obj);
@@ -156,6 +156,6 @@ export function paletteProtoBytesFromObj(m) {
 }
 
 export function decodePaletteFile(name, data) {
-    let msg = decodeDataFromFile("PaletteCaveObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile(DataProto.data.DataType.palette_cave, paletteObjFromLegacyJsonText, data);
     return normalizePaletteCaveObjLike(msg);
 }

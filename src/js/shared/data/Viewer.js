@@ -106,7 +106,7 @@ export function paletteObjFromLegacyJsonText(text) {
     let obj = null;
     try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
 
-    assertExpectedLegacyRootType("PaletteViewerObj", obj);
+    assertExpectedLegacyRootType(DataProto.data.DataType.palette_viewer, obj);
 
     if (isPlainObject(obj) && isPlainObject(obj.colors) && isPlainObject(obj.lighting) && isPlainObject(obj.shapes)) {
         return normalizePaletteViewerObjLike(obj);
@@ -206,6 +206,6 @@ export function paletteProtoBytesFromObj(pvo) {
 }
 
 export function decodePaletteFile(name, data) {
-    let msg = decodeDataFromFile("PaletteViewerObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile(DataProto.data.DataType.palette_viewer, paletteObjFromLegacyJsonText, data);
     return normalizePaletteViewerObjLike(msg);
 }
