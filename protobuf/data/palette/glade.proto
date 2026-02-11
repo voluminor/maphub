@@ -7,50 +7,50 @@ import "data/palette/global.proto";
 // // // //
 
 message PaletteGladeColorsObj {
-  optional PaletteRgbObj ground = 1;
-  optional PaletteRgbObj ink = 2;
-  optional PaletteRgbObj marks = 3;
-  repeated PaletteRgbObj tree = 4;
-  optional PaletteRgbObj tree_details = 5;
-  optional PaletteRgbObj thicket = 6;
-  optional PaletteRgbObj water_deep = 7;
-  optional PaletteRgbObj water_shallow = 8;
-  optional PaletteRgbObj sand = 9;
-  optional PaletteRgbObj shadow_color = 10;
-  optional PaletteRgbObj road = 11;
-  optional PaletteRgbObj road_outline = 12;
+  repeated PaletteRgbObj tree = 1;
+   PaletteRgbObj ground = 2;
+   PaletteRgbObj ink = 3;
+   PaletteRgbObj marks = 4;
+   PaletteRgbObj tree_details = 5;
+   PaletteRgbObj thicket = 6;
+   PaletteRgbObj water_deep = 7;
+   PaletteRgbObj water_shallow = 8;
+   PaletteRgbObj sand = 9;
+   PaletteRgbObj shadow_color = 10;
+   PaletteRgbObj road = 11;
+   PaletteRgbObj road_outline = 12;
 }
 
 message PaletteGladeTreesObj {
-  optional float variance = 1;
-  optional int32 bands = 2;
-  optional string shape = 3;
+   float variance = 1;
+   int32 bands = 2;
+   string shape = 3;
 }
 
 message PaletteGladeShadowObj {
-  optional float length = 1;
-  optional int32 angle_deg = 2;
+   float length = 1;
+   int32 angle_deg = 2;
 }
 
 message PaletteGladeStrokesObj {
-  optional float normal = 1;
-  optional float thin = 2;
-  optional float grid = 3;
+   float normal = 1;
+   float thin = 2;
+   float grid = 3;
 }
 
 message PaletteGladeMiscObj {
-  optional int32 grass_length = 1;
-  optional float road_width = 2;
-  optional float road_wiggle = 3;
+   int32 grass_length = 1;
+   float road_width = 2;
+   float road_wiggle = 3;
 }
 
 //
 
 message PaletteGladeObj {
-  optional PaletteGladeColorsObj colors = 1;
-  optional PaletteGladeTreesObj trees = 2;
-  optional PaletteGladeShadowObj shadow = 3;
-  optional PaletteGladeStrokesObj strokes = 4;
-  optional PaletteGladeMiscObj misc = 5;
+   PaletteGladeColorsObj colors = 1;
+   PaletteGladeTreesObj trees = 2;
+   PaletteGladeShadowObj shadow = 3;
+   PaletteGladeStrokesObj strokes = 4;
+   PaletteGladeMiscObj misc = 5;
 }
 

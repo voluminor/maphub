@@ -14,23 +14,23 @@ message PaletteCaveColorsObj {
 }
 
 message PaletteCaveShadowObj {
-  optional float shade_alpha = 1;
-  optional float shadow_alpha = 2;
-  optional float shadow_dist = 3;
+  float shade_alpha = 1;
+  float shadow_alpha = 2;
+  float shadow_dist = 3;
 }
 
 message PaletteCaveStrokesObj {
-  optional float wall = 1;
-  optional float detail = 2;
-  optional float hatch = 3;
-  optional float grid = 4;
+  float wall = 1;
+  float detail = 2;
+  float hatch = 3;
+  float grid = 4;
 }
 
 message PaletteCaveHatchingObj {
-  optional uint32 strokes = 1;
-  optional float size = 2;
-  optional float distance = 3;
-  optional float stones = 4;
+  uint32 strokes = 1;
+  float size = 2;
+  float distance = 3;
+  float stones = 4;
 }
 
 //

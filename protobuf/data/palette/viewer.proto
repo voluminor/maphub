@@ -37,17 +37,17 @@ message PaletteLightingObj {
   PaletteRgbObj sky1 = 1;
   PaletteRgbObj sky2 = 2;
   PaletteRgbObj sun = 3;
-  optional float sun_pos = 4;
-  optional float ambience = 5;
+  float sun_pos = 4;
+  float ambience = 5;
   PaletteRgbObj windows = 6;
-  optional float lighted = 7;
+  float lighted = 7;
 }
 
 message PaletteShapesObj {
-  optional float pitch = 1;
-  optional bool roofed_towers = 2;
-  optional PaletteTowerPlanType towers = 3;
-  optional PaletteTreeShapeType tree_shape = 4;
+  float pitch = 1;
+  bool roofed_towers = 2;
+  PaletteTowerPlanType towers = 3;
+  PaletteTreeShapeType tree_shape = 4;
 }
 
 //
