@@ -1,5 +1,5 @@
 import * as DataProto from "../../struct/data.js";
-import { decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
 const LEGACY_KEYS = [
@@ -101,11 +101,13 @@ export function paletteObjFromLegacyJsonText(text) {
     let obj = null;
     try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
 
-    if (obj != null && typeof obj === "object" && Array.isArray(obj.floors) && obj.features == null) {
-        throw new Error("These are Dwellings, not Palette.");
-    }
-    if (obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features)) {
-        throw new Error("These are City/Village, not Palette.");
+    assertExpectedLegacyRootType("PaletteMfcgObj", obj);
+
+    if (obj != null && typeof obj === "object" && !Array.isArray(obj)) {
+        let c = obj.colors;
+        if (c != null && typeof c === "object" && !Array.isArray(c)) {
+            if (c.paper != null || c.light != null || c.dark != null) return normalizePaletteMfcgObjLike(obj);
+        }
     }
     if (obj == null || typeof obj !== "object" || Array.isArray(obj)) {
         throw new Error("Invalid structure - expected Palette.");
@@ -188,5 +190,6 @@ export function paletteProtoBytesFromObj(pmo) {
 }
 
 export function decodePaletteFile(name, data) {
-    return decodeDataFromFile("PaletteMfcgObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile("PaletteMfcgObj", paletteObjFromLegacyJsonText, data);
+    return normalizePaletteMfcgObjLike(msg);
 }

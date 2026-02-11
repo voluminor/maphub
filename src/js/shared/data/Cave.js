@@ -1,135 +1,161 @@
 import * as DataProto from "../../struct/data.js";
-import { decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
-function looksLikePaletteCaveObj(m) {
-    let c = m?.colors;
-    if (PaletteFunc.hexToRgbObj(PaletteFunc.rgbObjToHex(c?.page)) == null) return false;
-    if (PaletteFunc.hexToRgbObj(PaletteFunc.rgbObjToHex(c?.floor)) == null) return false;
-    if (PaletteFunc.hexToRgbObj(PaletteFunc.rgbObjToHex(c?.water)) == null) return false;
-    if (PaletteFunc.hexToRgbObj(PaletteFunc.rgbObjToHex(c?.ink)) == null) return false;
+const LEGACY_KEYS = [
+    "colorPage", "colorFloor", "colorWater", "colorInk",
+    "shadeAlpha", "shadowAlpha", "shadowDist",
+    "strokeWall", "strokeDetail", "strokeHatch", "strokeGrid",
+    "hatchingStrokes", "hatchingSize", "hatchingDistance", "hatchingStones"
+];
 
-    let sh = m?.shadow;
-    if (typeof sh?.shadeAlpha !== "number") return false;
-    if (typeof sh?.shadowAlpha !== "number") return false;
-    if (typeof sh?.shadowDist !== "number") return false;
+function isPlainObject(o) {
+    return o != null && typeof o === "object" && !Array.isArray(o);
+}
 
-    let st = m?.strokes;
-    if (typeof st?.wall !== "number") return false;
-    if (typeof st?.detail !== "number") return false;
-    if (typeof st?.hatch !== "number") return false;
-    if (typeof st?.grid !== "number") return false;
+function normalizeRgb(rgb) {
+    PaletteFunc.rgbObjToHex(rgb);
+    return rgb;
+}
 
-    let h = m?.hatching;
-    if (typeof h?.strokes !== "number") return false;
-    if (typeof h?.size !== "number") return false;
-    if (typeof h?.distance !== "number") return false;
-    if (typeof h?.stones !== "number") return false;
+function normalizeFloat(v, min, max) {
+    if (typeof v !== "number" || !Number.isFinite(v)) throw new Error("Invalid structure - expected Palette.");
+    if (v < min || v > max) throw new Error("Invalid structure - expected Palette.");
+    return v;
+}
 
-    return true;
+function normalizeInt(v, min, max) {
+    if (typeof v !== "number" || !Number.isFinite(v) || (v | 0) !== v) throw new Error("Invalid structure - expected Palette.");
+    let n = v | 0;
+    if (n < min || n > max) throw new Error("Invalid structure - expected Palette.");
+    return n;
+}
+
+function normalizePaletteCaveObjLike(mLike) {
+    if (!isPlainObject(mLike)) throw new Error("Invalid structure - expected Palette.");
+
+    let c = mLike.colors;
+    let sh = mLike.shadow;
+    let st = mLike.strokes;
+    let h = mLike.hatching;
+    if (!isPlainObject(c) || !isPlainObject(sh) || !isPlainObject(st) || !isPlainObject(h)) throw new Error("Invalid structure - expected Palette.");
+
+    let colors = {
+        page: normalizeRgb(c.page),
+        floor: normalizeRgb(c.floor),
+        water: normalizeRgb(c.water),
+        ink: normalizeRgb(c.ink)
+    };
+
+    let shadow = {
+        shadeAlpha: normalizeFloat(sh.shadeAlpha, 0, 1),
+        shadowAlpha: normalizeFloat(sh.shadowAlpha, 0, 1),
+        shadowDist: normalizeFloat(sh.shadowDist, 0, 5)
+    };
+
+    let strokes = {
+        wall: normalizeFloat(st.wall, 0.1, 10),
+        detail: normalizeFloat(st.detail, 0.1, 10),
+        hatch: normalizeFloat(st.hatch, 0.1, 10),
+        grid: normalizeFloat(st.grid, 0.1, 10)
+    };
+
+    let hatching = {
+        strokes: normalizeInt(h.strokes, 2, 5),
+        size: normalizeFloat(h.size, 0.1, 1),
+        distance: normalizeFloat(h.distance, 0, 1),
+        stones: normalizeFloat(h.stones, 0, 1)
+    };
+
+    let protoObj = { colors, shadow, strokes, hatching };
+    let err = DataProto.data.PaletteCaveObj.verify(protoObj);
+    if (err) throw new Error("Invalid structure - expected Palette: " + err);
+    return DataProto.data.PaletteCaveObj.fromObject(protoObj);
+}
+
+function hasAnyLegacyKey(obj) {
+    if (!isPlainObject(obj)) return false;
+    for (let i = 0; i < LEGACY_KEYS.length; i++) if (Object.prototype.hasOwnProperty.call(obj, LEGACY_KEYS[i])) return true;
+    return false;
 }
 
 export function paletteObjFromLegacyJsonText(text) {
-
     let obj = null;
-    try {
-        obj = JSON.parse(text);
-    } catch (e) {
-        throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e)));
+    try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
+
+    if (!isPlainObject(obj)) throw PaletteFunc.unknownPalette();
+
+    assertExpectedLegacyRootType("PaletteCaveObj", obj);
+
+    if (isPlainObject(obj.colors) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.hatching)) {
+        return normalizePaletteCaveObjLike(obj);
     }
 
-    if (obj != null && typeof obj === "object" && Array.isArray(obj.floors) && obj.features == null) {
-        throw new Error("These are Dwellings, not Palette.");
-    }
-
-    if (obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features)) {
-        throw new Error("These are City/Village, not Palette.");
-    }
-
-    if (obj == null || typeof obj !== "object" || Array.isArray(obj)) throw PaletteFunc.unknownPalette("null/not-object/array");
-
-    let keys = [
-        "colorPage","colorFloor","colorWater","colorInk",
-        "shadeAlpha","shadowAlpha","shadowDist",
-        "strokeWall","strokeDetail","strokeHatch","strokeGrid",
-        "hatchingStrokes","hatchingSize","hatchingDistance","hatchingStones"
-    ];
-
-    let hasAny = false;
-    for (let i = 0; i < keys.length; i++) if (Object.prototype.hasOwnProperty.call(obj, keys[i])) { hasAny = true; break; }
-    if (!hasAny) throw PaletteFunc.unknownPalette("no has any");
+    if (!hasAnyLegacyKey(obj)) throw new Error("Invalid structure - expected Palette.");
 
     let missing = [];
 
-    function need(k) { missing.push(k); }
+    let page = PaletteFunc.hexToRgbObj(obj.colorPage); if (page == null) missing.push("colorPage");
+    let floor = PaletteFunc.hexToRgbObj(obj.colorFloor); if (floor == null) missing.push("colorFloor");
+    let water = PaletteFunc.hexToRgbObj(obj.colorWater); if (water == null) missing.push("colorWater");
+    let ink = PaletteFunc.hexToRgbObj(obj.colorInk); if (ink == null) missing.push("colorInk");
 
-    let page = PaletteFunc.hexToRgbObj(obj.colorPage); if (page == null) need("colorPage");
-    let floor = PaletteFunc.hexToRgbObj(obj.colorFloor); if (floor == null) need("colorFloor");
-    let water = PaletteFunc.hexToRgbObj(obj.colorWater); if (water == null) need("colorWater");
-    let ink = PaletteFunc.hexToRgbObj(obj.colorInk); if (ink == null) need("colorInk");
+    let shadeAlpha = PaletteFunc.toFloat(obj.shadeAlpha, 0, 1); if (shadeAlpha == null) missing.push("shadeAlpha");
+    let shadowAlpha = PaletteFunc.toFloat(obj.shadowAlpha, 0, 1); if (shadowAlpha == null) missing.push("shadowAlpha");
+    let shadowDist = PaletteFunc.toFloat(obj.shadowDist, 0, 5); if (shadowDist == null) missing.push("shadowDist");
 
-    let shadeAlpha = PaletteFunc.toFloat(obj.shadeAlpha, 0, 1); if (shadeAlpha == null) need("shadeAlpha");
-    let shadowAlpha = PaletteFunc.toFloat(obj.shadowAlpha, 0, 1); if (shadowAlpha == null) need("shadowAlpha");
-    let shadowDist = PaletteFunc.toFloat(obj.shadowDist, 0, 5); if (shadowDist == null) need("shadowDist");
+    let wall = PaletteFunc.toFloat(obj.strokeWall, 0.1, 10); if (wall == null) missing.push("strokeWall");
+    let detail = PaletteFunc.toFloat(obj.strokeDetail, 0.1, 10); if (detail == null) missing.push("strokeDetail");
+    let hatch = PaletteFunc.toFloat(obj.strokeHatch, 0.1, 10); if (hatch == null) missing.push("strokeHatch");
+    let grid = PaletteFunc.toFloat(obj.strokeGrid, 0.1, 10); if (grid == null) missing.push("strokeGrid");
 
-    let wall = PaletteFunc.toFloat(obj.strokeWall, 0.1, 10); if (wall == null) need("strokeWall");
-    let detail = PaletteFunc.toFloat(obj.strokeDetail, 0.1, 10); if (detail == null) need("strokeDetail");
-    let hatch = PaletteFunc.toFloat(obj.strokeHatch, 0.1, 10); if (hatch == null) need("strokeHatch");
-    let grid = PaletteFunc.toFloat(obj.strokeGrid, 0.1, 10); if (grid == null) need("strokeGrid");
-
-    let hatchStrokes = PaletteFunc.legacyInt(obj.hatchingStrokes); if (hatchStrokes == null) need("hatchingStrokes"); else if (hatchStrokes < 2 || hatchStrokes > 5) throw PaletteFunc.unknownPalette();
-    let hatchSize = PaletteFunc.toFloat(obj.hatchingSize, 0.1, 1); if (hatchSize == null) need("hatchingSize");
-    let hatchDist = PaletteFunc.toFloat(obj.hatchingDistance, 0, 1); if (hatchDist == null) need("hatchingDistance");
-    let hatchStones = PaletteFunc.toFloat(obj.hatchingStones, 0, 1); if (hatchStones == null) need("hatchingStones");
+    let hatchStrokes = PaletteFunc.legacyInt(obj.hatchingStrokes); if (hatchStrokes == null) missing.push("hatchingStrokes");
+    let hatchSize = PaletteFunc.toFloat(obj.hatchingSize, 0.1, 1); if (hatchSize == null) missing.push("hatchingSize");
+    let hatchDist = PaletteFunc.toFloat(obj.hatchingDistance, 0, 1); if (hatchDist == null) missing.push("hatchingDistance");
+    let hatchStones = PaletteFunc.toFloat(obj.hatchingStones, 0, 1); if (hatchStones == null) missing.push("hatchingStones");
 
     if (missing.length) throw new Error("Palette has valid fields, but not enough data to apply: " + missing.join(", "));
 
-    let protoObj = {
+    return normalizePaletteCaveObjLike({
         colors: { page, floor, water, ink },
         shadow: { shadeAlpha, shadowAlpha, shadowDist },
         strokes: { wall, detail, hatch, grid },
-        hatching: { strokes: hatchStrokes, size: hatchSize, distance: hatchDist, stones: hatchStones }
-    };
-
-    let err = DataProto.data.PaletteCaveObj.verify(protoObj);
-    if (err) throw PaletteFunc.unknownPalette(err);
-
-    let msg = DataProto.data.PaletteCaveObj.fromObject(protoObj);
-    if (!looksLikePaletteCaveObj(msg)) throw PaletteFunc.unknownPalette("not looks-like PaletteCaveObj in paletteObjFromLegacyJsonText");
-    return msg;
+        hatching: { strokes: hatchStrokes | 0, size: hatchSize, distance: hatchDist, stones: hatchStones }
+    });
 }
 
 export function paletteLegacyJsonFromObj(m) {
-    if (!looksLikePaletteCaveObj(m)) throw PaletteFunc.unknownPalette("not looks-like PaletteCaveObj in paletteLegacyJsonFromObj");
+    let n = normalizePaletteCaveObjLike(m);
 
     let out = {};
-    out.colorPage = PaletteFunc.rgbObjToHex(m.colors.page);
-    out.colorFloor = PaletteFunc.rgbObjToHex(m.colors.floor);
-    out.colorWater = PaletteFunc.rgbObjToHex(m.colors.water);
-    out.colorInk = PaletteFunc.rgbObjToHex(m.colors.ink);
+    out.colorPage = PaletteFunc.rgbObjToHex(n.colors.page);
+    out.colorFloor = PaletteFunc.rgbObjToHex(n.colors.floor);
+    out.colorWater = PaletteFunc.rgbObjToHex(n.colors.water);
+    out.colorInk = PaletteFunc.rgbObjToHex(n.colors.ink);
 
-    out.shadeAlpha = PaletteFunc.fromFloat(m.shadow.shadeAlpha);
-    out.shadowAlpha = PaletteFunc.fromFloat(m.shadow.shadowAlpha);
-    out.shadowDist = PaletteFunc.fromFloat(m.shadow.shadowDist);
+    out.shadeAlpha = PaletteFunc.fromFloat(n.shadow.shadeAlpha);
+    out.shadowAlpha = PaletteFunc.fromFloat(n.shadow.shadowAlpha);
+    out.shadowDist = PaletteFunc.fromFloat(n.shadow.shadowDist);
 
-    out.strokeWall = PaletteFunc.fromFloat(m.strokes.wall);
-    out.strokeDetail = PaletteFunc.fromFloat(m.strokes.detail);
-    out.strokeHatch = PaletteFunc.fromFloat(m.strokes.hatch);
-    out.strokeGrid = PaletteFunc.fromFloat(m.strokes.grid);
+    out.strokeWall = PaletteFunc.fromFloat(n.strokes.wall);
+    out.strokeDetail = PaletteFunc.fromFloat(n.strokes.detail);
+    out.strokeHatch = PaletteFunc.fromFloat(n.strokes.hatch);
+    out.strokeGrid = PaletteFunc.fromFloat(n.strokes.grid);
 
-    out.hatchingStrokes = String(m.hatching.strokes);
-    out.hatchingSize = PaletteFunc.fromFloat(m.hatching.size);
-    out.hatchingDistance = PaletteFunc.fromFloat(m.hatching.distance);
-    out.hatchingStones = PaletteFunc.fromFloat(m.hatching.stones);
+    out.hatchingStrokes = String(n.hatching.strokes);
+    out.hatchingSize = PaletteFunc.fromFloat(n.hatching.size);
+    out.hatchingDistance = PaletteFunc.fromFloat(n.hatching.distance);
+    out.hatchingStones = PaletteFunc.fromFloat(n.hatching.stones);
 
     return JSON.stringify(out, null, "  ");
 }
 
 export function paletteProtoBytesFromObj(m) {
-    return DataProto.data.PaletteCaveObj.encode(m).finish();
+    let n = normalizePaletteCaveObjLike(m);
+    return DataProto.data.PaletteCaveObj.encode(n).finish();
 }
 
 export function decodePaletteFile(name, data) {
-    return decodeDataFromFile("PaletteCaveObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile("PaletteCaveObj", paletteObjFromLegacyJsonText, data);
+    return normalizePaletteCaveObjLike(msg);
 }
-

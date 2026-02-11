@@ -1,5 +1,66 @@
 import * as DataProto from "../../struct/data.js";
 
+const TYPE_LABELS = {
+    GeoObj: { label: "City/Village", kind: "data" },
+    DwellingsObj: { label: "Dwellings", kind: "data" },
+    PaletteMfcgObj: { label: "MFCG", kind: "styles" },
+    PaletteVillageObj: { label: "Village", kind: "styles" },
+    PaletteGladeObj: { label: "Glade", kind: "styles" },
+    PaletteViewerObj: { label: "City", kind: "styles" },
+    PaletteDwellingsObj: { label: "Dwellings", kind: "styles" },
+    PaletteCaveObj: { label: "Cave", kind: "styles" }
+};
+
+export function describeRootType(typeName) {
+    let d = TYPE_LABELS[typeName];
+    if (d) return d;
+    return { label: String(typeName), kind: "data" };
+}
+
+export function createTypeMismatchError(expectedTypeName, actualTypeName) {
+    let e = describeRootType(expectedTypeName);
+    let a = describeRootType(actualTypeName);
+    let expectedText = e.kind === "styles" ? (e.label + " styles") : (e.label + " data");
+    let actualText = a.kind === "styles" ? (a.label + " styles") : (a.label + " data");
+    let verb = e.kind === "styles" ? "were" : "was";
+    return new Error("You uploaded " + actualText + ", but " + expectedText + " " + verb + " expected.");
+}
+
+function isPlainObject(v) {
+    return v != null && typeof v === "object" && !Array.isArray(v);
+}
+
+function hasAnyKey(obj, keys) {
+    if (!isPlainObject(obj)) return false;
+    for (let i = 0; i < keys.length; i++) if (Object.prototype.hasOwnProperty.call(obj, keys[i])) return true;
+    return false;
+}
+
+export function detectLegacyRootTypeName(obj) {
+    if (obj != null && typeof obj === "object" && Array.isArray(obj.floors) && obj.features == null) return "DwellingsObj";
+    if (obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features)) return "GeoObj";
+    if (!isPlainObject(obj)) return null;
+
+    if (isPlainObject(obj.colors) && isPlainObject(obj.misc) && isPlainObject(obj.strokes)) return "PaletteDwellingsObj";
+    if (isPlainObject(obj.colors) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.hatching)) return "PaletteCaveObj";
+
+    if (hasAnyKey(obj, ["walls1", "walls2", "roofs1", "roofs2", "sky1", "roofedTowers", "tree_shape"])) return "PaletteViewerObj";
+    if (hasAnyKey(obj, ["roofLight", "waterShallow", "waterDeep", "fontHeader", "outlineFields"])) return "PaletteVillageObj";
+    if (hasAnyKey(obj, ["thicket", "treeBands", "roadOutline", "grassLength"])) return "PaletteGladeObj";
+    if (hasAnyKey(obj, ["colorLight", "colorDark", "tintMethod", "weathering"])) return "PaletteMfcgObj";
+
+    if (hasAnyKey(obj, ["colorWalls", "colorProps", "colorWindows", "colorStairs", "colorRoof", "colorLabels", "strNormal10", "strGrid10", "alphaGrid", "alphaAO", "alphaLights", "fontRoom", "hatching"])) return "PaletteDwellingsObj";
+
+    if (hasAnyKey(obj, ["colorPage", "colorWater", "shadeAlpha", "shadowAlpha", "shadowDist", "strokeWall", "strokeDetail", "strokeHatch", "strokeGrid", "hatchingStrokes", "hatchingSize", "hatchingDistance", "hatchingStones"])) return "PaletteCaveObj";
+
+    return null;
+}
+
+export function assertExpectedLegacyRootType(expectedTypeName, obj) {
+    let actual = detectLegacyRootTypeName(obj);
+    if (actual != null && actual !== expectedTypeName) throw createTypeMismatchError(expectedTypeName, actual);
+}
+
 export function jsToProtoValue(v) {
     if (v === null || v === undefined) return { nullValue: 0 };
     if (Array.isArray(v)) return { listValue: jsToProtoListValue(v) };
@@ -181,7 +242,7 @@ export function decodeDataFromFile(expectedTypeName, legacyJsonTextParser, data)
             return legacyJsonTextParser(text);
         } catch (e) {
             let msg = e && e.message ? e.message : String(e);
-            if (msg.indexOf("An error occurred") === 0 || msg.indexOf("These are ") === 0 ||
+            if (msg.indexOf("An error occurred") === 0 || msg.indexOf("You uploaded ") === 0 ||
                 msg.indexOf("Unknown data format") === 0 || msg.indexOf("Invalid") === 0 ||
                 msg.indexOf("Palette has valid fields") === 0 || msg.indexOf("Expected ") === 0) throw e;
             throw new Error("An error occurred while parsing: " + msg);
@@ -189,7 +250,7 @@ export function decodeDataFromFile(expectedTypeName, legacyJsonTextParser, data)
     }
 
     let b = toUint8Array(data);
-    if (b == null) throw new Error("illegal buffer");
+    if (b == null) throw new Error("Invalid data buffer.");
 
     let expectedType = DataProto.data[expectedTypeName];
     let result = tryDecodeProto(expectedType, b);
@@ -200,9 +261,7 @@ export function decodeDataFromFile(expectedTypeName, legacyJsonTextParser, data)
         let otherType = DataProto.data[ROOT_DATA_TYPES[i]];
         if (otherType == null) continue;
         let otherResult = tryDecodeProto(otherType, b);
-        if (otherResult.msg != null) {
-            throw new Error("Expected " + expectedTypeName + ", but loaded " + ROOT_DATA_TYPES[i]);
-        }
+        if (otherResult.msg != null) throw createTypeMismatchError(expectedTypeName, ROOT_DATA_TYPES[i]);
     }
 
     throw new Error("An error occurred while parsing: unknown protobuf decode error");
@@ -213,12 +272,10 @@ export function decodeCityFromJsonText(text) {
     try {
         obj = JSON.parse(text);
     } catch (e) {
-        throw new Error("An error occurred while parsing: "+ (e && e.message ? e.message : String(e)));
+        throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e)));
     }
 
-    if (obj != null && typeof obj === "object" && Array.isArray(obj.floors) && obj.features == null) {
-        throw new Error("These are Dwellings, not City/Village.");
-    }
+    assertExpectedLegacyRootType("GeoObj", obj);
 
     try {
         let protoObj = geoJsonToProtoObject(obj);
@@ -229,7 +286,7 @@ export function decodeCityFromJsonText(text) {
     } catch (e2) {
         let msgText2 = e2 && e2.message ? e2.message : String(e2);
         if (msgText2.indexOf("Unknown data format") === 0) throw e2;
-        throw new Error("An error occurred while parsing: "+ msgText2);
+        throw new Error("An error occurred while parsing: " + msgText2);
     }
 }
 
