@@ -10,6 +10,7 @@ import * as DataProto from "./struct/data.js";
 import * as FuncBin from "./shared/data/bin-verify.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VILLAGE}}`));
+const isFrame = typeof window.parent.pingFrame === "function"
 
 var $lime_init = function (E, u) {
     var A = function (u, A) {

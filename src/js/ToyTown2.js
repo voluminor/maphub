@@ -11,6 +11,7 @@ import * as DataProto from "./struct/data.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VIEWER}}`));
 let GetParamName = new URLSearchParams(window.location.search).get('name') || '';
+const isFrame = typeof window.parent.pingFrame === "function"
 
 if (params !== null) (function (S, u) {
     S.lime = S.lime || {};

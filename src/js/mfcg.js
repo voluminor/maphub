@@ -12,6 +12,7 @@ import {paletteProtoBytesFromObj} from "./shared/data/mfcg.js";
 import {exportBin} from "./shared/data/bin-verify.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_MFCG}}`));
+const isFrame = typeof window.parent.pingFrame === "function"
 
 var $lime_init = function (A, t) {
     var E = function (t, E) {

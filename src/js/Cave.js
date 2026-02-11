@@ -8,6 +8,7 @@ import * as DataCave from "./shared/data/Cave.js";
 import * as DataGlade from "./shared/data/Glade.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_CAVE}}`));
+const isFrame = typeof window.parent.pingFrame === "function"
 
 var $lime_init = function (A, r) {
     var C = function (r, C) {
