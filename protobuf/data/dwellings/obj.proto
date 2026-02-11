@@ -20,4 +20,5 @@ message DwellingsObj {
   repeated DwellingsPlanObj floors = 1;
   DwellingsEdgeObj exit = 2;
   DwellingsEdgeObj spiral = 3;
+  reserved 4 to 19;
 }

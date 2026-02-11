@@ -1,5 +1,5 @@
 import * as DataProto from "../../struct/data.js";
-import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes, enumToNumber } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 import * as FuncBin from "./bin-verify.js";
 
@@ -220,4 +220,94 @@ export function paletteProtoBytesFromObj(pdo) {
 export function decodePaletteFile(name, data) {
     let msg = decodeDataFromFile(DataProto.data.DataType.palette_dwellings, paletteObjFromLegacyJsonText, data);
     return normalizePaletteDwellingsObjLike(msg);
+}
+
+function dwellingsEdgeToProto(e) {
+    if (e == null) return null;
+    let out = {};
+    if (e.cell != null) out.cell = { i: e.cell.i | 0, j: e.cell.j | 0 };
+    if (e.dir != null) out.dir = enumToNumber(DataProto.data.DwellingsDirectionType, e.dir, null);
+    return out;
+}
+
+function dwellingsJsonToProtoObject(obj) {
+    if (obj == null || typeof obj !== "object") return null;
+    let out = {};
+    if (obj.exit != null) out.exit = dwellingsEdgeToProto(obj.exit);
+    if (obj.spiral != null) out.spiral = dwellingsEdgeToProto(obj.spiral);
+    if (Array.isArray(obj.floors)) {
+        out.floors = [];
+        for (let fi = 0; fi < obj.floors.length; fi++) {
+            let fp = obj.floors[fi];
+            let floor = { level: fp.level | 0 };
+            if (Array.isArray(fp.rooms)) {
+                floor.rooms = [];
+                for (let ri = 0; ri < fp.rooms.length; ri++) {
+                    let rm = fp.rooms[ri];
+                    let room = {};
+                    if (rm.name != null) room.name = rm.name;
+                    if (Array.isArray(rm.cells)) {
+                        room.cells = [];
+                        for (let ci = 0; ci < rm.cells.length; ci++) {
+                            let c = rm.cells[ci];
+                            room.cells.push({ i: c.i | 0, j: c.j | 0 });
+                        }
+                    }
+                    floor.rooms.push(room);
+                }
+            }
+            if (Array.isArray(fp.doors)) {
+                floor.doors = [];
+                for (let di = 0; di < fp.doors.length; di++) {
+                    let d = fp.doors[di];
+                    let door = {};
+                    if (d.edge != null) door.edge = dwellingsEdgeToProto(d.edge);
+                    if (d.type != null) door.type = enumToNumber(DataProto.data.DwellingsDoorType, d.type, null);
+                    floor.doors.push(door);
+                }
+            }
+            if (Array.isArray(fp.windows)) {
+                floor.windows = [];
+                for (let wi = 0; wi < fp.windows.length; wi++) floor.windows.push(dwellingsEdgeToProto(fp.windows[wi]));
+            }
+            if (Array.isArray(fp.stairs)) {
+                floor.stairs = [];
+                for (let si = 0; si < fp.stairs.length; si++) {
+                    let st = fp.stairs[si];
+                    let stair = { up: !!st.up };
+                    if (st.cell != null) stair.cell = { i: st.cell.i | 0, j: st.cell.j | 0 };
+                    if (st.dir != null) stair.dir = enumToNumber(DataProto.data.DwellingsDirectionType, st.dir, null);
+                    floor.stairs.push(stair);
+                }
+            }
+            out.floors.push(floor);
+        }
+    }
+    return out;
+}
+
+function decodeDwellingsFromJsonText(text) {
+    let obj;
+    try {
+        obj = JSON.parse(text);
+    } catch (e) {
+        throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e)));
+    }
+
+    assertExpectedLegacyRootType(DataProto.data.DataType.dwellings, obj);
+
+    try {
+        let protoObj = dwellingsJsonToProtoObject(obj);
+        let err = DataProto.data.DwellingsObj.verify(protoObj);
+        if (err) throw new Error("Unknown data format - expected Dwellings: " + err);
+        return DataProto.data.DwellingsObj.fromObject(protoObj);
+    } catch (e2) {
+        let msg = e2 && e2.message ? e2.message : String(e2);
+        if (msg.indexOf("Unknown data format") === 0 || msg.indexOf("You uploaded") === 0) throw e2;
+        throw new Error("An error occurred while parsing: " + msg);
+    }
+}
+
+export function decodeDwellingsFile(name, data) {
+    return decodeDataFromFile(DataProto.data.DataType.dwellings, decodeDwellingsFromJsonText, data);
 }

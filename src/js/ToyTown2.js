@@ -18801,7 +18801,7 @@ if (params !== null) (function (S, u) {
                             b.setMode(b.navMode == b.modeFly ? b.modeFree : b.modeFly)
                         }, this.navMode == this.modeFly);
                     a.addItem("New view", p(this, GetParamName != ""? null:this.loadSample));
-                    a.addItem("Import *.json or *.pb", p(this, GetParamName != ""? null:this.loadExternal));
+                    a.addItem("Import...", p(this, GetParamName != ""? null:this.loadExternal));
                     a.addItem("Export as OBJ", p(this, this.export));
                     a.addSeparator();
                     a.addSubmenu("View", c);

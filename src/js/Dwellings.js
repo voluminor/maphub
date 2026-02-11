@@ -6711,6 +6711,222 @@ var $lime_init = function (K, v) {
                 for(var b=[],c=0;c<a.length;){var d=a[c];++c,b.push(sb.cell2data(d))}
                 return b
             };
+            sb.json2dir=function(a){
+                if(a==qa.NORTH||a==qa.SOUTH||a==qa.EAST||a==qa.WEST)return a;
+                if(a==null)return null;
+                if(typeof a=="number"){
+                    return a==DataProto.data.DwellingsDirectionType.n?qa.NORTH:
+                        a==DataProto.data.DwellingsDirectionType.s?qa.SOUTH:
+                            a==DataProto.data.DwellingsDirectionType.e?qa.EAST:
+                                a==DataProto.data.DwellingsDirectionType.w?qa.WEST:null
+                }
+                var b=(""+a).toLowerCase();
+                return b=="n"||b=="north"||b=="direction_type_unspecified"?qa.NORTH:
+                    b=="s"||b=="south"?qa.SOUTH:
+                        b=="e"||b=="east"?qa.EAST:
+                            b=="w"||b=="west"?qa.WEST:null
+            };
+            sb.json2doorType=function(a){
+                if(a==null)return null;
+                if(a==ad.NULL||a==ad.DOORWAY||a==ad.REGULAR)return a;
+                if(typeof a=="number")return a==1?ad.NULL:a==2?ad.DOORWAY:a==3?ad.REGULAR:null;
+                var b=(""+a).toLowerCase();
+                return b=="null"||b=="door_type_unspecified"?ad.NULL:
+                    b=="doorway"?ad.DOORWAY:
+                        b=="regular"?ad.REGULAR:null
+            };
+            sb._collectBounds=function(a,b){
+                if(a==null)return;
+                var c=a.i,d=a.j;
+                c<b.minI&&(b.minI=c);
+                d<b.minJ&&(b.minJ=d);
+                c>b.maxI&&(b.maxI=c);
+                d>b.maxJ&&(b.maxJ=d)
+            };
+            sb._edgeFromJson=function(a,b,c,d){
+                var g=a.cell;
+                var f=d.cell(g.i-b,g.j-c);
+                var e=sb.json2dir(a.dir);
+                if(f==null||e==null)return null;
+                return d.cellNdir2edge(f,e)
+            };
+            sb._cellFromJson=function(a,b,c,d){
+                return d.cell(a.i-b,a.j-c)
+            };
+            sb.importFromFile=function(a,b){
+                var u8=b instanceof Uint8Array?b:(b.b instanceof Uint8Array?b.b.subarray(0,b.length):b);
+                var msg=DataDwellings.decodeDwellingsFile(a,u8);
+                return sb.importFromProtoJson(sb.proto2json(msg),a)
+            };
+            sb.importFromProtoJson=function(a,b){
+                if(a==null||a.floors==null||a.floors.length==0)throw new Error("empty");
+                var c={minI:Infinity,minJ:Infinity,maxI:-Infinity,maxJ:-Infinity};
+                var d=0,g=a.floors;
+                for(d=0;d<g.length;){
+                    var f=g[d++];
+                    var e=f.rooms||[];
+                    for(var k=0;k<e.length;){
+                        var q=e[k++].cells||[];
+                        for(var l=0;l<q.length;)sb._collectBounds(q[l++],c)
+                    }
+                    e=f.doors||[];
+                    for(k=0;k<e.length;)sb._collectBounds(e[k++].edge.cell,c);
+                    e=f.windows||[];
+                    for(k=0;k<e.length;)sb._collectBounds(e[k++].cell,c);
+                    e=f.stairs||[];
+                    for(k=0;k<e.length;)sb._collectBounds(e[k++].cell,c)
+                }
+                a.exit!=null&&sb._collectBounds(a.exit.cell,c);
+                a.spiral!=null&&sb._collectBounds(a.spiral.cell,c);
+                if(!isFinite(c.minI)||!isFinite(c.minJ))throw new Error("bad bounds");
+
+                var mi=c.minI,mj=c.minJ;
+                var grid=new Gf(c.maxJ-mj+1,c.maxI-mi+1);
+
+                var house=Object.create(fd.prototype);
+                house.bp=Xd.random(0);
+                var nm=null==b?"Imported":Rd.withoutDirectory(""+b);
+                var ext=Rd.extension(nm);
+                null!=ext&&0<ext.length&&(nm=nm.substr(0,nm.length-ext.length-1));
+                house.name=(nm&&nm.length?nm:"Imported").replace(/\.dw$/,"");
+                house.floors=[];
+                house.basement=null;
+                house.rooms=[];
+                house.elevations=null;
+                house.chimneys=new Ba;
+                house.stairCells=new Ba;
+
+                var floors=[],basement=null,stairsByKey={};
+
+                for(var i=0;i<a.floors.length;i++){
+                    var fp=a.floors[i];
+                    var level=fp.level|0;
+
+                    var area=[],seen={};
+                    var rms=fp.rooms||[];
+                    for(var r=0;r<rms.length;r++){
+                        var cells=rms[r].cells||[];
+                        for(var ci=0;ci<cells.length;ci++){
+                            var cc=sb._cellFromJson(cells[ci],mi,mj,grid);
+                            if(cc==null)continue;
+                            var key=cc.i+","+cc.j;
+                            if(seen[key])continue;
+                            seen[key]=!0;
+                            area.push(cc)
+                        }
+                    }
+                    if(area.length==0)continue;
+
+                    var plan=Object.create(Pb.prototype);
+                    plan.house=house;
+                    plan.grid=grid;
+                    plan.area=area;
+                    plan.contour=grid.outline(area);
+                    plan.rooms=[];
+                    plan.stairs=[];
+                    plan.innerWalls=[];
+                    plan.windows=[];
+                    plan.entrance=null;
+                    plan.spiral=null;
+                    plan.stairwell=null;
+                    plan.__importLevel=level;
+
+                    for(r=0;r<rms.length;r++){
+                        var rr=rms[r];
+                        var ra=[],rseen={};
+                        var rc=rr.cells||[];
+                        for(ci=0;ci<rc.length;ci++){
+                            cc=sb._cellFromJson(rc[ci],mi,mj,grid);
+                            if(cc==null)continue;
+                            key=cc.i+","+cc.j;
+                            if(rseen[key])continue;
+                            rseen[key]=!0;
+                            ra.push(cc)
+                        }
+                        if(ra.length==0)continue;
+                        var contour=grid.outline(ra);
+                        var room=new Ck(plan,contour);
+                        room.name=rr.name!=null?rr.name:null;
+                        plan.rooms.push(room)
+                    }
+
+                    var wins=fp.windows||[];
+                    for(r=0;r<wins.length;r++){
+                        var we=sb._edgeFromJson(wins[r],mi,mj,grid);
+                        we!=null&&plan.windows.push(we)
+                    }
+
+                    var doors=fp.doors||[];
+                    for(r=0;r<doors.length;r++){
+                        var de=sb._edgeFromJson(doors[r].edge,mi,mj,grid);
+                        if(de==null)continue;
+                        var r1=plan.getRoom(grid.edge2cell(de));
+                        var rev=grid.edges.h[de.b.__id__].h[de.a.__id__];
+                        var r2=rev!=null?plan.getRoom(grid.edge2cell(rev)):null;
+                        if(r1!=null&&r2!=null&&r1!=r2){
+                            var door=r1.link(r2,de);
+                            door!=null&&(door.type=sb.json2doorType(doors[r].type))
+                        }
+                    }
+
+                    var st=fp.stairs||[];
+                    for(r=0;r<st.length;r++){
+                        var sc=sb._cellFromJson(st[r].cell,mi,mj,grid);
+                        var sd2=sb.json2dir(st[r].dir);
+                        if(sc==null||sd2==null)continue;
+                        var stair=new ff(plan,sc,sd2);
+                        stair.__lvl=level;
+                        key=sc.i+","+sc.j;
+                        stairsByKey[key]==null&&(stairsByKey[key]=[]);
+                        stairsByKey[key].push(stair)
+                    }
+
+                    level==-1?basement=plan:floors.push({lvl:level,plan:plan})
+                }
+
+                floors.sort(function(a,b){return a.lvl-b.lvl});
+                for(i=0;i<floors.length;i++)house.floors.push(floors[i].plan);
+                house.basement=basement;
+
+                for(i=0;i<house.floors.length;i++){
+                    var pr=house.floors[i].rooms;
+                    for(r=0;r<pr.length;r++)house.rooms.push(pr[r])
+                }
+                if(house.basement!=null){
+                    pr=house.basement.rooms;
+                    for(r=0;r<pr.length;r++)house.rooms.push(pr[r])
+                }
+
+                var gf=null;
+                for(i=0;i<floors.length;i++)if(floors[i].lvl==0){gf=floors[i].plan;break}
+                gf==null&&(gf=house.floors.length?house.floors[0]:null);
+
+                if(gf!=null&&a.exit!=null){
+                    var ex=sb._edgeFromJson(a.exit,mi,mj,grid);
+                    ex!=null&&(gf.entrance={door:ex,landing:grid.edge2cell(ex)})
+                }
+
+                if(a.spiral!=null){
+                    var sp=sb._edgeFromJson(a.spiral,mi,mj,grid);
+                    if(sp!=null){
+                        for(i=0;i<house.floors.length;i++){
+                            var pl=house.floors[i];
+                            var exit=sp;
+                            var idx=pl.contour.indexOf(sp);
+                            idx!=-1&&(exit=pl.contour[(idx-1+pl.contour.length)%pl.contour.length]);
+                            pl.spiral={entrance:sp,exit:exit,landing:grid.edge2cell(sp)}
+                        }
+                    }
+                }
+
+                for(var kk in stairsByKey){
+                    var arr=stairsByKey[kk];
+                    arr.sort(function(a,b){return a.__lvl-b.__lvl});
+                    for(i=0;i<arr.length-1;i++)arr[i].link(arr[i+1])
+                }
+
+                return house
+            };
             var Md = function () {
             };
             h["dwellings.model.Namer"] = Md;
@@ -9129,6 +9345,32 @@ var $lime_init = function (K, v) {
                         a.reset(Xd.fromURL())
                     }))
                 },
+                importPlan: function () {
+                    var a = this, b = new Zg;
+                    b.addEventListener("select", function () { b.load(); });
+                    b.addEventListener("complete", function (c) { a.onPlanLoaded(Ua.__cast(c.target, Zg)); });
+                    b.browse([new xk("Dwellings", "*.json;*.pb;")])
+                },
+                onPlanLoaded: function (a) {
+                    try {
+                        var b = sb.importFromFile(a.name, a.data);
+                        this.applyImportedHouse(b)
+                    } catch (c) {
+                        Ha.lastError = c;
+                        var msg = c && c.message || "" + c;
+                        if (msg === "empty") msg = "The file is empty or contains no floor data.";
+                        else if (msg === "bad bounds") msg = "The file contains invalid geometry data.";
+                        ma.showToast(msg)
+                    }
+                },
+                applyImportedHouse: function (a) {
+                    fd.inst = a;
+                    this.house = a;
+                    sd.curFloor = 0;
+                    this.floor.update(this.house);
+                    this.floor.select(sd.curFloor);
+                    this.updateView()
+                },
                 applyColors: function (a) {
                     J.setPalette(a, !0);
                     ac.setUIColors([J.colorPaper, J.colorFloor], J.colorInk);
@@ -9668,6 +9910,7 @@ var $lime_init = function (K, v) {
                     a.addItem("Blueprint", m(this, this.switchToBlueprint));
                     var g = new Ac;
                     this.fillExportMenu(g);
+                    a.addItem("Import...", m(this, this.importPlan));
                     0 < g.items.length && a.addSubmenu("Export as", g);
                     a.addItem("Permalink...", m(this, this.onPermalink));
 
