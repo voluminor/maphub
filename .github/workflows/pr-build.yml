@@ -45,6 +45,3 @@ jobs:
           npm test
 
       - uses: ./.github/actions/build-web
-        with:
-          node-version: ${{ matrix.node-version }}
-          npm-version: ${{ matrix.npm-version }}

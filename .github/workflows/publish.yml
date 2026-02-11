@@ -49,9 +49,6 @@ jobs:
       - uses: ./.github/actions/npm-install
 
       - uses: ./.github/actions/build-web
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          npm-version: ${{ env.NPM_VERSION }}
 
       - name: "🔎 Check build output"
         run: |
