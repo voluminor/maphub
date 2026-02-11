@@ -43,6 +43,11 @@ jobs:
 
       - uses: ./.github/actions/npm-install
 
+      - name: "🧪 Test"
+        run: |
+          npm run pre:gen:proto
+          npm test
+
       - uses: ./.github/actions/generate-build-env
 
       - uses: ./.github/actions/build-web

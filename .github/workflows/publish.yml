@@ -48,6 +48,11 @@ jobs:
 
       - uses: ./.github/actions/npm-install
 
+      - name: "🧪 Test"
+        run: |
+          npm run pre:gen:proto
+          npm test
+
       - uses: ./.github/actions/build-web
 
       - name: "🔎 Check build output"
