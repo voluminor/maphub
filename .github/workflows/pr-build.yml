@@ -39,7 +39,9 @@ jobs:
 
       - uses: ./.github/actions/npm-install
 
+      - name: "🧪 Test"
+        run: |
+          npm run pre:gen:proto
+          npm test
+
       - uses: ./.github/actions/build-web
-        with:
-          node-version: ${{ matrix.node-version }}
-          npm-version: ${{ matrix.npm-version }}

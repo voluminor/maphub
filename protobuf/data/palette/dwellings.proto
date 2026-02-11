@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package data;
+
+import "data/palette/global.proto";
+
+// // // //
+
+message PaletteDwellingsColorsObj {
+  PaletteRgbObj ink = 1;
+  PaletteRgbObj paper = 2;
+  PaletteRgbObj floor = 3;
+  PaletteRgbObj walls = 4;
+  PaletteRgbObj props = 5;
+  PaletteRgbObj windows = 6;
+  PaletteRgbObj stairs = 7;
+  PaletteRgbObj roof = 8;
+  PaletteRgbObj labels = 9;
+}
+
+message PaletteDwellingsStrokesObj {
+  float normal = 1;
+  float grid = 2;
+}
+
+message PaletteDwellingsMiscObj {
+  float alpha_grid = 1;
+  float alpha_ao = 2;
+  float alpha_lights = 3;
+  PaletteFontObj font_room = 4;
+  bool hatching = 5;
+}
+
+//
+
+message PaletteDwellingsObj {
+  PaletteDwellingsColorsObj colors = 1;
+  PaletteDwellingsStrokesObj strokes = 2;
+  PaletteDwellingsMiscObj misc = 3;
+}

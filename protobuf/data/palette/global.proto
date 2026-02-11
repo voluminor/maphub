@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package data;
+
+// // // //
+
+message PaletteRgbObj {
+  uint32 r = 1;
+  uint32 g = 2;
+  uint32 b = 3;
+}
+
+message PaletteFontObj {
+  string face = 1;
+  uint32 size = 2;
+  bool bold = 3;
+  bool italic = 4;
+  string embedded = 5;
+}

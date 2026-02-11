@@ -1,10 +1,26 @@
 name: "Install dependencies"
-description: "Install npm dependencies"
+description: "Install npm dependencies with node_modules caching"
 
 runs:
   using: "composite"
   steps:
+    - name: "🔎 Detect runtime versions"
+      id: rt
+      shell: bash
+      run: |
+        set -Eeuo pipefail
+        echo "node=$(node -v)" >> "$GITHUB_OUTPUT"
+        echo "npm=$(npm -v)"   >> "$GITHUB_OUTPUT"
+
+    - name: "🗄️ Restore node_modules"
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: nm-${{ runner.os }}-${{ steps.rt.outputs.node }}-${{ steps.rt.outputs.npm }}-${{ hashFiles('package-lock.json', 'npm-shrinkwrap.json', 'package.json') }}
+
     - name: "📦 Install"
+      if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
         set -Eeuo pipefail

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package data;
 
-import "data/dwellings_enum.proto";
+import "data/dwellings/enum.proto";
 
 // // // //
 

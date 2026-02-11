@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package data;
+
+import "data/palette/global.proto";
+
+// // // //
+
+message PaletteGladeColorsObj {
+  repeated PaletteRgbObj tree = 1;
+   PaletteRgbObj ground = 2;
+   PaletteRgbObj ink = 3;
+   PaletteRgbObj marks = 4;
+   PaletteRgbObj tree_details = 5;
+   PaletteRgbObj thicket = 6;
+   PaletteRgbObj water_deep = 7;
+   PaletteRgbObj water_shallow = 8;
+   PaletteRgbObj sand = 9;
+   PaletteRgbObj shadow_color = 10;
+   PaletteRgbObj road = 11;
+   PaletteRgbObj road_outline = 12;
+}
+
+message PaletteGladeTreesObj {
+   float variance = 1;
+   int32 bands = 2;
+   string shape = 3;
+}
+
+message PaletteGladeShadowObj {
+   float length = 1;
+   int32 angle_deg = 2;
+}
+
+message PaletteGladeStrokesObj {
+   float normal = 1;
+   float thin = 2;
+   float grid = 3;
+}
+
+message PaletteGladeMiscObj {
+   int32 grass_length = 1;
+   float road_width = 2;
+   float road_wiggle = 3;
+}
+
+//
+
+message PaletteGladeObj {
+   PaletteGladeColorsObj colors = 1;
+   PaletteGladeTreesObj trees = 2;
+   PaletteGladeShadowObj shadow = 3;
+   PaletteGladeStrokesObj strokes = 4;
+   PaletteGladeMiscObj misc = 5;
+}
+

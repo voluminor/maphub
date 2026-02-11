@@ -2,9 +2,10 @@ import * as LimeShared from "./shared/lime.js";
 import * as OpenflShared from "./shared/openfl.js";
 import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
-
 import * as FuncProto from "./shared/proto.js";
-import * as ParamsProto from "./struct/params.js";
+
+import * as DataVillage from "./shared/data/Village.js";
+
 import * as DataProto from "./struct/data.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VILLAGE}}`));
@@ -4549,11 +4550,12 @@ var $lime_init = function (E, u) {
                 this.add(this.form);
                 this.tabs = new rh;
                 this.form.add(this.tabs);
-                var d = [new pb("Load", r(this, this.onLoad)), new pb("Apply", function () {
-                    a(c.getPalette())
-                }), new pb("Save", function () {
-                    c.onSave(c.getPalette())
-                })];
+                var saveFormats = ["JSON", "PROTO"];
+                var saveBtn = new he("Save", saveFormats, saveFormats);
+                saveBtn.action.add(function (fmt) {
+                    c.onSave(c.getPalette(), fmt);
+                });
+                var d = [new pb("Load", r(this, this.onLoad)), new pb("Apply", function () {a(c.getPalette())}), saveBtn];
                 if (null != b) {
                     for (var f = [], h = []; 0 < b.length;) f.push(b.shift()), h.push(b.shift());
                     b = new he("Preset", f, h);
@@ -4810,7 +4812,7 @@ var $lime_init = function (E, u) {
                             r(a, a.onPaletteLoaded));
                         b.load()
                     });
-                    var c = [new gj("Palette", "*.json")];
+                    var c = [new gj("Palette", "*.json;*.pb;")];
                     b.browse(c)
                 },
                 loadPreset: function (a) {
@@ -4819,9 +4821,13 @@ var $lime_init = function (E, u) {
                 },
                 onPaletteLoaded: function (a) {
                     try {
-                        this.loadPalette(Rb.fromJSON(Ka.__cast(a.target, Bg).data.toString()))
+                        var fr = Ka.__cast(a.target, Bg);
+                        var pvo = DataVillage.decodePaletteFile(fr.name, fr.data);
+                        var legacyJson = DataVillage.paletteLegacyJsonFromObj(pvo);
+                        this.loadPalette(Rb.fromJSON(legacyJson));
                     } catch (b) {
-                        t.show("Invalid palette file")
+                        b = U.caught(b).unwrap();
+                        t.show(D.string(b));
                     }
                 },
                 loadPalette: function (a) {
@@ -4912,9 +4918,33 @@ var $lime_init = function (E, u) {
                     }
                     return a
                 },
-                onSave: function (a) {
-                    Sd.saveText(a.json(), this.getName(a) + ".palette.vg.json", "application/json")
+                onSave: function (a, format) {
+                    var self = this;
+
+                    var doSave = function(fmt) {
+                        if (fmt === "JSON") {
+                            var pvo = DataVillage.paletteObjFromLegacyJsonText(a.json());
+                            var json = DataVillage.paletteLegacyJsonFromObj(pvo);
+                            Sd.saveText(json, self.getName(a) + ".palette.vg.json", "application/json");
+                            return;
+                        }
+                        if (fmt === "PROTO") {
+                            var pvo = DataVillage.paletteObjFromLegacyJsonText(a.json());
+                            var bytes = DataProto.data.PaletteVillageObj.encode(pvo).finish();
+                            Sd.saveText(bytes, self.getName(a) + ".palette.vg.pb", "application/octet-stream");
+                            return;
+                        }
+                    };
+                    if (format == null) {
+                        var menu = new Qc;
+                        menu.addItem("JSON", function () { doSave("JSON"); });
+                        menu.addItem("PROTO", function () { doSave("PROTO"); });
+                        w.showMenu(menu);
+                        return;
+                    }
+                    doSave(format);
                 },
+
                 __class__: uc
             });
             var sh = function (a) {

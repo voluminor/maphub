@@ -2,10 +2,11 @@ import * as LimeShared from "./shared/lime.js";
 import * as OpenflShared from "./shared/openfl.js";
 import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
-
 import * as FuncProto from "./shared/proto.js";
-import * as FuncParse from "./shared/proto-parse.js";
-import * as ParamsProto from "./struct/params.js";
+
+import * as DataGeo from "./shared/data/data.js";
+import * as DataViewer from "./shared/data/Viewer.js";
+
 import * as DataProto from "./struct/data.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VIEWER}}`));
@@ -15437,13 +15438,17 @@ if (params !== null) (function (S, u) {
                 this.add(this.form);
                 this.tabs = new ri;
                 this.form.add(this.tabs);
-                var d = [new Ke("Load", p(this, this.onLoad)), new Ke("Apply", function () {
-                    if (GetParamName === "") {
-                        a(c.getPalette());
-                    }
-                }), new Ke("Save", function () {
-                    c.onSave(c.getPalette())
-                })];
+
+                var exportBtn = new Kg("Save", ["JSON","PROTO"], ["json","proto"]);
+                exportBtn.action.add(function (fmt) {
+                    c.onSave(c.getPalette(), fmt);
+                });
+
+                var d = [
+                    new Ke("Load", p(this, this.onLoad)),
+                    new Ke("Apply", function () {if (GetParamName === "") {a(c.getPalette());}}),
+                    exportBtn,
+                ];
                 if (null != b) {
                     for (var e = [], f = []; 0 < b.length;) e.push(b.shift()), f.push(b.shift());
                     b = new Kg("Preset", e, f);
@@ -15605,7 +15610,7 @@ if (params !== null) (function (S, u) {
                         b.addEventListener("complete", p(a, a.onPaletteLoaded));
                         b.load()
                     });
-                    var c = [new ti("Palette", "*.json")];
+                    var c = [new ti("Palette", "*.json;*.pb;")];
                     b.browse(c)
                 },
                 loadPreset: function (a) {
@@ -15614,9 +15619,14 @@ if (params !== null) (function (S, u) {
                 },
                 onPaletteLoaded: function (a) {
                     try {
-                        this.loadPalette(Lb.fromJSON(T.__cast(a.target, Of).data.toString()))
+                        var fr = T.__cast(a.target, Of);
+                        var pvo = DataViewer.decodePaletteFile(fr.name, fr.data);
+                        var legacyJson = DataViewer.paletteLegacyJsonFromObj(pvo);
+                        this.loadPalette(Lb.fromJSON(legacyJson));
                     } catch (b) {
-                        lc.show("Invalid palette file")
+                        Ia.lastError = b;
+                        b = fa.caught(b).unwrap();
+                        lc.show(n.string(b));
                     }
                 },
                 loadPalette: function (a) {
@@ -15708,8 +15718,15 @@ if (params !== null) (function (S, u) {
                     }
                     return a
                 },
-                onSave: function (a) {
-                    Og.saveText(a.json(), this.getName(a) + ".palette.vr.json", "application/json")
+                onSave: function (a, fmt) {
+                    var pvo = DataViewer.paletteObjFromLegacyJsonText(a.json());
+                    if (fmt === "proto") {
+                        var bytes = DataProto.data.PaletteViewerObj.encode(pvo).finish();
+                        Og.saveText(bytes, this.getName(a) + ".palette.vr.pb", "application/octet-stream");
+                    } else {
+                        var json = DataViewer.paletteLegacyJsonFromObj(pvo);
+                        Og.saveText(json, this.getName(a) + ".palette.vr.json", "application/json");
+                    }
                 },
                 __class__: nc
             });
@@ -18884,7 +18901,7 @@ if (params !== null) (function (S, u) {
                 },
                 load: function (a, b) {
                     if (null != a) try {
-                        var c = FuncParse.decodeCityFile(a, b);
+                        var c = DataGeo.decodeCityFile(a, b);
                         new bc(a, c)
                     } catch (d) {
                         Ia.lastError = d;

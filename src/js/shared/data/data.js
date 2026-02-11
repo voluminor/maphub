@@ -1,4 +1,65 @@
-import * as DataProto from "../struct/data.js";
+import * as DataProto from "../../struct/data.js";
+
+const TYPE_LABELS = {
+    GeoObj: { label: "City/Village", kind: "data" },
+    DwellingsObj: { label: "Dwellings", kind: "data" },
+    PaletteMfcgObj: { label: "MFCG", kind: "styles" },
+    PaletteVillageObj: { label: "Village", kind: "styles" },
+    PaletteGladeObj: { label: "Glade", kind: "styles" },
+    PaletteViewerObj: { label: "City", kind: "styles" },
+    PaletteDwellingsObj: { label: "Dwellings", kind: "styles" },
+    PaletteCaveObj: { label: "Cave", kind: "styles" }
+};
+
+export function describeRootType(typeName) {
+    let d = TYPE_LABELS[typeName];
+    if (d) return d;
+    return { label: String(typeName), kind: "data" };
+}
+
+export function createTypeMismatchError(expectedTypeName, actualTypeName) {
+    let e = describeRootType(expectedTypeName);
+    let a = describeRootType(actualTypeName);
+    let expectedText = e.kind === "styles" ? (e.label + " styles") : (e.label + " data");
+    let actualText = a.kind === "styles" ? (a.label + " styles") : (a.label + " data");
+    let verb = e.kind === "styles" ? "were" : "was";
+    return new Error("You uploaded " + actualText + ", but " + expectedText + " " + verb + " expected.");
+}
+
+function isPlainObject(v) {
+    return v != null && typeof v === "object" && !Array.isArray(v);
+}
+
+function hasAnyKey(obj, keys) {
+    if (!isPlainObject(obj)) return false;
+    for (let i = 0; i < keys.length; i++) if (Object.prototype.hasOwnProperty.call(obj, keys[i])) return true;
+    return false;
+}
+
+export function detectLegacyRootTypeName(obj) {
+    if (obj != null && typeof obj === "object" && Array.isArray(obj.floors) && obj.features == null) return "DwellingsObj";
+    if (obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features)) return "GeoObj";
+    if (!isPlainObject(obj)) return null;
+
+    if (isPlainObject(obj.colors) && isPlainObject(obj.misc) && isPlainObject(obj.strokes)) return "PaletteDwellingsObj";
+    if (isPlainObject(obj.colors) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.hatching)) return "PaletteCaveObj";
+
+    if (hasAnyKey(obj, ["walls1", "walls2", "roofs1", "roofs2", "sky1", "roofedTowers", "tree_shape"])) return "PaletteViewerObj";
+    if (hasAnyKey(obj, ["roofLight", "waterShallow", "waterDeep", "fontHeader", "outlineFields"])) return "PaletteVillageObj";
+    if (hasAnyKey(obj, ["thicket", "treeBands", "roadOutline", "grassLength"])) return "PaletteGladeObj";
+    if (hasAnyKey(obj, ["colorLight", "colorDark", "tintMethod", "weathering"])) return "PaletteMfcgObj";
+
+    if (hasAnyKey(obj, ["colorWalls", "colorProps", "colorWindows", "colorStairs", "colorRoof", "colorLabels", "strNormal10", "strGrid10", "alphaGrid", "alphaAO", "alphaLights", "fontRoom", "hatching"])) return "PaletteDwellingsObj";
+
+    if (hasAnyKey(obj, ["colorPage", "colorWater", "shadeAlpha", "shadowAlpha", "shadowDist", "strokeWall", "strokeDetail", "strokeHatch", "strokeGrid", "hatchingStrokes", "hatchingSize", "hatchingDistance", "hatchingStones"])) return "PaletteCaveObj";
+
+    return null;
+}
+
+export function assertExpectedLegacyRootType(expectedTypeName, obj) {
+    let actual = detectLegacyRootTypeName(obj);
+    if (actual != null && actual !== expectedTypeName) throw createTypeMismatchError(expectedTypeName, actual);
+}
 
 export function jsToProtoValue(v) {
     if (v === null || v === undefined) return { nullValue: 0 };
@@ -141,17 +202,80 @@ export function bytesToUtf8Text(data) {
     return data != null && typeof data.toString === "function" ? data.toString() : "";
 }
 
+const ROOT_DATA_TYPES = [
+    "GeoObj", "DwellingsObj", "PaletteMfcgObj", "PaletteVillageObj",
+    "PaletteGladeObj", "PaletteViewerObj", "PaletteDwellingsObj", "PaletteCaveObj"
+];
+
+function stripLengthDelimited(buf) {
+    let pos = 0, len = 0, shift = 0;
+    while (pos < buf.length && shift < 35) {
+        let c = buf[pos++];
+        len |= (c & 127) << shift;
+        if ((c & 128) === 0) break;
+        shift += 7;
+    }
+    if (pos <= 0 || pos >= buf.length) return null;
+    if (len <= 0 || pos + len > buf.length) return null;
+    return buf.subarray(pos, pos + len);
+}
+
+function tryDecodeProto(MessageType, buf) {
+    try { return { msg: MessageType.decode(buf), err: null }; } catch (e) {}
+    let inner = stripLengthDelimited(buf);
+    if (inner != null) {
+        try { return { msg: MessageType.decode(inner), err: null }; } catch (e2) {}
+    }
+    return { msg: null, err: null };
+}
+
+export function decodeDataFromFile(expectedTypeName, legacyJsonTextParser, data) {
+    let text = bytesToUtf8Text(data);
+    let isJson = false;
+    try {
+        JSON.parse(text);
+        isJson = true;
+    } catch (e) {}
+
+    if (isJson) {
+        try {
+            return legacyJsonTextParser(text);
+        } catch (e) {
+            let msg = e && e.message ? e.message : String(e);
+            if (msg.indexOf("An error occurred") === 0 || msg.indexOf("You uploaded ") === 0 ||
+                msg.indexOf("Unknown data format") === 0 || msg.indexOf("Invalid") === 0 ||
+                msg.indexOf("Palette has valid fields") === 0 || msg.indexOf("Expected ") === 0) throw e;
+            throw new Error("An error occurred while parsing: " + msg);
+        }
+    }
+
+    let b = toUint8Array(data);
+    if (b == null) throw new Error("Invalid data buffer.");
+
+    let expectedType = DataProto.data[expectedTypeName];
+    let result = tryDecodeProto(expectedType, b);
+    if (result.msg != null) return result.msg;
+
+    for (let i = 0; i < ROOT_DATA_TYPES.length; i++) {
+        if (ROOT_DATA_TYPES[i] === expectedTypeName) continue;
+        let otherType = DataProto.data[ROOT_DATA_TYPES[i]];
+        if (otherType == null) continue;
+        let otherResult = tryDecodeProto(otherType, b);
+        if (otherResult.msg != null) throw createTypeMismatchError(expectedTypeName, ROOT_DATA_TYPES[i]);
+    }
+
+    throw new Error("An error occurred while parsing: unknown protobuf decode error");
+}
+
 export function decodeCityFromJsonText(text) {
     let obj = null;
     try {
         obj = JSON.parse(text);
     } catch (e) {
-        throw new Error("An error occurred while parsing: "+ (e && e.message ? e.message : String(e)));
+        throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e)));
     }
 
-    if (obj != null && typeof obj === "object" && Array.isArray(obj.floors) && obj.features == null) {
-        throw new Error("These are Dwellings, not City/Village.");
-    }
+    assertExpectedLegacyRootType("GeoObj", obj);
 
     try {
         let protoObj = geoJsonToProtoObject(obj);
@@ -162,83 +286,17 @@ export function decodeCityFromJsonText(text) {
     } catch (e2) {
         let msgText2 = e2 && e2.message ? e2.message : String(e2);
         if (msgText2.indexOf("Unknown data format") === 0) throw e2;
-        throw new Error("An error occurred while parsing: "+ msgText2);
+        throw new Error("An error occurred while parsing: " + msgText2);
     }
 }
 
-export function decodeCityFromProtoBytes(bytes) {
-    let b = toUint8Array(bytes);
-    if (b == null) throw new Error("illegal buffer");
-
-    let lastErr = null;
-
-    function stripLengthDelimited(buf) {
-        let pos = 0, len = 0, shift = 0;
-        while (pos < buf.length && shift < 35) {
-            let c = buf[pos++];
-            len |= (c & 127) << shift;
-            if ((c & 128) === 0) break;
-            shift += 7;
-        }
-        if (pos <= 0 || pos >= buf.length) return null;
-        if (len <= 0 || pos + len > buf.length) return null;
-        return buf.subarray(pos, pos + len);
-    }
-
-    function tryDecode(MessageType, buf) {
-        try { return { msg: MessageType.decode(buf), err: null }; } catch (e) { lastErr = e; }
-        try { return { msg: MessageType.decodeDelimited(buf), err: null }; } catch (e2) { lastErr = e2; }
-
-        let inner = stripLengthDelimited(buf);
-        if (inner != null) {
-            try { return { msg: MessageType.decode(inner), err: null }; } catch (e3) { lastErr = e3; }
-            try { return { msg: MessageType.decodeDelimited(inner), err: null }; } catch (e4) { lastErr = e4; }
-        }
-        return { msg: null, err: lastErr };
-    }
-
-    function looksLikeCityGeoJson(o) {
-        return (
-            o != null &&
-            typeof o === "object" &&
-            o.type === "FeatureCollection" &&
-            Array.isArray(o.features) &&
-            o.features.length > 0
-        );
-    }
-
-    let geo = tryDecode(DataProto.data.GeoObj, b);
-    if (geo.msg != null) {
-        let cityObj = geoJsonFromProtoMessage(geo.msg);
-
-        if (looksLikeCityGeoJson(cityObj)) {
-            return cityObj;
-        }
-
-        let d1 = tryDecode(DataProto.data.DwellingsObj, b);
-        if (d1.msg != null) {
-            throw new Error("These are Dwellings, not City/Village.");
-        }
-
-        throw new Error("Unknown data format - expected City/Village: " + lastErr);
-    }
-
-    let dwell = tryDecode(DataProto.data.DwellingsObj, b);
-    if (dwell.msg != null) {
-        throw new Error("These are Dwellings, not City/Village.");
-    }
-
-    let errText = geo.err && geo.err.message ? geo.err.message : "unknown protobuf decode error";
-    throw new Error("An error occurred while parsing: " + errText);
+function decodeCityFromJsonTextAsProto(text) {
+    let obj = decodeCityFromJsonText(text);
+    let protoObj = geoJsonToProtoObject(obj);
+    return DataProto.data.GeoObj.fromObject(protoObj);
 }
 
 export function decodeCityFile(name, data) {
-    let ext = "";
-    if (name != null) {
-        let parts = String(name).split(".");
-        if (parts.length > 1) ext = String(parts.pop()).toLowerCase();
-    }
-    if (ext === "proto" || ext === "pb" || ext === "bin") return decodeCityFromProtoBytes(data);
-    let text = bytesToUtf8Text(data);
-    return decodeCityFromJsonText(text);
+    let msg = decodeDataFromFile("GeoObj", decodeCityFromJsonTextAsProto, data);
+    return geoJsonFromProtoMessage(msg);
 }

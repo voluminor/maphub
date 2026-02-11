@@ -1,36 +1,60 @@
 # Fantasy MapHub Generators
 
+[Перейти к Русской версии](./README.RU.md)
+
+## Technical part
+
+### Build and publishing
+
+To build, it’s enough to run `npm run build` so that the project is fully built into the `dist` folder.
+
+To make it available locally in the browser, run `npm run preview`.
+
+When deploying to a server, it’s enough to move the contents of the `dist` folder to the root.
+
+### Other features
+
+This project is built based on predefined values and page templates; to make changes, it’s enough to interact with these files:
+
+-[package.json](./package.json)
+-[static.config.mjs](./static.config.mjs)
+-[pages.config.mjs](./pages.config.mjs)
+
+If needed, you can “cut out” only one specific generator — at the code level they are self-contained and independent of their neighbors.
+
+Work with data is built on the proto-first principle, while keeping support for older JSON export formats. If you plan to create your own solution using this generator, I recommend relying only on binary proto files, because JSON import/export is primarily focused on supporting older variants and the original watabou generators. Proto files, in turn, guarantee long-term support even if new functionality is added — old saved files will be supported in new versions without losing backward compatibility.
+
 ## About the project
 
-This project is a consolidation into a single project of map generators by [watabou](https://github.com/watabou/) that he published on [watabou.github.io](https://watabou.github.io). Not all of them are publicly available, and even what is available is written in a not-so-popular language.
+This project is a consolidation into one project of map generators by [watabou](https://github.com/watabou/) that he published at [watabou.github.io](https://watabou.github.io). Not all of them are publicly available, and even what is available is written in a not-so-popular language.
 
-I took the web version with the JS implementation and made many changes to it.
+I took the web version implemented in JS and made many changes to it.
 
-The work is not finished yet; you could say that the work of restructuring the JS code into a more maintainable format hasn’t even started. But it’s already usable now: all the old functionality is preserved, and importing from files works as well.
+The work is not finished yet; the final goal is to get a fully self-contained generator and editor that requires no external resources and can conveniently describe an entire world, from a high level (planet) down to a low level (houses, clearings, and caves).
 
-### What was changed globally:
+### What was changed overall:
 
-* These generators are now fully local. That is, they work without the internet: all connections are internal, and the downloadable files are included with the project.
-* Maximum automation has been implemented. You can conveniently assemble it for your use case by interacting only with constructors and JSON parameters.
-* I wrote an `openapi.json` for the generators and made it available directly through RapiDoc.
-* I changed the marshalling approach to make it proto-first. For now, partially (schema export), but in the future I might take it to its logical conclusion and palettes will be implemented as well.
-* I added import/export to a binary file: pure protobuf. Backward compatibility is preserved.
-* I tried to standardize the context menu so that items in different generators are in the same places and have the same names. I also added functionality for those generators that didn’t have it (`Permalink...`, `Fullscreen`).
-* I added the ability to open towns and villages directly in the 3D viewer (`View in 3D`).
-* I made the dialogs more user-friendly (for example, City Viewer now clearly states what the problem is during import).
-* I added prefixes for exported files (`*.palette.mf.json`, `*.mf.json`) so you can understand what relates to what without looking inside.
-* I published it as a standalone [web resource](https://maphub.webtools.download), including a [PWA](https://en.wikipedia.org/wiki/Progressive_web_app), which makes it possible to install it as an application that doesn’t require the internet.
+- These generators are now fully local. That is, they can work without the internet: all connections are internal, and the downloaded files are included in the project.
+- Maximum automation has been implemented. You can conveniently assemble everything for your use case by interacting only with constructors and JSON parameters.
+- I wrote `openapi.json` for the generators and made it available directly via RapiDoc.
+- I changed the marshalling approach, making it proto-first.
+- I added import/export to a binary file: pure protobuf. Backward compatibility is preserved.
+- I tried to standardize the context menu so that items in different generators are in the same places and have the same names. I also added functionality for those generators that didn’t have it (`Permalink...`, `Fullscreen`).
+- I added the ability to open cities and villages directly in the 3D viewer (`View in 3D`).
+- I made dialogs more user-friendly (for example, it now clearly reports what the problem is during import).
+- I added prefixes for exported files (`*.palette.mf.json`, `*.mf.json`) so it’s clear what relates to what without looking inside.
+- I published it as a separate [web resource](https://maphub.webtools.download), including a [PWA](https://en.wikipedia.org/wiki/Progressive_web_app), which makes it possible to install it as an app that doesn’t need the internet.
 
 ### Plans for the future:
 
-* Move palette import/export to proto.
-* Add export for the Cave/Glade Generator.
-* Add the ability to import schemas from a file for all generators except City Viewer (since City Viewer already has import).
-* Add a 3D visualizer for buildings (separate or simply expand City Viewer’s functionality).
-* Add an extended export mode that transfers names, labels, and other fields.
-* Add generation of Cave/Glade pointers in the Medieval-Fantasy-City/Village Generator.
-* After extended export, it will be possible to link the Cave/Glade/Dwellings Generator and the Medieval-Fantasy-City/Village Generator.
-* Make it separately buildable, or extend the current one, with a list of saved maps and palettes directly in the app.
+- ~~Move palette import/export to proto.~~
+- Add export for Cave/Glade Generator.
+- Add the ability to import schemes from a file for all generators except City Viewer (since City Viewer already has import).
+- Add a 3D visualizer for buildings (separate or just extend City Viewer functionality).
+- Add an advanced export mode that transfers names, labels, and other fields.
+- Add generation of Cave/Glade pointers in Medieval-Fantasy-City/Village Generator.
+- After advanced export, it will be possible to link Cave/Glade/Dwellings Generator and Medieval-Fantasy-City/Village Generator.
+- Make it separately buildable or extend the current build with a list of saved maps and palettes directly in the app.
 
 ## Gallery
 
@@ -56,7 +80,7 @@ The work is not finished yet; you could say that the work of restructuring the J
 
 ![to\_viewer](.github/img/to_viewer.png)
 
-### Example of the installed app
+### Example of an installed app
 
 #### Installed on a phone: a separate icon, works even without the internet
 
@@ -68,7 +92,7 @@ The work is not finished yet; you could say that the work of restructuring the J
 
 ## CONTRIBUTING
 
-If you want to join or just fix a bug, send a pull request with a description.
+If you want to join or just fix a bug — send a pull request with a description.
 
 ## LICENSE
 

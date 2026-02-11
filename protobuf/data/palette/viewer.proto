@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package data;
+
+import "data/palette/global.proto";
+
+// // // //
+
+enum PaletteTowerPlanType {
+  PALETTE_TOWER_PLAN_UNSPECIFIED = 0;
+  round = 1;
+  square = 2;
+}
+
+enum PaletteTreeShapeType {
+  PALETTE_TREE_SHAPE_UNSPECIFIED = 0;
+  ellipsoid = 1;
+  cone = 2;
+}
+
+// //
+
+message PaletteColorsObj {
+  PaletteRgbObj ground = 1;
+  PaletteRgbObj fields = 2;
+  PaletteRgbObj greens = 3;
+  PaletteRgbObj foliage = 4;
+  PaletteRgbObj roads = 5;
+  PaletteRgbObj water = 6;
+  PaletteRgbObj walls1 = 7;
+  PaletteRgbObj walls2 = 8;
+  PaletteRgbObj roofs1 = 9;
+  PaletteRgbObj roofs2 = 10;
+}
+
+message PaletteLightingObj {
+  PaletteRgbObj sky1 = 1;
+  PaletteRgbObj sky2 = 2;
+  PaletteRgbObj sun = 3;
+  float sun_pos = 4;
+  float ambience = 5;
+  PaletteRgbObj windows = 6;
+  float lighted = 7;
+}
+
+message PaletteShapesObj {
+  float pitch = 1;
+  bool roofed_towers = 2;
+  PaletteTowerPlanType towers = 3;
+  PaletteTreeShapeType tree_shape = 4;
+}
+
+//
+
+message PaletteViewerObj {
+  PaletteColorsObj colors = 1;
+  PaletteLightingObj lighting = 2;
+  PaletteShapesObj shapes = 3;
+}

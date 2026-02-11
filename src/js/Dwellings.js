@@ -2,9 +2,10 @@ import * as LimeShared from "./shared/lime.js";
 import * as OpenflShared from "./shared/openfl.js";
 import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
-
 import * as FuncProto from "./shared/proto.js";
-import * as ParamsProto from "./struct/params.js";
+
+import * as DataDwellings from "./shared/data/Dwellings.js";
+
 import * as DataProto from "./struct/data.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_DWELLINGS}}`));
@@ -4727,11 +4728,15 @@ var $lime_init = function (K, v) {
                 this.add(this.form);
                 this.tabs = new Lh;
                 this.form.add(this.tabs);
-                var d = [new wb("Load", m(this, this.onLoad)), new wb("Apply", function () {
-                    a(c.getPalette())
-                }), new wb("Save", function () {
-                    c.onSave(c.getPalette())
-                })];
+                var exportBtn = new cf("Save", ["JSON","PROTO"], ["json","proto"]);
+                exportBtn.action.add(function (fmt) {
+                    c.onSave(c.getPalette(), fmt);
+                });
+                var d = [
+                    new wb("Load", m(this, this.onLoad)),
+                    new wb("Apply", function () { a(c.getPalette()) }),
+                    exportBtn
+                ];
                 if (null != b) {
                     for (var g = [], f = []; 0 < b.length;) g.push(b.shift()), f.push(b.shift());
                     b = new cf("Preset",
@@ -4903,7 +4908,7 @@ var $lime_init = function (K, v) {
                         b.addEventListener("complete", m(a, a.onPaletteLoaded));
                         b.load()
                     });
-                    var c = [new xk("Palette", "*.json")];
+                    var c = [new xk("Palette", "*.json;*.pb;")];
                     b.browse(c)
                 },
                 loadPreset: function (a) {
@@ -4912,10 +4917,15 @@ var $lime_init = function (K, v) {
                 },
                 onPaletteLoaded: function (a) {
                     try {
-                        this.loadPalette($c.fromJSON(Ua.__cast(a.target, Zg).data.toString()))
+                        var fr = Ua.__cast(a.target, Zg);
+                        var pdo = DataDwellings.decodePaletteFile(fr.name, fr.data);
+                        var legacyJson = DataDwellings.paletteLegacyJsonFromObj(pdo);
+                        this.loadPalette($c.fromJSON(legacyJson));
                     } catch (b) {
-                        bc.show("Invalid palette file")
+                        b = aa.caught(b).unwrap();
+                        bc.show(E.string(b));
                     }
+
                 },
                 loadPalette: function (a) {
                     for (var b = 0, c = this.values; b < c.length;) {
@@ -5006,9 +5016,15 @@ var $lime_init = function (K, v) {
                     }
                     return a
                 },
-                onSave: function (a) {
-                    id.saveText(a.json(),
-                        this.getName(a) + ".palette.dw.json", "application/json")
+                onSave: function (a, fmt) {
+                    var pdo = DataDwellings.paletteObjFromLegacyJsonText(a.json());
+                    if (fmt === "proto") {
+                        var bytes = DataProto.data.PaletteDwellingsObj.encode(pdo).finish();
+                        id.saveText(bytes, this.getName(a) + ".palette.dw.pb", "application/octet-stream");
+                    } else {
+                        var json = DataDwellings.paletteLegacyJsonFromObj(pdo);
+                        id.saveText(json, this.getName(a) + ".palette.dw.json", "application/json");
+                    }
                 },
                 __class__: Sb
             });

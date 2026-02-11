@@ -2,10 +2,10 @@ import * as LimeShared from "./shared/lime.js";
 import * as OpenflShared from "./shared/openfl.js";
 import * as HaxeShared from "./shared/haxe.js";
 import * as OthersShared from "./shared/others.js";
-
 import * as FuncProto from "./shared/proto.js";
-import * as ParamsProto from "./struct/params.js";
-import * as DataProto from "./struct/data.js";
+
+import * as DataCave from "./shared/data/Cave.js";
+import * as DataGlade from "./shared/data/Glade.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_CAVE}}`));
 
@@ -3956,8 +3956,9 @@ var $lime_init = function (A, r) {
                 L.colorSand = a.getColor("sand", L.colorInk);
                 L.colorShadow = a.getColor("shadowColor", 9869742);
                 L.shadowLength = a.getFloat("shadowLength", 1);
-                L.shadowDir =
-                    a.getInt("shadowAngle", 60) / 180 * Math.PI;
+                var angle = a.getInt("shadowAngle", 361);
+                361 == angle && (angle = a.getInt("shadowDir", 60));
+                L.shadowDir = angle / 180 * Math.PI;
                 L.strokeNormal = a.getFloat("strokeNormal", 1);
                 L.strokeThin = a.getFloat("strokeThin", .5);
                 L.strokeGrid = a.getFloat("strokeGrid", .3);
@@ -4052,8 +4053,8 @@ var $lime_init = function (A, r) {
                 null == d && (d = .5);
                 (n.seed = 48271 *
                     n.seed % 2147483647 | 0) / 2147483647 < d ? (a.setColor("shadowColor", Ta.hsl(210 + 30 * (((n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647) / 3 * 2 - 1), .5 * Math.abs(((n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647) / 2 - 1), 1 - Math.abs(((n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed %
-                    2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647) / 2 - 1))), a.setFloat("shadowLength", Math.pow(2, ((n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647) / 3 * 2 - 1)), a.setInt("shadowDir", Math.round(90 * (((n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647) / 3)))) : (a.setColor("shadowColor",
-                    16777215), a.setFloat("shadowLength", 0), a.setInt("shadowDir", 0));
+                    2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647) / 2 - 1))), a.setFloat("shadowLength", Math.pow(2, ((n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647) / 3 * 2 - 1)), a.setInt("shadowAngle", Math.round(90 * (((n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647) / 3)))) : (a.setColor("shadowColor",
+                    16777215), a.setFloat("shadowLength", 0), a.setInt("shadowAngle", 0));
                 d = Ta.rgb2hsv(b);
                 d.x = Ta.lerpHue(d.x, 220, (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647);
                 d.y *= Math.pow(2, ((n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647 + (n.seed = 48271 * n.seed % 2147483647 | 0) / 2147483647) / 3 * 2 - 1);
@@ -6038,6 +6039,7 @@ var $lime_init = function (A, r) {
                             a.applyPalette(b)
                         }, "Parchment parchment Moonlight moonlight B&W bw".split(" "));
                         b.getName = $b.swatches("cave", ["colorPage", "colorFloor"]);
+                        b.paletteCodec = DataCave;
                         ja.fillForm(b);
                         Fa.showDialog(b, "Style")
                     }
@@ -6137,6 +6139,7 @@ var $lime_init = function (A, r) {
                             b.loadPalette(L.getRandom())
                         };
                         b.getName = $b.swatches("glade", ["ground", "tree", "thicket"]);
+                        b.paletteCodec = DataGlade;
                         L.fillForm(b);
                         Fa.showDialog(b, "Style")
                     }
@@ -8571,11 +8574,13 @@ var $lime_init = function (A, r) {
                 this.add(this.form);
                 this.tabs = new $g;
                 this.form.add(this.tabs);
+                var save = new gg("Save", ["JSON", "PROTO"], ["JSON", "PROTO"]);
+                save.action.add(function (a) {
+                    c.onSave(c.getPalette(), a)
+                });
                 var d = [new Zd("Load", l(this, this.onLoad)), new Zd("Apply", function () {
                     a(c.getPalette())
-                }), new Zd("Save", function () {
-                    c.onSave(c.getPalette())
-                })];
+                }), save];
                 if (null != b) {
                     for (var f = [], h = []; 0 < b.length;) f.push(b.shift()), h.push(b.shift());
                     b = new gg("Preset", f, h);
@@ -8798,7 +8803,7 @@ var $lime_init = function (A, r) {
                         b.addEventListener("complete", l(a, a.onPaletteLoaded));
                         b.load()
                     });
-                    var c = [new Ji("Palette", "*.json")];
+                    var c = [new Ji("Palette", "*.json;*.pb")]
                     b.browse(c)
                 },
                 loadPreset: function (a) {
@@ -8807,9 +8812,17 @@ var $lime_init = function (A, r) {
                 },
                 onPaletteLoaded: function (a) {
                     try {
-                        this.loadPalette(ec.fromJSON(Pa.__cast(a.target, jg).data.toString()))
-                    } catch (b) {
-                        Ac.show("Invalid palette file")
+                        var fr = Pa.__cast(a.target, jg);
+                        if (null != this.paletteCodec) {
+                            var p = this.paletteCodec.decodePaletteFile(fr.name, fr.data);
+                            var legacyJson = this.paletteCodec.paletteLegacyJsonFromObj(p);
+                            this.loadPalette(ec.fromJSON(legacyJson));
+                        } else {
+                            this.loadPalette(ec.fromJSON(fr.data.toString()));
+                        }
+                    } catch (e) {
+                        var msg = e && e.message ? e.message : "Invalid palette file";
+                        Ac.show(msg);
                     }
                 },
                 loadPalette: function (a) {
@@ -8903,8 +8916,51 @@ var $lime_init = function (A, r) {
                     }
                     return a
                 },
-                onSave: function (a) {
-                    Ld.saveText(a.json(), this.getName(a) + ".palette.cv.json", "application/json")
+                onSave: function (a, b) {
+                    var self = this;
+                    if (null == self.paletteCodec) {
+                        Ld.saveText(a.json(), self.getName(a) + ".palette.cv.json", "application/json");
+                        return;
+                    }
+
+                    var saveJson = function () {
+                        try {
+                            var p = self.paletteCodec.paletteObjFromLegacyJsonText(a.json());
+                            var text = self.paletteCodec.paletteLegacyJsonFromObj(p);
+                            Ld.saveText(text, self.getName(a) + ".palette.cv.json", "application/json");
+                        } catch (e) {
+                            Ac.show(e && e.message ? e.message : String(e));
+                        }
+                    };
+
+                    var saveProto = function () {
+                        try {
+                            var p = self.paletteCodec.paletteObjFromLegacyJsonText(a.json());
+                            var bytes = self.paletteCodec.paletteProtoBytesFromObj(p);
+                            var fname = self.getName(a) + ".palette.cv.pb";
+                            window.saveAs(new Blob([bytes], { type: "application/x-protobuf" }), Ld.fixName(fname), !0);
+                        } catch (e) {
+                            Ac.show(e && e.message ? e.message : String(e));
+                        }
+                    };
+
+                    if ("JSON" == b) {
+                        saveJson();
+                        return;
+                    }
+                    if ("PROTO" == b) {
+                        saveProto();
+                        return;
+                    }
+
+                    var menu = new Yc;
+                    menu.addItem("JSON", function () {
+                        self.onSave(a, "JSON");
+                    });
+                    menu.addItem("PROTO", function () {
+                        self.onSave(a, "PROTO");
+                    });
+                    Fa.showMenu(menu);
                 },
                 __class__: $b
             });
