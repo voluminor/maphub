@@ -44,7 +44,7 @@ function wipeBytes(input, byteOffset, byteLength) {
     }
 }
 
-function pack(input, number, opts) {
+export function exportBin(input, number, opts) {
     const inputOffset = opts && opts.inputOffset;
     const inputLength = opts && opts.inputLength;
 
@@ -69,7 +69,7 @@ function pack(input, number, opts) {
     return out;
 }
 
-function unpack(input, opts) {
+export function importBin(input, opts) {
     const inputOffset = opts && opts.inputOffset;
     const inputLength = opts && opts.inputLength;
 
@@ -104,4 +104,3 @@ function unpack(input, opts) {
 
     return { number: num, buffer: bodyBuffer };
 }
-
