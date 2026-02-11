@@ -24,6 +24,27 @@ If needed, you can “cut out” only one specific generator — at the code lev
 
 Work with data is built on the proto-first principle, while keeping support for older JSON export formats. If you plan to create your own solution using this generator, I recommend relying only on binary proto files, because JSON import/export is primarily focused on supporting older variants and the original watabou generators. Proto files, in turn, guarantee long-term support even if new functionality is added — old saved files will be supported in new versions without losing backward compatibility.
 
+### Binary file structure
+
+All binary files are generated from proto definitions located in the [protobuf](./protobuf) directory.
+
+Import accepts both raw binary proto objects from root structures and objects wrapped in a typed envelope with CRC32.
+
+The envelope follows a simple format: `|DataType uint32|{protobuf binary}|crc32IEEE({protobuf binary})`
+
+Type identifiers are also defined in proto: [DataType](./protobuf/data/enum.proto)
+
+Root structures:
+
+- [GeoObj](./protobuf/data/geo/obj.proto)
+- [DwellingsObj](./protobuf/data/dwellings/obj.proto)
+- [PaletteMfcgObj](./protobuf/data/palette/mfcg.proto)
+- [PaletteVillageObj](./protobuf/data/palette/village.proto)
+- [PaletteDwellingsObj](./protobuf/data/palette/dwellings.proto)
+- [PaletteViewerObj](./protobuf/data/palette/viewer.proto)
+- [PaletteCaveObj](./protobuf/data/palette/cave.proto)
+- [PaletteGladeObj](./protobuf/data/palette/glade.proto)
+
 ## About the project
 
 This project is a consolidation into one project of map generators by [watabou](https://github.com/watabou/) that he published at [watabou.github.io](https://watabou.github.io). Not all of them are publicly available, and even what is available is written in a not-so-popular language.

@@ -9,7 +9,15 @@ import {
     readProp,
     toUint8Array,
     bytesToUtf8Text,
+    detectLegacyRootType,
+    describeRootType,
+    createTypeMismatchError,
+    decodeDataFromFile,
+    encodeDataToBytes,
 } from "../../../src/js/shared/data/data.js";
+import { data as DataProto } from "../../../src/js/struct/data.js";
+
+const DT = DataProto.DataType;
 
 // ─── jsToProtoValue / protoValueToJs roundtrip ──────────────────
 
@@ -238,5 +246,153 @@ describe("bytesToUtf8Text", () => {
 
     it("returns empty string for empty-ish input", () => {
         expect(bytesToUtf8Text(null)).toBe("");
+    });
+});
+
+// ─── detectLegacyRootType ──────────────────────────────────────
+
+describe("detectLegacyRootType", () => {
+    it("detects GeoObj as DataType.geo", () => {
+        expect(detectLegacyRootType({ type: "FeatureCollection", features: [] })).toBe(DT.geo);
+    });
+
+    it("detects DwellingsObj as DataType.dwellings", () => {
+        expect(detectLegacyRootType({ floors: [{}] })).toBe(DT.dwellings);
+    });
+
+    it("detects PaletteCaveObj as DataType.palette_cave", () => {
+        expect(detectLegacyRootType({ colors: {}, shadow: {}, strokes: {}, hatching: {} })).toBe(DT.palette_cave);
+    });
+
+    it("detects PaletteDwellingsObj as DataType.palette_dwellings", () => {
+        expect(detectLegacyRootType({ colors: {}, misc: {}, strokes: {} })).toBe(DT.palette_dwellings);
+    });
+
+    it("detects PaletteViewerObj by key", () => {
+        expect(detectLegacyRootType({ walls1: "#000" })).toBe(DT.palette_viewer);
+    });
+
+    it("detects PaletteVillageObj by key", () => {
+        expect(detectLegacyRootType({ roofLight: "#000" })).toBe(DT.palette_village);
+    });
+
+    it("detects PaletteGladeObj by key", () => {
+        expect(detectLegacyRootType({ thicket: "#000" })).toBe(DT.palette_glade);
+    });
+
+    it("detects PaletteMfcgObj by key", () => {
+        expect(detectLegacyRootType({ colorLight: "#000" })).toBe(DT.palette_mfcg);
+    });
+
+    it("returns null for unrecognized object", () => {
+        expect(detectLegacyRootType({ unknownKey: 1 })).toBeNull();
+    });
+
+    it("returns null for null", () => {
+        expect(detectLegacyRootType(null)).toBeNull();
+    });
+
+    it("returns null for non-object", () => {
+        expect(detectLegacyRootType("string")).toBeNull();
+    });
+});
+
+// ─── describeRootType ──────────────────────────────────────────
+
+describe("describeRootType", () => {
+    it("returns label and kind for DataType.geo", () => {
+        const d = describeRootType(DT.geo);
+        expect(d.label).toBe("City/Village");
+        expect(d.kind).toBe("data");
+    });
+
+    it("returns label and kind for DataType.palette_cave", () => {
+        const d = describeRootType(DT.palette_cave);
+        expect(d.label).toBe("Cave");
+        expect(d.kind).toBe("styles");
+    });
+
+    it("returns fallback for unknown type", () => {
+        const d = describeRootType(999);
+        expect(d.label).toBe("999");
+        expect(d.kind).toBe("data");
+    });
+});
+
+// ─── createTypeMismatchError ───────────────────────────────────
+
+describe("createTypeMismatchError", () => {
+    it("creates error for data type mismatch", () => {
+        const err = createTypeMismatchError(DT.geo, DT.dwellings);
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toContain("City/Village");
+        expect(err.message).toContain("Dwellings");
+    });
+
+    it("creates error for styles type mismatch", () => {
+        const err = createTypeMismatchError(DT.palette_cave, DT.palette_mfcg);
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toContain("Cave styles");
+        expect(err.message).toContain("MFCG styles");
+    });
+});
+
+// ─── decodeDataFromFile with DataType ──────────────────────────
+
+describe("decodeDataFromFile", () => {
+    it("decodes JSON via legacy parser", () => {
+        const jsonText = JSON.stringify({ type: "FeatureCollection", features: [] });
+        const bytes = new TextEncoder().encode(jsonText);
+        const parser = (text) => JSON.parse(text);
+        const result = decodeDataFromFile(DT.geo, parser, bytes);
+        expect(result.type).toBe("FeatureCollection");
+    });
+
+    it("decodes proto binary for matching type", () => {
+        const msg = DataProto.PaletteCaveObj.fromObject({ colors: {} });
+        const protoBytes = DataProto.PaletteCaveObj.encode(msg).finish();
+        const result = decodeDataFromFile(DT.palette_cave, () => { throw new Error("not JSON"); }, protoBytes);
+        expect(result).toBeTruthy();
+    });
+
+    it("throws on invalid data", () => {
+        expect(() => decodeDataFromFile(DT.geo, () => { throw new Error("not JSON"); }, new Uint8Array([0, 0, 0, 0, 0]))).toThrow();
+    });
+});
+
+// ─── encodeDataToBytes / decodeDataFromFile bin-verify roundtrip ─
+
+describe("encodeDataToBytes / decodeDataFromFile bin-verify roundtrip", () => {
+    it("roundtrips proto via bin-verify frame", () => {
+        const msg = DataProto.PaletteCaveObj.fromObject({ colors: {} });
+        const raw = DataProto.PaletteCaveObj.encode(msg).finish();
+        const frame = encodeDataToBytes(DT.palette_cave, raw);
+        expect(frame).toBeInstanceOf(ArrayBuffer);
+        expect(frame.byteLength).toBe(raw.length + 8);
+        const decoded = decodeDataFromFile(DT.palette_cave, () => { throw new Error("not JSON"); }, frame);
+        expect(decoded).toBeTruthy();
+    });
+
+    it("throws type mismatch for mismatched bin-verify frame", () => {
+        const msg = DataProto.PaletteCaveObj.fromObject({ colors: {} });
+        const raw = DataProto.PaletteCaveObj.encode(msg).finish();
+        const frame = encodeDataToBytes(DT.palette_cave, raw);
+        expect(() => decodeDataFromFile(DT.palette_mfcg, () => { throw new Error("not JSON"); }, frame)).toThrow("You uploaded");
+    });
+
+    it("falls back to raw proto decode on CRC mismatch", () => {
+        const msg = DataProto.PaletteCaveObj.fromObject({ colors: {} });
+        const raw = DataProto.PaletteCaveObj.encode(msg).finish();
+        const decoded = decodeDataFromFile(DT.palette_cave, () => { throw new Error("not JSON"); }, raw);
+        expect(decoded).toBeTruthy();
+    });
+
+    it("throws on corrupted bin-verify frame", () => {
+        const msg = DataProto.PaletteCaveObj.fromObject({ colors: {} });
+        const raw = DataProto.PaletteCaveObj.encode(msg).finish();
+        const frame = encodeDataToBytes(DT.palette_cave, raw);
+        const u8 = new Uint8Array(frame);
+        u8[5] ^= 0xFF;
+        expect(() => decodeDataFromFile(DT.palette_cave, () => { throw new Error("not JSON"); }, frame)).toThrow();
     });
 });

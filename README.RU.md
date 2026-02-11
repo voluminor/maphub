@@ -24,6 +24,27 @@
 
 Работа с данными построена на принципе proto-first, но с сохранением поддержки старых json-форматов экспорта. Если Вы планируете создавать свое решение с использованием данного генератора, рекомендую рассчитывать только на бинарные proto-файлы так как импорт/экспорт в json сфокусирован в первую очередь на поддержке старых вариантов и первоначальных watabou-генераторов. proto-файлы в свою очередь гарантируют долгосрочную поддержку даже в случае добавления нового функционала - старые сохраненные файлы будут поддерживаться и в новых версиях, без потери обратной совместимости.
 
+### Формирование бинарных файлов
+
+Все бинарные файлы формируются на основании proto-файлов которые лежат в папке: [protobuf](./protobuf)
+
+Импорт принимает как прямые бинарные прото-обьекты из корневых структур, так и обернутые в указатель типа с CRC32.
+
+Обертка формируется простым правилом: `|DataType uint32|{protobuf binary}|crc32IEEE({protobuf binary})`
+
+Указатели так же в proto: [DataType](./protobuf/data/enum.proto)
+
+Список корневых структур:
+
+- [GeoObj](./protobuf/data/geo/obj.proto)
+- [DwellingsObj](./protobuf/data/dwellings/obj.proto)
+- [PaletteMfcgObj](./protobuf/data/palette/mfcg.proto)
+- [PaletteVillageObj](./protobuf/data/palette/village.proto)
+- [PaletteDwellingsObj](./protobuf/data/palette/dwellings.proto)
+- [PaletteViewerObj](./protobuf/data/palette/viewer.proto)
+- [PaletteCaveObj](./protobuf/data/palette/cave.proto)
+- [PaletteGladeObj](./protobuf/data/palette/glade.proto)
+
 ## О проекте
 
 Этот проект — объединение в один проект генераторов карт от [watabou](https://github.com/watabou/), которые он публиковал на [watabou.github.io](https://watabou.github.io). Не все из них доступны публично, а даже то, что доступно, написано на не самом популярном языке.

@@ -47,47 +47,47 @@ message PaletteVillageTerrainObj {
 }
 
 message PaletteVillageHousesObj {
-  repeated PaletteRgbObj roofLight = 1;
-  PaletteRgbObj roofStroke = 2;
-  float roofVariance = 3;
-  float roofSlope = 4;
-  PaletteVillageRoofType roofType = 5;
+  repeated PaletteRgbObj roof_light = 1;
+  PaletteRgbObj roof_stroke = 2;
+  float roof_variance = 3;
+  float roof_slope = 4;
+  PaletteVillageRoofType roof_type = 5;
 }
 
 message PaletteVillageRoadsObj {
   PaletteRgbObj road = 1;
-  float largeRoad = 2;
-  float smallRoad = 3;
-  PaletteVillageOutlineType outlineRoads = 4;
-  bool mergeRoads = 5;
+  float large_road = 2;
+  float small_road = 3;
+  PaletteVillageOutlineType outline_roads = 4;
+  bool merge_roads = 5;
 }
 
 message PaletteVillageFieldsObj {
-  repeated PaletteRgbObj fieldLight = 1;
-  PaletteRgbObj fieldFurrow = 2;
-  float fieldVariance = 3;
-  PaletteVillageOutlineType outlineFields = 4;
+  repeated PaletteRgbObj field_light = 1;
+  PaletteRgbObj field_furrow = 2;
+  float field_variance = 3;
+  PaletteVillageOutlineType outline_fields = 4;
 }
 
 message PaletteVillageWaterObj {
-  PaletteRgbObj waterShallow = 1;
-  PaletteRgbObj waterDeep = 2;
-  PaletteRgbObj waterTide = 3;
-  uint32 shallowBands = 4;
+  PaletteRgbObj water_shallow = 1;
+  PaletteRgbObj water_deep = 2;
+  PaletteRgbObj water_tide = 3;
+  uint32 shallow_bands = 4;
 }
 
 message PaletteVillageTreesObj {
   repeated PaletteRgbObj tree = 1;
   PaletteRgbObj thicket = 2;
-  PaletteRgbObj treeDetails = 3;
+  PaletteRgbObj tree_details = 3;
   float treeVariance = 4;
-  PaletteVillageTreeShapeType treeShape = 5;
+  PaletteVillageTreeShapeType tree_shape = 5;
 }
 
 message PaletteVillageLightingObj {
-  PaletteRgbObj shadowColor = 1;
-  float shadowLength = 2;
-  uint32 shadowAngleDeg = 3;
+  PaletteRgbObj shadow_color = 1;
+  float shadow_length = 2;
+  uint32 shadow_angle_deg = 3;
   PaletteRgbObj lights = 4;
 }
 
@@ -100,8 +100,8 @@ message PaletteVillageTextObj {
 message PaletteVillageMiscObj {
   PaletteRgbObj ink = 1;
   PaletteRgbObj paper = 2;
-  float strokeNormal = 3;
-  float strokeThin = 4;
+  float stroke_normal = 3;
+  float stroke_thin = 4;
 }
 
 //

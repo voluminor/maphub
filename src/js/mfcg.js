@@ -5,8 +5,11 @@ import * as OthersShared from "./shared/others.js";
 import * as FuncProto from "./shared/proto.js";
 
 import * as DataMfcg from "./shared/data/mfcg.js";
+import * as FuncBin from "./shared/data/bin-verify.js";
 
 import * as DataProto from "./struct/data.js";
+import {paletteProtoBytesFromObj} from "./shared/data/mfcg.js";
+import {exportBin} from "./shared/data/bin-verify.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_MFCG}}`));
 
@@ -7882,7 +7885,8 @@ var $lime_init = function (A, t) {
             };
             be.asPROTO = function () {
                 var a = Ub.instance, b = lg.export(a), c = DataProto.data.GeoObj.encode(b).finish();
-                a = a.name, ge.saveBinary(Td.fromArrayBuffer(c.buffer), "" + a + ".mf.pb", "application/x-protobuf")
+                var bb = FuncBin.exportBin(c, DataProto.data.DataType.geo);
+                a = a.name, ge.saveBinary(Td.fromArrayBuffer(bb), "" + a + ".mf.pb", "application/x-protobuf")
             };
             var lg = function () {
             };

@@ -1,6 +1,7 @@
 import * as DataProto from "../../struct/data.js";
-import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes } from "./data.js";
 import * as PaletteFunc from "./palette.js";
+import * as FuncBin from "./bin-verify.js";
 
 const COLOR_SPECS = [
     { legacy: "colorInk", proto: "ink" },
@@ -120,7 +121,7 @@ function paletteDwellingsObjFromLegacyJsonInternal(obj) {
     if (!isPlainObject(obj)) throw PaletteFunc.unknownPalette();
     if (Array.isArray(obj.floors) && obj.features == null) throw new Error("Dwellings, not Palette.");
 
-    assertExpectedLegacyRootType("PaletteDwellingsObj", obj);
+    assertExpectedLegacyRootType(DataProto.data.DataType.palette_dwellings, obj);
 
     if (isPlainObject(obj.colors) && isPlainObject(obj.strokes) && isPlainObject(obj.misc)) {
         return normalizePaletteDwellingsObjLike(obj);
@@ -212,10 +213,11 @@ export function paletteLegacyJsonFromObj(pdo) {
 
 export function paletteProtoBytesFromObj(pdo) {
     let n = normalizePaletteDwellingsObjLike(pdo);
-    return DataProto.data.PaletteDwellingsObj.encode(n).finish();
+    let raw = DataProto.data.PaletteDwellingsObj.encode(n).finish();
+    return encodeDataToBytes(DataProto.data.DataType.palette_dwellings, raw);
 }
 
 export function decodePaletteFile(name, data) {
-    let msg = decodeDataFromFile("PaletteDwellingsObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile(DataProto.data.DataType.palette_dwellings, paletteObjFromLegacyJsonText, data);
     return normalizePaletteDwellingsObjLike(msg);
 }

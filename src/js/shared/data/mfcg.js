@@ -1,6 +1,7 @@
 import * as DataProto from "../../struct/data.js";
-import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes } from "./data.js";
 import * as PaletteFunc from "./palette.js";
+import * as FuncBin from "./bin-verify.js";
 
 const LEGACY_KEYS = [
     "colorPaper","colorLight","colorDark","colorRoof","colorWater","colorGreen","colorRoad","colorWall","colorTree","colorLabel",
@@ -101,7 +102,7 @@ export function paletteObjFromLegacyJsonText(text) {
     let obj = null;
     try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
 
-    assertExpectedLegacyRootType("PaletteMfcgObj", obj);
+    assertExpectedLegacyRootType(DataProto.data.DataType.palette_mfcg, obj);
 
     if (obj != null && typeof obj === "object" && !Array.isArray(obj)) {
         let c = obj.colors;
@@ -186,10 +187,11 @@ export function paletteLegacyJsonFromObj(pmo) {
 
 export function paletteProtoBytesFromObj(pmo) {
     let n = normalizePaletteMfcgObjLike(pmo);
-    return DataProto.data.PaletteMfcgObj.encode(n).finish();
+    let raw = DataProto.data.PaletteMfcgObj.encode(n).finish();
+    return encodeDataToBytes(DataProto.data.DataType.palette_mfcg, raw);
 }
 
 export function decodePaletteFile(name, data) {
-    let msg = decodeDataFromFile("PaletteMfcgObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile(DataProto.data.DataType.palette_mfcg, paletteObjFromLegacyJsonText, data);
     return normalizePaletteMfcgObjLike(msg);
 }

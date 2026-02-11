@@ -180,11 +180,11 @@ describe("Cave: import/export roundtrip", () => {
 // ─── paletteProtoBytesFromObj ───────────────────────────────────
 
 describe("Cave: paletteProtoBytesFromObj", () => {
-    it("returns Uint8Array", () => {
+    it("returns ArrayBuffer", () => {
         const msg = paletteObjFromLegacyJsonText(validCaveJsonText());
         const bytes = paletteProtoBytesFromObj(msg);
-        expect(bytes).toBeInstanceOf(Uint8Array);
-        expect(bytes.length).toBeGreaterThan(0);
+        expect(bytes).toBeInstanceOf(ArrayBuffer);
+        expect(bytes.byteLength).toBeGreaterThan(0);
     });
 
     it("proto bytes can be decoded back via decodePaletteFile", () => {

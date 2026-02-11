@@ -1,6 +1,7 @@
 import * as DataProto from "../../struct/data.js";
-import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes } from "./data.js";
 import * as PaletteFunc from "./palette.js";
+import * as FuncBin from "./bin-verify.js";
 
 const LEGACY_KEYS = [
     "ink", "marks", "tree", "ground", "treeDetails", "thicket",
@@ -147,7 +148,7 @@ export function paletteObjFromLegacyJsonText(text) {
     let obj = null;
     try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
 
-    assertExpectedLegacyRootType("PaletteGladeObj", obj);
+    assertExpectedLegacyRootType(DataProto.data.DataType.palette_glade, obj);
 
     if (isPlainObject(obj) && isPlainObject(obj.colors) && isPlainObject(obj.trees) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.misc)) {
         return normalizePaletteGladeObjLike(obj);
@@ -329,10 +330,11 @@ export function paletteLegacyJsonFromObj(p) {
 
 export function paletteProtoBytesFromObj(m) {
     let n = normalizePaletteGladeObjLike(m);
-    return DataProto.data.PaletteGladeObj.encode(n).finish();
+    let raw = DataProto.data.PaletteGladeObj.encode(n).finish();
+    return encodeDataToBytes(DataProto.data.DataType.palette_glade, raw);
 }
 
 export function decodePaletteFile(name, data) {
-    let msg = decodeDataFromFile("PaletteGladeObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile(DataProto.data.DataType.palette_glade, paletteObjFromLegacyJsonText, data);
     return normalizePaletteGladeObjLike(msg);
 }

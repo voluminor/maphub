@@ -1,5 +1,5 @@
 import * as DataProto from "../../struct/data.js";
-import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes } from "./data.js";
 import * as PaletteFunc from "./palette.js";
 
 const LEGACY_KEYS = [
@@ -85,7 +85,7 @@ export function paletteObjFromLegacyJsonText(text) {
 
     if (!isPlainObject(obj)) throw PaletteFunc.unknownPalette();
 
-    assertExpectedLegacyRootType("PaletteCaveObj", obj);
+    assertExpectedLegacyRootType(DataProto.data.DataType.palette_cave, obj);
 
     if (isPlainObject(obj.colors) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.hatching)) {
         return normalizePaletteCaveObjLike(obj);
@@ -152,10 +152,11 @@ export function paletteLegacyJsonFromObj(m) {
 
 export function paletteProtoBytesFromObj(m) {
     let n = normalizePaletteCaveObjLike(m);
-    return DataProto.data.PaletteCaveObj.encode(n).finish();
+    let raw = DataProto.data.PaletteCaveObj.encode(n).finish();
+    return encodeDataToBytes(DataProto.data.DataType.palette_cave, raw);
 }
 
 export function decodePaletteFile(name, data) {
-    let msg = decodeDataFromFile("PaletteCaveObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile(DataProto.data.DataType.palette_cave, paletteObjFromLegacyJsonText, data);
     return normalizePaletteCaveObjLike(msg);
 }

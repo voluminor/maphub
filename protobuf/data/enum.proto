@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package data;
+
+// // // //
+
+enum DataType {
+  DATA_UNSPECIFIED = 0;
+  geo = 1;
+  dwellings = 2;
+  reserved 3 to 19;
+
+  palette_cave = 20;
+  palette_glade = 21;
+  palette_dwellings = 22;
+  palette_mfcg = 23;
+  palette_village = 24;
+  palette_viewer = 25;
+  reserved 26 to 59;
+};

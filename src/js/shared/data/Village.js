@@ -1,6 +1,7 @@
 import * as DataProto from "../../struct/data.js";
-import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes } from "./data.js";
 import * as PaletteFunc from "./palette.js";
+import * as FuncBin from "./bin-verify.js";
 
 const LEGACY_KEYS = [
     "ground", "relief", "sand", "plank",
@@ -294,7 +295,7 @@ export function paletteObjFromLegacyJsonText(text) {
     let obj = null;
     try { obj = JSON.parse(text); } catch (e) { throw new Error("An error occurred while parsing: " + (e && e.message ? e.message : String(e))); }
 
-    assertExpectedLegacyRootType("PaletteVillageObj", obj);
+    assertExpectedLegacyRootType(DataProto.data.DataType.palette_village, obj);
 
     if (isPlainObject(obj) && isPlainObject(obj.terrain) && isPlainObject(obj.houses) && isPlainObject(obj.roads) && isPlainObject(obj.fields) && isPlainObject(obj.water) && isPlainObject(obj.trees) && isPlainObject(obj.lighting) && isPlainObject(obj.text) && isPlainObject(obj.misc)) {
         return normalizePaletteVillageObjLike(obj);
@@ -436,10 +437,11 @@ export function paletteLegacyJsonFromObj(p) {
 
 export function paletteProtoBytesFromObj(p) {
     let n = normalizePaletteVillageObjLike(p);
-    return DataProto.data.PaletteVillageObj.encode(n).finish();
+    let raw = DataProto.data.PaletteVillageObj.encode(n).finish();
+    return encodeDataToBytes(DataProto.data.DataType.palette_village, raw);
 }
 
 export function decodePaletteFile(name, data) {
-    let msg = decodeDataFromFile("PaletteVillageObj", paletteObjFromLegacyJsonText, data);
+    let msg = decodeDataFromFile(DataProto.data.DataType.palette_village, paletteObjFromLegacyJsonText, data);
     return normalizePaletteVillageObjLike(msg);
 }

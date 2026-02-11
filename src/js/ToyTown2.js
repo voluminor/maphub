@@ -15721,7 +15721,7 @@ if (params !== null) (function (S, u) {
                 onSave: function (a, fmt) {
                     var pvo = DataViewer.paletteObjFromLegacyJsonText(a.json());
                     if (fmt === "proto") {
-                        var bytes = DataProto.data.PaletteViewerObj.encode(pvo).finish();
+                        var bytes = DataViewer.paletteProtoBytesFromObj(pvo);
                         Og.saveText(bytes, this.getName(a) + ".palette.vr.pb", "application/octet-stream");
                     } else {
                         var json = DataViewer.paletteLegacyJsonFromObj(pvo);
