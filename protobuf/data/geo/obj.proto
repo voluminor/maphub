@@ -3,7 +3,7 @@ syntax = "proto3";
 package data;
 
 import "google/protobuf/struct.proto";
-import "data/geo_enum.proto";
+import "data/geo/enum.proto";
 
 // // // //
 
