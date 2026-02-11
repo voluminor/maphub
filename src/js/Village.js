@@ -7,6 +7,7 @@ import * as FuncProto from "./shared/proto.js";
 import * as DataVillage from "./shared/data/Village.js";
 
 import * as DataProto from "./struct/data.js";
+import * as FuncBin from "./shared/data/bin-verify.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VILLAGE}}`));
 
@@ -4922,15 +4923,14 @@ var $lime_init = function (E, u) {
                     var self = this;
 
                     var doSave = function(fmt) {
+                        var pvo = DataVillage.paletteObjFromLegacyJsonText(a.json());
                         if (fmt === "JSON") {
-                            var pvo = DataVillage.paletteObjFromLegacyJsonText(a.json());
                             var json = DataVillage.paletteLegacyJsonFromObj(pvo);
                             Sd.saveText(json, self.getName(a) + ".palette.vg.json", "application/json");
                             return;
                         }
                         if (fmt === "PROTO") {
-                            var pvo = DataVillage.paletteObjFromLegacyJsonText(a.json());
-                            var bytes = DataProto.data.PaletteVillageObj.encode(pvo).finish();
+                            var bytes = DataVillage.paletteProtoBytesFromObj(pvo);
                             Sd.saveText(bytes, self.getName(a) + ".palette.vg.pb", "application/octet-stream");
                             return;
                         }
@@ -9406,9 +9406,9 @@ var $lime_init = function (E, u) {
                     var b = Hh.getProto(a), c = Hh.stringifyProto(b);
                     return Sd.saveText(c, a.name + ".vg.json", "application/json"), b
                 }, Hh.exportBinary = function (a) {
-                var b = Hh.getProto(a), c = DataProto.data.GeoObj.encode(b).finish(),
-                    d = wd.fromArrayBuffer(c.buffer.slice(c.byteOffset, c.byteOffset + c.byteLength));
-                return Sd.saveBinary(d, a.name + ".vg.pb", "application/x-protobuf"), b
+                var b = Hh.getProto(a), c = DataProto.data.GeoObj.encode(b).finish();
+                var d = FuncBin.exportBin(c, DataProto.data.DataType.geo);
+                return Sd.saveBinary(wd.fromArrayBuffer(d), a.name + ".vg.pb", "application/x-protobuf"), b
             },
                 Hh.getData = function (a) {
                     Ua.CX = 0, Ua.CY = 0, Ua.SCALE = .7;

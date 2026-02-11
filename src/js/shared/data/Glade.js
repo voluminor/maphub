@@ -1,6 +1,7 @@
 import * as DataProto from "../../struct/data.js";
-import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes } from "./data.js";
 import * as PaletteFunc from "./palette.js";
+import * as FuncBin from "./bin-verify.js";
 
 const LEGACY_KEYS = [
     "ink", "marks", "tree", "ground", "treeDetails", "thicket",
@@ -329,7 +330,8 @@ export function paletteLegacyJsonFromObj(p) {
 
 export function paletteProtoBytesFromObj(m) {
     let n = normalizePaletteGladeObjLike(m);
-    return DataProto.data.PaletteGladeObj.encode(n).finish();
+    let raw = DataProto.data.PaletteGladeObj.encode(n).finish();
+    return encodeDataToBytes(DataProto.data.DataType.palette_glade, raw);
 }
 
 export function decodePaletteFile(name, data) {

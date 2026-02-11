@@ -1,6 +1,7 @@
 import * as DataProto from "../../struct/data.js";
-import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes } from "./data.js";
 import * as PaletteFunc from "./palette.js";
+import * as FuncBin from "./bin-verify.js";
 
 const COLOR_SPECS = [
     { legacy: "colorInk", proto: "ink" },
@@ -212,7 +213,8 @@ export function paletteLegacyJsonFromObj(pdo) {
 
 export function paletteProtoBytesFromObj(pdo) {
     let n = normalizePaletteDwellingsObjLike(pdo);
-    return DataProto.data.PaletteDwellingsObj.encode(n).finish();
+    let raw = DataProto.data.PaletteDwellingsObj.encode(n).finish();
+    return encodeDataToBytes(DataProto.data.DataType.palette_dwellings, raw);
 }
 
 export function decodePaletteFile(name, data) {

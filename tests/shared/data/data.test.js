@@ -13,6 +13,7 @@ import {
     describeRootType,
     createTypeMismatchError,
     decodeDataFromFile,
+    encodeDataToBytes,
 } from "../../../src/js/shared/data/data.js";
 import { data as DataProto } from "../../../src/js/struct/data.js";
 
@@ -356,5 +357,42 @@ describe("decodeDataFromFile", () => {
 
     it("throws on invalid data", () => {
         expect(() => decodeDataFromFile(DT.geo, () => { throw new Error("not JSON"); }, new Uint8Array([0, 0, 0, 0, 0]))).toThrow();
+    });
+});
+
+// ─── encodeDataToBytes / decodeDataFromFile bin-verify roundtrip ─
+
+describe("encodeDataToBytes / decodeDataFromFile bin-verify roundtrip", () => {
+    it("roundtrips proto via bin-verify frame", () => {
+        const msg = DataProto.PaletteCaveObj.fromObject({ colors: {} });
+        const raw = DataProto.PaletteCaveObj.encode(msg).finish();
+        const frame = encodeDataToBytes(DT.palette_cave, raw);
+        expect(frame).toBeInstanceOf(ArrayBuffer);
+        expect(frame.byteLength).toBe(raw.length + 8);
+        const decoded = decodeDataFromFile(DT.palette_cave, () => { throw new Error("not JSON"); }, frame);
+        expect(decoded).toBeTruthy();
+    });
+
+    it("throws type mismatch for mismatched bin-verify frame", () => {
+        const msg = DataProto.PaletteCaveObj.fromObject({ colors: {} });
+        const raw = DataProto.PaletteCaveObj.encode(msg).finish();
+        const frame = encodeDataToBytes(DT.palette_cave, raw);
+        expect(() => decodeDataFromFile(DT.palette_mfcg, () => { throw new Error("not JSON"); }, frame)).toThrow("You uploaded");
+    });
+
+    it("falls back to raw proto decode on CRC mismatch", () => {
+        const msg = DataProto.PaletteCaveObj.fromObject({ colors: {} });
+        const raw = DataProto.PaletteCaveObj.encode(msg).finish();
+        const decoded = decodeDataFromFile(DT.palette_cave, () => { throw new Error("not JSON"); }, raw);
+        expect(decoded).toBeTruthy();
+    });
+
+    it("throws on corrupted bin-verify frame", () => {
+        const msg = DataProto.PaletteCaveObj.fromObject({ colors: {} });
+        const raw = DataProto.PaletteCaveObj.encode(msg).finish();
+        const frame = encodeDataToBytes(DT.palette_cave, raw);
+        const u8 = new Uint8Array(frame);
+        u8[5] ^= 0xFF;
+        expect(() => decodeDataFromFile(DT.palette_cave, () => { throw new Error("not JSON"); }, frame)).toThrow();
     });
 });

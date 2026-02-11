@@ -1,4 +1,5 @@
 import * as DataProto from "../../struct/data.js";
+import { importBin, exportBin } from "./bin-verify.js";
 
 const DT = DataProto.data.DataType;
 
@@ -12,8 +13,6 @@ const DATA_TYPE_INFO = {
     [DT.palette_dwellings]:  { MessageType: DataProto.data.PaletteDwellingsObj, label: "Dwellings",    kind: "styles" },
     [DT.palette_cave]:       { MessageType: DataProto.data.PaletteCaveObj,      label: "Cave",         kind: "styles" },
 };
-
-const ALL_DATA_TYPES = Object.keys(DATA_TYPE_INFO).map(Number);
 
 export function describeRootType(dataType) {
     let d = DATA_TYPE_INFO[dataType];
@@ -229,6 +228,10 @@ function tryDecodeProto(MessageType, buf) {
     return { msg: null, err: null };
 }
 
+export function encodeDataToBytes(dataType, protoBytes) {
+    return exportBin(protoBytes, dataType);
+}
+
 export function decodeDataFromFile(expectedDataType, legacyJsonTextParser, data) {
     let text = bytesToUtf8Text(data);
     let isJson = false;
@@ -253,17 +256,30 @@ export function decodeDataFromFile(expectedDataType, legacyJsonTextParser, data)
     if (b == null) throw new Error("Invalid data buffer.");
 
     let expectedInfo = DATA_TYPE_INFO[expectedDataType];
+
+    let binResult = null;
+    try {
+        binResult = importBin(b);
+    } catch (binErr) {}
+
+    if (binResult != null) {
+        if (binResult.number !== expectedDataType) {
+            let actualInfo = DATA_TYPE_INFO[binResult.number];
+            if (actualInfo != null) throw createTypeMismatchError(expectedDataType, binResult.number);
+            throw new Error("An error occurred while parsing: unknown data type " + binResult.number);
+        }
+        let payload = new Uint8Array(binResult.buffer);
+        try {
+            return expectedInfo.MessageType.decode(payload);
+        } catch (decErr) {
+            throw new Error("An error occurred while parsing: " + (decErr && decErr.message ? decErr.message : String(decErr)));
+        }
+    }
+
     let result = tryDecodeProto(expectedInfo.MessageType, b);
     if (result.msg != null) return result.msg;
 
-    for (let i = 0; i < ALL_DATA_TYPES.length; i++) {
-        if (ALL_DATA_TYPES[i] === expectedDataType) continue;
-        let otherInfo = DATA_TYPE_INFO[ALL_DATA_TYPES[i]];
-        let otherResult = tryDecodeProto(otherInfo.MessageType, b);
-        if (otherResult.msg != null) throw createTypeMismatchError(expectedDataType, ALL_DATA_TYPES[i]);
-    }
-
-    throw new Error("An error occurred while parsing: unknown protobuf decode error");
+    throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
 }
 
 export function decodeCityFromJsonText(text) {

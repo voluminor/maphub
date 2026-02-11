@@ -1,6 +1,7 @@
 import * as DataProto from "../../struct/data.js";
-import { assertExpectedLegacyRootType, decodeDataFromFile } from "./data.js";
+import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes } from "./data.js";
 import * as PaletteFunc from "./palette.js";
+import * as FuncBin from "./bin-verify.js";
 
 const COLOR_KEYS = ["ground", "fields", "greens", "foliage", "roads", "water", "walls1", "walls2", "roofs1", "roofs2"];
 const LIGHTING_COLOR_KEYS = ["sky1", "sky2", "sun", "windows"];
@@ -202,7 +203,8 @@ export function paletteLegacyJsonFromObj(pvo) {
 
 export function paletteProtoBytesFromObj(pvo) {
     let n = normalizePaletteViewerObjLike(pvo);
-    return DataProto.data.PaletteViewerObj.encode(n).finish();
+    let raw = DataProto.data.PaletteViewerObj.encode(n).finish();
+    return encodeDataToBytes(DataProto.data.DataType.palette_viewer, raw);
 }
 
 export function decodePaletteFile(name, data) {

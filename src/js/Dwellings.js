@@ -7,6 +7,7 @@ import * as FuncProto from "./shared/proto.js";
 import * as DataDwellings from "./shared/data/Dwellings.js";
 
 import * as DataProto from "./struct/data.js";
+import * as FuncBin from "./shared/data/bin-verify.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_DWELLINGS}}`));
 
@@ -5019,7 +5020,7 @@ var $lime_init = function (K, v) {
                 onSave: function (a, fmt) {
                     var pdo = DataDwellings.paletteObjFromLegacyJsonText(a.json());
                     if (fmt === "proto") {
-                        var bytes = DataProto.data.PaletteDwellingsObj.encode(pdo).finish();
+                        var bytes = DataDwellings.paletteProtoBytesFromObj(pdo);
                         id.saveText(bytes, this.getName(a) + ".palette.dw.pb", "application/octet-stream");
                     } else {
                         var json = DataDwellings.paletteLegacyJsonFromObj(pdo);
@@ -6567,10 +6568,9 @@ var $lime_init = function (K, v) {
                 return b
             };
             sb.exportAsProto=function(a){
-                var b=sb.exportProto(a),c=DataProto.data.DwellingsObj.encode(b).finish(),d=c.buffer.slice(c.byteOffset,c.byteOffset+c.byteLength);
-                c=Pd.fromArrayBuffer(d);
-                d=id.fixName(a.name);
-                id.saveBinary(c,d+".dw.pb","application/x-protobuf");
+                var b=sb.exportProto(a),c=DataProto.data.DwellingsObj.encode(b).finish();
+                var d = FuncBin.exportBin(c, DataProto.data.DataType.dwellings);
+                id.saveBinary(Pd.fromArrayBuffer(d),id.fixName(a.name)+".dw.pb","application/x-protobuf");
                 return b
             };
             sb.house2proto=function(a){
