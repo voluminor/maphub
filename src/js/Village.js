@@ -15899,12 +15899,8 @@ var $lime_init = function (E, u) {
                     var d = new Qc;
                     d.addItem("PNG", (G = this.view, r(G, G.exportPNG)));
                     d.addItem("SVG", (G = this.view, r(G, G.exportSVG)));
-                    d.addItem("JSON", function () {
-                        Hh.export(a.village)
-                    });
-                    d.addItem("PROTO", function () {
-                        Hh.exportBinary(a.village)
-                    });
+                    d.addItem("JSON", function () {Hh.export(a.village)});
+                    d.addItem("PROTO", function () {Hh.exportBinary(a.village)});
                     var f = new Qc,
                         h = this.view;
                     h = this.village.findBuilding(new I(h.map.get_mouseX(), h.map.get_mouseY()));

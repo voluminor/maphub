@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package data;
+
+import "data/dwellings/enum.proto";
+import "data/dwellings/types.proto";
+
+// // // //
+
+message DwellingsLightObj {
+  DwellingsPointObj pos = 1;
+  float radius = 2;
+  float power = 3;
+  bool on = 4;
+}
+
+message DwellingsPropObj {
+  DwellingsPropType kind = 1;
+  DwellingsPointObj pos = 2;
+  DwellingsEdgeObj wall = 3;
+  DwellingsEdgeObj from_edge = 4;
+  DwellingsEdgeObj to_edge = 5;
+}

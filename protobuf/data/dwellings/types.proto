@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package data;
+
+import "data/dwellings/enum.proto";
+
+// // // //
+
+message DwellingsCellObj {
+  int32 i = 1;
+  int32 j = 2;
+}
+
+message DwellingsPointObj {
+  float x = 1;
+  float y = 2;
+}
+
+message DwellingsEdgeObj {
+  DwellingsCellObj cell = 1;
+  DwellingsDirectionType dir = 2;
+}

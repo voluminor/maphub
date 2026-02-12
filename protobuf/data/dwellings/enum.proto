@@ -18,3 +18,22 @@ enum DwellingsDoorType {
   DOORWAY = 2;
   REGULAR = 3;
 }
+
+
+enum DwellingsPropType {
+  PROP_UNSPECIFIED = 0;
+  ALTAR = 1;
+  STATUE = 2;
+  CURTAIN = 3;
+  BED = 4;
+}
+
+enum DwellingsArchitectureType {
+  ARCHITECTURE_UNSPECIFIED = 0;
+
+  simple = 1;
+  castle = 2;
+  logs = 3;
+  modern = 4;
+  scifi = 5;
+}
