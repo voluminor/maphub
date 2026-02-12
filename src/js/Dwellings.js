@@ -6579,7 +6579,7 @@ var $lime_init = function (K, v) {
                 a.basement!=null&&b.push(sb.plan2proto(a.basement,a.chimneys));
                 var c=new DataProto.data.DwellingsObj({floors:b,exit:sb.edge2proto(a.floors[0].entrance.door)});
                 a.floors[0].spiral!=null&&(c.spiral=sb.edge2proto(a.floors[0].spiral.entrance));
-                a.name!=null&&a.name!="";
+                a.name!=null&&a.name!=""&&(c.embedName=a.name);
                 var e=ib.get("architecture");
                 if(e!=null){var f=DataProto.data.DwellingsArchitectureType[e];f!==void 0&&(c.embedArchitecture=f)}
                 return c
@@ -6735,6 +6735,15 @@ var $lime_init = function (K, v) {
                     b=="doorway"?ad.DOORWAY:
                         b=="regular"?ad.REGULAR:null
             };
+            sb._typeFromId=function(a){
+                if(a==null)return null;
+                var b=(""+a).toLowerCase();
+                for(var c=Object.keys(Z),d=0;d<c.length;){
+                    var g=c[d++],f=Z[g];
+                    if(f!=null&&typeof f=="object"&&f.__class__==Z&&f.name!=null&&(""+f.name).toLowerCase()==b)return f
+                }
+                return null
+            };
             sb._collectBounds=function(a,b){
                 if(a==null)return;
                 var c=a.i,d=a.j;
@@ -6760,6 +6769,17 @@ var $lime_init = function (K, v) {
             };
             sb.importFromProtoJson=function(a,b){
                 if(a==null||a.floors==null||a.floors.length==0)throw new Error("empty");
+                var embedName=a.embedName;
+                console.log(embedName, a);
+                if(embedName==null||(""+embedName).trim()=="")throw new Error("Your schema is outdated and import cannot be performed.");
+                var arch=a.embedArchitecture;
+                if(arch!=null){
+                    var archName=typeof arch=="number"?DataProto.data.DwellingsArchitectureType[arch]:""+arch;
+                    archName=archName!=null?(""+archName).toLowerCase():null;
+                    archName!=null&&archName!=""&&archName!="architecture_unspecified"&&hb.setStyle(archName)
+                }
+
+
                 var c={minI:Infinity,minJ:Infinity,maxI:-Infinity,maxJ:-Infinity};
                 var d=0,g=a.floors;
                 for(d=0;d<g.length;){
@@ -6785,10 +6805,7 @@ var $lime_init = function (K, v) {
 
                 var house=Object.create(fd.prototype);
                 house.bp=Xd.random(0);
-                var nm=null==b?"Imported":Rd.withoutDirectory(""+b);
-                var ext=Rd.extension(nm);
-                null!=ext&&0<ext.length&&(nm=nm.substr(0,nm.length-ext.length-1));
-                house.name=(nm&&nm.length?nm:"Imported").replace(/\.dw$/,"");
+                house.name=(""+embedName).trim();
                 house.floors=[];
                 house.basement=null;
                 house.rooms=[];
@@ -6830,6 +6847,13 @@ var $lime_init = function (K, v) {
                     plan.spiral=null;
                     plan.stairwell=null;
                     plan.__importLevel=level;
+                    var chim=fp.embedChimneys;
+                    if(chim!=null&&chim.length>0){
+                        for(var ci2=0;ci2<chim.length;ci2++){
+                            var chcell=sb._cellFromJson(chim[ci2],mi,mj,grid);
+                            chcell!=null&&house.chimneys.set(chcell,level)
+                        }
+                    }
 
                     for(r=0;r<rms.length;r++){
                         var rr=rms[r];
@@ -6846,7 +6870,58 @@ var $lime_init = function (K, v) {
                         if(ra.length==0)continue;
                         var contour=grid.outline(ra);
                         var room=new Ck(plan,contour);
+                        room.area=ra;
+                        room.narrow=ra;
                         room.name=rr.name!=null?rr.name:null;
+                        var rt=sb._typeFromId(rr.embedTypeId);
+                        rt!=null&&(room.type=rt);
+                        var el=rr.embedLight;
+                        if(el!=null&&el.pos!=null){
+                            var lp=el.pos;
+                            room.light=new Dc(new F(lp.x,lp.y),el.radius,el.power);
+                            room.light.on=el.on!=null?el.on:!0
+                        }
+                        var dec=rr.embedDecor;
+                        if(dec!=null&&dec.length>0){
+                            room.clutter=new Hd(room);
+                            var shapes=[];
+                            for(var gi=0;gi<dec.length;gi++){
+                                var polysObj=dec[gi].polygons||[];
+                                var polys=[];
+                                for(var pi=0;pi<polysObj.length;pi++){
+                                    var ptsObj=polysObj[pi].points||[];
+                                    var pts=[];
+                                    for(var ti=0;ti<ptsObj.length;ti++){
+                                        var pt=ptsObj[ti];
+                                        pts.push(new F(pt.x,pt.y))
+                                    }
+                                    polys.push(pts)
+                                }
+                                shapes.push(polys)
+                            }
+                            room.clutter.shapes=shapes
+                        }
+                        var props=rr.embedProps;
+                        if(props!=null&&props.length>0){
+                            for(var pp=0;pp<props.length;pp++){
+                                var pr=props[pp];
+                                var kind=pr.kind;
+                                typeof kind=="number"&&(kind=DataProto.data.DwellingsPropType[kind]);
+                                kind=kind!=null?(""+kind).toUpperCase():null;
+                                if(kind=="ALTAR"){
+                                    var wall=pr.wall!=null?sb._edgeFromJson(pr.wall,mi,mj,grid):null;
+                                    wall!=null&&room.props.add(new Xh(wall))
+                                }else if(kind=="STATUE"){
+                                    var stp=pr.pos;
+                                    stp!=null&&room.props.add(new ng(new F(stp.x,stp.y)))
+                                }else if(kind=="CURTAIN"){
+                                    var fe=pr.fromEdge!=null?sb._edgeFromJson(pr.fromEdge,mi,mj,grid):null;
+                                    var te=pr.toEdge!=null?sb._edgeFromJson(pr.toEdge,mi,mj,grid):null;
+                                    fe!=null&&te!=null&&room.props.add(new di(fe,te))
+                                }
+                            }
+                            room.props.update()
+                        }
                         plan.rooms.push(room)
                     }
 
@@ -9362,14 +9437,21 @@ var $lime_init = function (K, v) {
                         var msg = c && c.message || "" + c;
                         if (msg === "empty") msg = "The file is empty or contains no floor data.";
                         else if (msg === "bad bounds") msg = "The file contains invalid geometry data.";
+                        console.error(msg);
                         ma.showToast(msg)
                     }
                 },
                 applyImportedHouse: function (a) {
                     fd.inst = a;
                     this.house = a;
+                    this.permalinkDisabled=!1;
+                    const url = new URL(window.location);
+                    url.search = '?import_mode=1';
+                    window.history.replaceState({}, document.title, url);
+                    this.house.updateProps();
                     sd.curFloor = 0;
                     this.floor.update(this.house);
+                    this.permalinkDisabled=!0;
                     this.floor.select(sd.curFloor);
                     this.updateView()
                 },
@@ -9914,7 +9996,7 @@ var $lime_init = function (K, v) {
                     this.fillExportMenu(g);
                     a.addItem("Import...", m(this, this.importPlan));
                     0 < g.items.length && a.addSubmenu("Export as", g);
-                    a.addItem("Permalink...", m(this, this.onPermalink));
+                    a.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
 
                     a.addSeparator();
                     a.addItem("Parameters...", m(this, this.showParams));
@@ -9933,6 +10015,7 @@ var $lime_init = function (K, v) {
                     a.addItem("Advanced...", m(this, this.multiExport))
                 },
                 reset: function (a) {
+                    this.permalinkDisabled=!1;
                     ub.prototype.reset.call(this, a);
                     this.floor.update(this.house);
                     this.floor.select(sd.curFloor);

@@ -1,7 +1,6 @@
 import * as DataProto from "../../struct/data.js";
 import { assertExpectedLegacyRootType, decodeDataFromFile, encodeDataToBytes, enumToNumber } from "./data.js";
 import * as PaletteFunc from "./palette.js";
-import * as FuncBin from "./bin-verify.js";
 
 const COLOR_SPECS = [
     { legacy: "colorInk", proto: "ink" },
@@ -222,67 +221,226 @@ export function decodePaletteFile(name, data) {
     return normalizePaletteDwellingsObjLike(msg);
 }
 
-function dwellingsEdgeToProto(e) {
-    if (e == null) return null;
-    let out = {};
-    if (e.cell != null) out.cell = { i: e.cell.i | 0, j: e.cell.j | 0 };
-    if (e.dir != null) out.dir = enumToNumber(DataProto.data.DwellingsDirectionType, e.dir, null);
-    return out;
-}
-
 function dwellingsJsonToProtoObject(obj) {
     if (obj == null || typeof obj !== "object") return null;
-    let out = {};
-    if (obj.exit != null) out.exit = dwellingsEdgeToProto(obj.exit);
-    if (obj.spiral != null) out.spiral = dwellingsEdgeToProto(obj.spiral);
-    if (Array.isArray(obj.floors)) {
+
+    const src = (obj && typeof obj === "object" && obj.dwellings && typeof obj.dwellings === "object" && Array.isArray(obj.dwellings.floors))
+        ? obj.dwellings
+        : obj;
+
+    const isObj = (v) => v != null && typeof v === "object" && !Array.isArray(v);
+
+    const toEnum = (E, v, fallback) => {
+        let n = enumToNumber(E, v, null);
+        if (n == null && typeof v === "string") {
+            const t = v.trim();
+            n = enumToNumber(E, t, null);
+            if (n == null) n = enumToNumber(E, t.toLowerCase(), null);
+            if (n == null) n = enumToNumber(E, t.toUpperCase(), null);
+        }
+        if (n == null && typeof v === "number" && Number.isFinite(v)) n = v | 0;
+        if (n == null || E[n] === undefined) return fallback;
+        return n | 0;
+    };
+
+    const toCell = (c) => {
+        if (c == null) return null;
+        if (Array.isArray(c)) {
+            if (c.length < 2) return null;
+            return { i: (c[0] | 0), j: (c[1] | 0) };
+        }
+        if (isObj(c)) {
+            if (c.i != null && c.j != null) return { i: (c.i | 0), j: (c.j | 0) };
+            if (c.x != null && c.y != null) return { i: (c.x | 0), j: (c.y | 0) };
+        }
+        return null;
+    };
+
+    const toPoint = (p) => {
+        if (p == null) return null;
+        if (Array.isArray(p)) {
+            if (p.length < 2) return null;
+            const x = Number(p[0]);
+            const y = Number(p[1]);
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+            return { x, y };
+        }
+        if (isObj(p)) {
+            const x = Number(p.x);
+            const y = Number(p.y);
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+            return { x, y };
+        }
+        return null;
+    };
+
+    const toEdge = (e) => {
+        if (e == null) return null;
+        const out = {};
+        const cell = toCell(e.cell);
+        if (cell) out.cell = cell;
+        if (e.dir != null) out.dir = toEnum(DataProto.data.DwellingsDirectionType, e.dir, 0);
+        return out;
+    };
+
+    const toLight = (l) => {
+        if (l == null) return null;
+        const out = {};
+        const pos = toPoint(l.pos);
+        if (pos) out.pos = pos;
+        if (l.radius != null) out.radius = Number(l.radius);
+        if (l.power != null) out.power = Number(l.power);
+        if (l.on != null) out.on = !!l.on;
+        return out;
+    };
+
+    const toProp = (p) => {
+        if (p == null) return null;
+        const out = {};
+        if (p.kind != null) out.kind = toEnum(DataProto.data.DwellingsPropType, p.kind, 0);
+        const pos = toPoint(p.pos);
+        if (pos) out.pos = pos;
+        const wall = toEdge(p.wall);
+        if (wall) out.wall = wall;
+        const fe = toEdge(p.fromEdge);
+        if (fe) out.fromEdge = fe;
+        const te = toEdge(p.toEdge);
+        if (te) out.toEdge = te;
+        return out;
+    };
+
+    const toPolygon = (poly) => {
+        if (poly == null) return null;
+        const out = {};
+        const pts = Array.isArray(poly.points) ? poly.points : null;
+        if (pts) {
+            out.points = [];
+            for (let i = 0; i < pts.length; i++) {
+                const pt = toPoint(pts[i]);
+                if (pt) out.points.push(pt);
+            }
+        }
+        return out;
+    };
+
+    const toDecorGroup = (g) => {
+        if (g == null) return null;
+        const out = {};
+        const polys = Array.isArray(g.polygons) ? g.polygons : null;
+        if (polys) {
+            out.polygons = [];
+            for (let i = 0; i < polys.length; i++) {
+                const pl = toPolygon(polys[i]);
+                if (pl) out.polygons.push(pl);
+            }
+        }
+        return out;
+    };
+
+    const out = {};
+
+    if (src.exit != null) out.exit = toEdge(src.exit);
+    if (src.spiral != null) out.spiral = toEdge(src.spiral);
+
+    if (src.embedName != null) out.embedName = String(src.embedName);
+    if (src.embedArchitecture != null) out.embedArchitecture = toEnum(DataProto.data.DwellingsArchitectureType, src.embedArchitecture, 0);
+
+    if (Array.isArray(src.floors)) {
         out.floors = [];
-        for (let fi = 0; fi < obj.floors.length; fi++) {
-            let fp = obj.floors[fi];
-            let floor = { level: fp.level | 0 };
+        for (let fi = 0; fi < src.floors.length; fi++) {
+            const fp = src.floors[fi] || {};
+            const floor = { level: (fp.level | 0) };
+
             if (Array.isArray(fp.rooms)) {
                 floor.rooms = [];
                 for (let ri = 0; ri < fp.rooms.length; ri++) {
-                    let rm = fp.rooms[ri];
-                    let room = {};
-                    if (rm.name != null) room.name = rm.name;
+                    const rm = fp.rooms[ri] || {};
+                    const room = {};
+
+                    if (rm.name != null) room.name = String(rm.name);
+
                     if (Array.isArray(rm.cells)) {
                         room.cells = [];
                         for (let ci = 0; ci < rm.cells.length; ci++) {
-                            let c = rm.cells[ci];
-                            room.cells.push({ i: c.i | 0, j: c.j | 0 });
+                            const cell = toCell(rm.cells[ci]);
+                            if (cell) room.cells.push(cell);
                         }
                     }
+
+                    if (rm.embedTypeId != null) room.embedTypeId = String(rm.embedTypeId);
+
+                    if (rm.embedLight != null) {
+                        const light = toLight(rm.embedLight);
+                        if (light) room.embedLight = light;
+                    }
+
+                    if (Array.isArray(rm.embedProps)) {
+                        room.embedProps = [];
+                        for (let pi = 0; pi < rm.embedProps.length; pi++) {
+                            const pr = toProp(rm.embedProps[pi]);
+                            if (pr) room.embedProps.push(pr);
+                        }
+                    }
+
+                    if (Array.isArray(rm.embedDecor)) {
+                        room.embedDecor = [];
+                        for (let gi = 0; gi < rm.embedDecor.length; gi++) {
+                            const gr = toDecorGroup(rm.embedDecor[gi]);
+                            if (gr) room.embedDecor.push(gr);
+                        }
+                    }
+
                     floor.rooms.push(room);
                 }
             }
+
             if (Array.isArray(fp.doors)) {
                 floor.doors = [];
                 for (let di = 0; di < fp.doors.length; di++) {
-                    let d = fp.doors[di];
-                    let door = {};
-                    if (d.edge != null) door.edge = dwellingsEdgeToProto(d.edge);
-                    if (d.type != null) door.type = enumToNumber(DataProto.data.DwellingsDoorType, d.type, null);
+                    const d = fp.doors[di] || {};
+                    const door = {};
+                    if (d.edge != null) {
+                        const ed = toEdge(d.edge);
+                        if (ed) door.edge = ed;
+                    }
+                    if (d.type != null) door.type = toEnum(DataProto.data.DwellingsDoorType, d.type, 0);
                     floor.doors.push(door);
                 }
             }
+
             if (Array.isArray(fp.windows)) {
                 floor.windows = [];
-                for (let wi = 0; wi < fp.windows.length; wi++) floor.windows.push(dwellingsEdgeToProto(fp.windows[wi]));
+                for (let wi = 0; wi < fp.windows.length; wi++) {
+                    const ed = toEdge(fp.windows[wi]);
+                    if (ed) floor.windows.push(ed);
+                }
             }
+
             if (Array.isArray(fp.stairs)) {
                 floor.stairs = [];
                 for (let si = 0; si < fp.stairs.length; si++) {
-                    let st = fp.stairs[si];
-                    let stair = { up: !!st.up };
-                    if (st.cell != null) stair.cell = { i: st.cell.i | 0, j: st.cell.j | 0 };
-                    if (st.dir != null) stair.dir = enumToNumber(DataProto.data.DwellingsDirectionType, st.dir, null);
+                    const st = fp.stairs[si] || {};
+                    const stair = { up: !!st.up };
+                    const cell = toCell(st.cell);
+                    if (cell) stair.cell = cell;
+                    if (st.dir != null) stair.dir = toEnum(DataProto.data.DwellingsDirectionType, st.dir, 0);
+                    if (st.embedTrapdoor != null) stair.embedTrapdoor = !!st.embedTrapdoor;
                     floor.stairs.push(stair);
                 }
             }
+
+            if (Array.isArray(fp.embedChimneys)) {
+                floor.embedChimneys = [];
+                for (let ci = 0; ci < fp.embedChimneys.length; ci++) {
+                    const cell = toCell(fp.embedChimneys[ci]);
+                    if (cell) floor.embedChimneys.push(cell);
+                }
+            }
+
             out.floors.push(floor);
         }
     }
+
     return out;
 }
 
