@@ -6756,7 +6756,7 @@ var $lime_init = function (K, v) {
             sb.importFromFile=function(a,b){
                 var u8=b instanceof Uint8Array?b:(b.b instanceof Uint8Array?b.b.subarray(0,b.length):b);
                 var msg=DataDwellings.decodeDwellingsFile(a,u8);
-                return sb.importFromProtoJson(sb.proto2json(msg),a)
+                return sb.importFromProtoJson(msg,a)
             };
             sb.importFromProtoJson=function(a,b){
                 if(a==null||a.floors==null||a.floors.length==0)throw new Error("empty");
