@@ -9712,7 +9712,7 @@ var $lime_init = function (E, u) {
                     embedBbox: Hh._bboxToProto(l),
                     embedEditorPayload: {
                         payloadRev: 1,
-                        coordSpace: 1,
+                        coordSpace: DataProto.data.EditorCoordSpaceType.world,
                         roadModels: h,
                         shapeModels: k,
                         props: Hh._structFromJs({generator: "vg", version: params.meta.ver_app})

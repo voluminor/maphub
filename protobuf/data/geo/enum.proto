@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package data;
 
-import "google/protobuf/struct.proto";
-
 // // // //
 
 enum GeoFeatureType {
@@ -58,4 +56,27 @@ enum GeoType {
   Polygon = 23;
   MultiPolygon = 24;
   reserved 25 to 50;
+}
+
+enum EditorCoordSpaceType {
+  EDITOR_COORD_SPACE_UNSPECIFIED = 0;
+  world = 1;
+  export = 2;
+}
+
+enum EditorLinkType {
+  EDITOR_LINK_TYPE_UNSPECIFIED = 0;
+  EDITOR_LINK_TYPE_PARENT_CHILD = 1;
+  EDITOR_LINK_TYPE_GROUP_MEMBER = 2;
+  EDITOR_LINK_TYPE_ATTACH = 3;
+  EDITOR_LINK_TYPE_OVER_UNDER = 4;
+  EDITOR_LINK_TYPE_ALONG = 5;
+}
+
+enum EditorConstraintType {
+  EDITOR_CONSTRAINT_TYPE_UNSPECIFIED = 0;
+  EDITOR_CONSTRAINT_TYPE_SNAP = 1;
+  EDITOR_CONSTRAINT_TYPE_FIXED_LENGTH = 2;
+  EDITOR_CONSTRAINT_TYPE_PARALLEL = 3;
+  EDITOR_CONSTRAINT_TYPE_PERPENDICULAR = 4;
 }

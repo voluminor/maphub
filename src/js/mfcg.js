@@ -8054,7 +8054,7 @@ var $lime_init = function (A, t) {
                     za.init();
                     var b = new DataProto.data.EditorPayloadObj;
                     b.payloadRev = 1;
-                    b.coordSpace = DataProto.data.EditorCoordSpaceType.EDITOR_COORD_SPACE_EXPORT;
+                    b.coordSpace = DataProto.data.EditorCoordSpaceType.export;
                     var c = {state: ba.data, url: za.data};
                     a != null && (c.blueprint = a.bp, c.name = a.name);
                     b.props = lg.toStruct(c);
