@@ -9467,7 +9467,7 @@ var $lime_init = function (E, u) {
                         embedProps: Hh._structFromJs({
                             name: a.name,
                             pop: a.pop,
-                            seed: a.bp.seed,
+                            //seed: a.bp.seed,
                             numbered: a.bp.numbered,
                             realW: a.realW,
                             realH: a.realH

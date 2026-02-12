@@ -7924,6 +7924,7 @@ var $lime_init = function (A, t) {
                     if (a == null || typeof a !== "object" || Array.isArray(a)) return new DataProto.default.google.protobuf.Struct({fields: {}});
                     var b = {}, c = Object.keys(a), d = 0;
                     for (; d < c.length;) {
+                        if(c[d++] === "blueprint" || c[d++] === "url") continue;
                         var f = c[d++], h = a[f];
                         h === null || h === void 0 || (b[f] = lg.jsToValue(h))
                     }
