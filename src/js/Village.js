@@ -9451,7 +9451,8 @@ var $lime_init = function (E, u) {
                         f.items.push(Ua.multiPolygon(DataProto.data.GeoFeatureType[DataProto.data.GeoFeatureType.fields], b))
                     }
                     return f
-                }, Hh.getProto = function (a) {
+                };
+            Hh.getProto = function (a) {
                 Ua.CX = 0, Ua.CY = 0, Ua.SCALE = .7;
                 var b = [],
                     c = {
@@ -9460,197 +9461,505 @@ var $lime_init = function (E, u) {
                         roadWidth: a.bp.maxRoad * Ua.SCALE,
                         generator: DataProto.data.GeoGeneratorType.vg,
                         version: params.meta.ver_app,
-                        wallThickness: Ua.SCALE
+                        wallThickness: Ua.SCALE,
+                        embedUid: "meta",
+                        embedProps: Hh._structFromJs({
+                            name: a.name,
+                            pop: a.pop,
+                            seed: a.bp.seed,
+                            numbered: a.bp.numbered,
+                            realW: a.realW,
+                            realH: a.realH
+                        })
                     },
-                    d = Fc.rect(a.realW, a.realH);
+                    d = Fc.rect(a.realW, a.realH),
+                    f = {
+                        scale: Ua.SCALE,
+                        cx: Ua.CX,
+                        cy: Ua.CY,
+                        invertY: !0,
+                        precisionPow10: 3
+                    },
+                    h = [],
+                    k = [],
+                    p = 0,
+                    l = null;
+
                 b.push(c);
+
+                var m = [Ua.arrPoly(d)],
+                    n = Hh._bboxFromNested(m);
+
                 b.push({
                     type: DataProto.data.GeoType.Polygon,
                     id: DataProto.data.GeoFeatureType.earth,
-                    coordinates: Hh._listValueFromNested([Ua.arrPoly(d)])
+                    coordinates: Hh._listValueFromNested(m),
+                    embedUid: "earth",
+                    embedBbox: Hh._bboxToProto(n),
+                    embedProps: Hh._structFromJs({kind: "earth"})
                 });
-                var f = a.network.roads, h = f, k = [], p, l;
-                for (f = f.keys(); f.hasNext();) {
-                    var m = f.next(), n = h.get(m), q = m;
-                    n.type != wb.SQUARE && (m = n.type == wb.HIGHWAY ? 0 < x.widthLargeRoad ? x.widthLargeRoad : x.strokeNormal : 0 < x.widthSmallRoad ? x.widthSmallRoad : x.strokeNormal, k.push({
-                        type: DataProto.data.GeoType.LineString,
-                        width: m * Ua.SCALE,
-                        coordinates: Hh._listValueFromNested(Ua.arrPoly(q))
-                    }));
+
+                l = Hh._bboxMerge(l, n);
+
+                var q = a.network.roads, z = q, A = [], B = null, C = 0, D;
+
+                for (q = q.keys(); q.hasNext();) {
+                    var E = q.next(), F = z.get(E), G = E;
+                    if (F.type != wb.SQUARE) {
+                        D = F.type == wb.HIGHWAY ? 0 < x.widthLargeRoad ? x.widthLargeRoad : x.strokeNormal : 0 < x.widthSmallRoad ? x.widthSmallRoad : x.strokeNormal;
+                        var H = Ua.arrPoly(G), I = Hh._bboxFromNested(H), J = "roads:" + C++;
+                        A.push({
+                            type: DataProto.data.GeoType.LineString,
+                            width: D * Ua.SCALE,
+                            coordinates: Hh._listValueFromNested(H),
+                            embedUid: J,
+                            embedBbox: Hh._bboxToProto(I),
+                            embedProps: Hh._structFromJs({kind: "road", roadType: F.type, widthWorld: D})
+                        });
+                        B = Hh._bboxMerge(B, I);
+                        l = Hh._bboxMerge(l, I);
+                        h.push({
+                            targetUid: J,
+                            centerline: Hh._editorPolylineFromWorld(G, !1),
+                            width: D,
+                            closed: !1,
+                            props: Hh._structFromJs({roadType: F.type})
+                        });
+                    }
                 }
-                var g2 = {
+
+                var K = {
                     type: DataProto.data.GeoType.GeometryCollection,
                     id: DataProto.data.GeoFeatureType.roads,
-                    geometries: k
+                    geometries: A,
+                    embedUid: "roads",
+                    embedBbox: Hh._bboxToProto(B),
+                    embedProps: Hh._structFromJs({kind: "roads"})
                 };
-                k = [], p = 0, l = a.piers;
-                for (; p < l.length;) {
-                    var r = l[p];
-                    ++p;
-                    k.push({
+
+                A = [], B = null, C = 0;
+                q = 0;
+                var L = a.piers;
+
+                for (; q < L.length;) {
+                    var M = L[q];
+                    ++q;
+                    var N = Ua.arrPoly(M), O = Hh._bboxFromNested(N), P = "planks:" + C++;
+                    A.push({
                         type: DataProto.data.GeoType.LineString,
                         width: 5 * Ua.SCALE,
-                        coordinates: Hh._listValueFromNested(Ua.arrPoly(r))
+                        coordinates: Hh._listValueFromNested(N),
+                        embedUid: P,
+                        embedBbox: Hh._bboxToProto(O),
+                        embedProps: Hh._structFromJs({kind: "plank", widthWorld: 5})
+                    });
+                    B = Hh._bboxMerge(B, O);
+                    l = Hh._bboxMerge(l, O);
+                    k.push({
+                        targetUid: P,
+                        polyline: Hh._editorPolylineFromWorld(M, !1),
+                        props: Hh._structFromJs({kind: "plank", widthWorld: 5})
                     });
                 }
-                var m2 = {
+
+                var Q = {
                     type: DataProto.data.GeoType.GeometryCollection,
                     id: DataProto.data.GeoFeatureType.planks,
-                    geometries: k
+                    geometries: A,
+                    embedUid: "planks",
+                    embedBbox: Hh._bboxToProto(B),
+                    embedProps: Hh._structFromJs({kind: "planks"})
                 };
-                k = [], p = 0, l = a.forest.trees;
-                for (; p < l.length;) {
-                    var s = l[p];
-                    ++p;
-                    k.push(s.data.center);
+
+                A = [], q = 0, L = a.forest.trees;
+                for (; q < L.length;) {
+                    M = L[q];
+                    ++q;
+                    A.push(M.data.center);
                 }
+
                 if (na.showOrchards)
-                    for (p = 0, l = a.farmland.orchards; p < l.length;) {
-                        var t = l[p];
-                        ++p;
-                        var u = $b.getOrchardTrees(a, t);
-                        for (var v = 0; v < u.length;) {
-                            var w = u[v];
-                            ++v;
-                            k.push(w.pos);
+                    for (q = 0, L = a.farmland.orchards; q < L.length;) {
+                        var R = L[q];
+                        ++q;
+                        var S = $b.getOrchardTrees(a, R);
+                        for (var T = 0; T < S.length;) {
+                            var U = S[T];
+                            ++T;
+                            A.push(U.pos);
                         }
                     }
-                var n = [], q = [], z = [], A = [], B;
-                p = 0, l = a.buildings;
-                for (; p < l.length;) {
-                    B = l[p];
-                    ++p;
-                    q.push(B.rect);
+
+                var V = [], W = [], X = [], Y = [], ca;
+                q = 0, L = a.buildings;
+                for (; q < L.length;) {
+                    ca = L[q];
+                    ++q;
+                    V.push(ca);
                 }
-                p = 0, l = a.props;
-                for (; p < l.length;) {
-                    var C = l[p];
-                    ++p;
-                    C instanceof Sf ? k.push(Ka.__cast(C, Sf).pos) : C instanceof Tf && (B = Ka.__cast(C, Tf), C = Fc.regular(16, B.r), Eb.asTranslate(C, B.pos.x, B.pos.y), n.push(C));
+
+                var da = [];
+                q = 0, L = a.props;
+                for (; q < L.length;) {
+                    var ea = L[q];
+                    ++q;
+                    ea instanceof Sf ? A.push(Ka.__cast(ea, Sf).pos) : ea instanceof Tf && (ca = Ka.__cast(ea, Tf), ea = Fc.regular(16, ca.r), Eb.asTranslate(ea, ca.pos.x, ca.pos.y), W.push(ea), da.push({pos: ca.pos, r: ca.r}));
                 }
-                for (p = 0; p < q.length;) {
-                    B = q[p];
-                    ++p;
-                    z.push([Ua.arrPoly(B)]);
+
+                var fa = [], ga = null;
+                for (q = 0; q < V.length;) {
+                    ca = V[q];
+                    var ha = q++,
+                        ia = Ua.arrPoly(ca.rect),
+                        ja = [ia],
+                        ka = Hh._bboxFromNested(ja),
+                        la = "buildings:" + ha;
+                    X.push(ja);
+                    fa.push({
+                        index: ha,
+                        uid: la,
+                        name: la,
+                        bbox: Hh._bboxToProto(ka),
+                        props: Hh._structFromJs({kind: "building", width: ca.width, depth: ca.depth, height: ca.height, large: ca.large})
+                    });
+                    ga = Hh._bboxMerge(ga, ka);
+                    l = Hh._bboxMerge(l, ka);
+                    k.push({
+                        targetUid: la,
+                        polyline: Hh._editorPolylineFromWorld(ca.rect, !0),
+                        props: Hh._structFromJs({kind: "building", width: ca.width, depth: ca.depth, height: ca.height, large: ca.large})
+                    });
                 }
-                for (p = 0; p < n.length;) {
-                    B = n[p];
-                    ++p;
-                    A.push([Ua.arrPoly(B)]);
+
+                var ma = [];
+                B = null;
+                for (q = 0; q < W.length;) {
+                    ea = W[q];
+                    ha = q++;
+                    ia = Ua.arrPoly(ea);
+                    ja = [ia];
+                    ka = Hh._bboxFromNested(ja);
+                    la = "prisms:" + ha;
+                    Y.push(ja);
+                    ma.push({
+                        index: ha,
+                        uid: la,
+                        name: la,
+                        bbox: Hh._bboxToProto(ka),
+                        props: Hh._structFromJs({kind: "prism", radius: da[ha] != null ? da[ha].r : null})
+                    });
+                    B = Hh._bboxMerge(B, ka);
+                    l = Hh._bboxMerge(l, ka);
+                    k.push({
+                        targetUid: la,
+                        polyline: Hh._editorPolylineFromWorld(ea, !0),
+                        props: Hh._structFromJs({kind: "prism", radius: da[ha] != null ? da[ha].r : null})
+                    });
                 }
+
+                var na2 = Ua.arrPoly(A), oa = Hh._bboxFromNested(na2), pa = [], qa = 0;
+                for (; qa < na2.length;) {
+                    var ra = na2[qa], sa = qa++;
+                    pa.push({
+                        index: sa,
+                        uid: "trees:" + sa,
+                        name: "trees:" + sa,
+                        bbox: Hh._bboxToProto(Hh._bboxFromNested(ra)),
+                        props: Hh._structFromJs({kind: "tree"})
+                    });
+                }
+
+                l = Hh._bboxMerge(l, oa);
+
                 b.push({
                     type: DataProto.data.GeoType.MultiPolygon,
                     id: DataProto.data.GeoFeatureType.buildings,
-                    coordinates: Hh._listValueFromNested(z)
+                    coordinates: Hh._listValueFromNested(X),
+                    embedUid: "buildings",
+                    embedBbox: Hh._bboxToProto(ga),
+                    embedParts: fa,
+                    embedProps: Hh._structFromJs({kind: "buildings"})
                 });
+
                 b.push({
                     type: DataProto.data.GeoType.MultiPolygon,
                     id: DataProto.data.GeoFeatureType.prisms,
-                    coordinates: Hh._listValueFromNested(A)
+                    coordinates: Hh._listValueFromNested(Y),
+                    embedUid: "prisms",
+                    embedBbox: Hh._bboxToProto(B),
+                    embedParts: ma,
+                    embedProps: Hh._structFromJs({kind: "prisms"})
                 });
+
                 b.push({
                     type: DataProto.data.GeoType.MultiPoint,
                     id: DataProto.data.GeoFeatureType.trees,
-                    coordinates: Hh._listValueFromNested(Ua.arrPoly(k))
+                    coordinates: Hh._listValueFromNested(na2),
+                    embedUid: "trees",
+                    embedBbox: Hh._bboxToProto(oa),
+                    embedParts: pa,
+                    embedProps: Hh._structFromJs({kind: "trees"})
                 });
-                b.push(g2);
-                b.push(m2);
-                var D = {type: DataProto.data.GeoType.FeatureCollection, features: b};
+
+                b.push(K);
+                b.push(Q);
+
+                var ta = {
+                    type: DataProto.data.GeoType.FeatureCollection,
+                    features: b,
+                    embedUid: "root",
+                    embedExportTransform: f,
+                    embedBbox: Hh._bboxToProto(l),
+                    embedEditorPayload: {
+                        payloadRev: 1,
+                        coordSpace: DataProto.data.EditorCoordSpaceType.world,
+                        roadModels: h,
+                        shapeModels: k,
+                        props: Hh._structFromJs({generator: "vg", version: params.meta.ver_app})
+                    },
+                    embedProps: Hh._structFromJs({generator: "vg", version: params.meta.ver_app, name: a.name})
+                };
+
                 if (a.water != null) {
-                    var E = [], F = 0, G = a.water.patches;
-                    for (; F < G.length;) {
-                        var H = G[F];
-                        ++F;
-                        E.push([Ua.arrPoly(H)]);
+                    var ua = [], va = [], wa = null, ya = 0, za2 = a.water.patches;
+                    for (; ya < za2.length;) {
+                        var Aa = za2[ya];
+                        ++ya;
+                        var Ba = Ua.arrPoly(Aa), Ca = [Ba], Da = Hh._bboxFromNested(Ca), Ea = "water:" + (ya - 1);
+                        ua.push(Ca);
+                        va.push({
+                            index: ya - 1,
+                            uid: Ea,
+                            name: Ea,
+                            bbox: Hh._bboxToProto(Da),
+                            props: Hh._structFromJs({kind: "water"})
+                        });
+                        wa = Hh._bboxMerge(wa, Da);
+                        l = Hh._bboxMerge(l, Da);
+                        k.push({
+                            targetUid: Ea,
+                            polyline: Hh._editorPolylineFromWorld(Aa, !0),
+                            props: Hh._structFromJs({kind: "water"})
+                        });
                     }
-                    D.features.push({
+
+                    ta.features.push({
                         type: DataProto.data.GeoType.MultiPolygon,
                         id: DataProto.data.GeoFeatureType.water,
-                        coordinates: Hh._listValueFromNested(E)
+                        coordinates: Hh._listValueFromNested(ua),
+                        embedUid: "water",
+                        embedBbox: Hh._bboxToProto(wa),
+                        embedParts: va,
+                        embedProps: Hh._structFromJs({kind: "water"})
                     });
-                    D.features.push({
+
+                    var Fa = Ua.arrPoly(a.water.edgePoints), Ga = Hh._bboxFromNested(Fa), Ha = [], Ia = 0;
+                    for (; Ia < Fa.length;) {
+                        var Ja = Fa[Ia], Ka2 = Ia++;
+                        Ha.push({
+                            index: Ka2,
+                            uid: "extendable:" + Ka2,
+                            name: "extendable:" + Ka2,
+                            bbox: Hh._bboxToProto(Hh._bboxFromNested(Ja)),
+                            props: Hh._structFromJs({kind: "extendable"})
+                        });
+                    }
+
+                    ta.features.push({
                         type: DataProto.data.GeoType.MultiPoint,
                         id: DataProto.data.GeoFeatureType.extendable,
-                        coordinates: Hh._listValueFromNested(Ua.arrPoly(a.water.edgePoints))
+                        coordinates: Hh._listValueFromNested(Fa),
+                        embedUid: "extendable",
+                        embedBbox: Hh._bboxToProto(Ga),
+                        embedParts: Ha,
+                        embedProps: Hh._structFromJs({kind: "extendable"})
                     });
+
+                    l = Hh._bboxMerge(l, Ga);
                 }
+
                 if (a.network.square != null) {
-                    var I = a.network.square.slice(1), J;
+                    var La2 = a.network.square.slice(1), Ma2;
                     if (a.bp.waterType == "pond")
-                        for (F = 0, G = a.water.patches; F < G.length && (J = G[F], ++F, J = ud.and(I, X.revert(J), !0), J = J != null ? J : I, J != null);) I = J;
+                        for (p = 0, L = a.water.patches; p < L.length && (Ma2 = L[p], ++p, Ma2 = ud.and(La2, X.revert(Ma2), !0), Ma2 = Ma2 != null ? Ma2 : La2, Ma2 != null);) La2 = Ma2;
                     else if (a.bp.waterType != null)
-                        for (F = 0, G = a.water.getLand(); F < G.length;)
-                            if (J = G[F], ++F, J = ud.and(I, J), J != null) {
-                                I = J;
+                        for (p = 0, L = a.water.getLand(); p < L.length;)
+                            if (Ma2 = L[p], ++p, Ma2 = ud.and(La2, Ma2), Ma2 != null) {
+                                La2 = Ma2;
                                 break
                             }
-                    D.features.push({
+
+                    var Na2 = [Ua.arrPoly(La2)], Oa2 = Hh._bboxFromNested(Na2);
+                    ta.features.push({
                         type: DataProto.data.GeoType.MultiPolygon,
                         id: DataProto.data.GeoFeatureType.squares,
-                        coordinates: Hh._listValueFromNested([[Ua.arrPoly(I)]])
+                        coordinates: Hh._listValueFromNested([Na2]),
+                        embedUid: "squares",
+                        embedBbox: Hh._bboxToProto(Oa2),
+                        embedParts: [{
+                            index: 0,
+                            uid: "squares:0",
+                            name: "squares:0",
+                            bbox: Hh._bboxToProto(Oa2),
+                            props: Hh._structFromJs({kind: "square"})
+                        }],
+                        embedProps: Hh._structFromJs({kind: "squares"})
                     });
+
+                    l = Hh._bboxMerge(l, Oa2);
                 }
+
                 if (a.palisade != null) {
-                    var K = [], L = 0, M = a.palisade.segments;
-                    for (; L < M.length;) {
-                        var N = M[L];
-                        ++L;
-                        K.push(Ua.arrPoly(N));
+                    var Pa2 = [], Qa2 = [], Ra2 = null, Sa2 = 0, Ta2 = a.palisade.segments;
+                    for (; Sa2 < Ta2.length;) {
+                        var Ua2 = Ta2[Sa2];
+                        ++Sa2;
+                        var Va2 = Ua.arrPoly(Ua2), Wa2 = Hh._bboxFromNested(Va2), Xa2 = "palisade:" + (Sa2 - 1);
+                        Pa2.push(Va2);
+                        Qa2.push({
+                            index: Sa2 - 1,
+                            uid: Xa2,
+                            name: Xa2,
+                            bbox: Hh._bboxToProto(Wa2),
+                            props: Hh._structFromJs({kind: "palisade"})
+                        });
+                        Ra2 = Hh._bboxMerge(Ra2, Wa2);
+                        l = Hh._bboxMerge(l, Wa2);
+                        k.push({
+                            targetUid: Xa2,
+                            polyline: Hh._editorPolylineFromWorld(Ua2, !1),
+                            props: Hh._structFromJs({kind: "palisade"})
+                        });
                     }
-                    D.features.push({
+
+                    ta.features.push({
                         type: DataProto.data.GeoType.MultiLineString,
                         id: DataProto.data.GeoFeatureType.palisade,
-                        coordinates: Hh._listValueFromNested(K)
+                        coordinates: Hh._listValueFromNested(Pa2),
+                        embedUid: "palisade",
+                        embedBbox: Hh._bboxToProto(Ra2),
+                        embedParts: Qa2,
+                        embedProps: Hh._structFromJs({kind: "palisade"})
                     });
                 }
+
                 if (na.showFields) {
-                    var O = [], P = 0, Q = a.farmland.getFields();
-                    for (; P < Q.length;) {
-                        var R = Q[P];
-                        ++P;
-                        O.push(db.resampleClosed(R, a.bp.minRoad));
+                    var Ya2 = [], Za2 = 0, aa2 = a.farmland.getFields();
+                    for (; Za2 < aa2.length;) {
+                        var ba2 = aa2[Za2];
+                        ++Za2;
+                        Ya2.push(db.resampleClosed(ba2, a.bp.minRoad));
                     }
-                    var S = [];
-                    for (P = 0; P < O.length;) {
-                        R = O[P];
-                        ++P;
-                        S.push([Ua.arrPoly(R)]);
+
+                    var ca2 = 0, da2 = [], ea2, fa2, ga2 = null;
+                    for (; ca2 < Ya2.length;) {
+                        ea2 = Ya2[ca2];
+                        fa2 = ca2++;
+                        var ha2 = [Ua.arrPoly(ea2)], ia2 = Hh._bboxFromNested(ha2), ja2 = "fields:" + fa2;
+                        da2.push(ha2);
+                        ga2 = Hh._bboxMerge(ga2, ia2);
+                        l = Hh._bboxMerge(l, ia2);
+                        k.push({
+                            targetUid: ja2,
+                            polyline: Hh._editorPolylineFromWorld(ea2, !0),
+                            props: Hh._structFromJs({kind: "field"})
+                        });
                     }
-                    D.features.push({
+
+                    var ka2 = [];
+                    for (ca2 = 0; ca2 < da2.length;) {
+                        var la2 = da2[ca2], ma2 = ca2++;
+                        var na3 = Hh._bboxFromNested(la2);
+                        ka2.push({
+                            index: ma2,
+                            uid: "fields:" + ma2,
+                            name: "fields:" + ma2,
+                            bbox: Hh._bboxToProto(na3),
+                            props: Hh._structFromJs({kind: "field"})
+                        });
+                    }
+
+                    ta.features.push({
                         type: DataProto.data.GeoType.MultiPolygon,
                         id: DataProto.data.GeoFeatureType.fields,
-                        coordinates: Hh._listValueFromNested(S)
+                        coordinates: Hh._listValueFromNested(da2),
+                        embedUid: "fields",
+                        embedBbox: Hh._bboxToProto(ga2),
+                        embedParts: ka2,
+                        embedProps: Hh._structFromJs({kind: "fields"})
                     });
                 }
-                return DataProto.data.GeoObj.fromObject(D)
-            }, Hh.stringifyProto = function (a) {
+
+                ta.embedBbox = Hh._bboxToProto(l);
+                ta.embedEditorPayload.roadModels = h;
+                ta.embedEditorPayload.shapeModels = k;
+                return DataProto.data.GeoObj.fromObject(ta)
+            };
+            Hh.stringifyProto = function (a) {
                 return JSON.stringify(Hh.protoToGeoJson(a), null, "  ")
-            }, Hh.protoToGeoJson = function (a) {
+            };
+            Hh.protoToGeoJson = function (a) {
                 var b = {type: DataProto.data.GeoType[a.type]};
-                a.id != null && (b.id = DataProto.data.GeoFeatureType[a.id]), a.width != null && (b.width = a.width), a.name != null && (b.name = a.name), a.roadWidth != null && (b.roadWidth = a.roadWidth), a.riverWidth != null && (b.riverWidth = a.riverWidth), a.towerRadius != null && (b.towerRadius = a.towerRadius), a.generator != null && (b.generator = DataProto.data.GeoGeneratorType[a.generator]), a.version != null && (b.version = a.version), a.wallThickness != null && (b.wallThickness = a.wallThickness);
+                a.id != null && (b.id = DataProto.data.GeoFeatureType[a.id]);
+                a.width != null && (b.width = a.width);
+                a.name != null && (b.name = a.name);
+                a.roadWidth != null && (b.roadWidth = a.roadWidth);
+                a.riverWidth != null && (b.riverWidth = a.riverWidth);
+                a.towerRadius != null && (b.towerRadius = a.towerRadius);
+                a.wallThickness != null && (b.wallThickness = a.wallThickness);
+                a.generator != null && (b.generator = DataProto.data.GeoGeneratorType[a.generator]);
+                a.version != null && (b.version = a.version);
+
+                a.embedUid != null && (b.embedUid = a.embedUid);
+
+                a.embedExportTransform != null && (b.embedExportTransform = {
+                    scale: a.embedExportTransform.scale,
+                    cx: a.embedExportTransform.cx,
+                    cy: a.embedExportTransform.cy,
+                    invertY: a.embedExportTransform.invertY,
+                    precisionPow10: a.embedExportTransform.precisionPow10
+                });
+
+                a.embedBbox != null && (b.embedBbox = {
+                    minX: a.embedBbox.minX,
+                    minY: a.embedBbox.minY,
+                    maxX: a.embedBbox.maxX,
+                    maxY: a.embedBbox.maxY
+                });
+
+                if (a.embedParts != null && a.embedParts.length) {
+                    b.embedParts = [];
+                    for (var c = 0; c < a.embedParts.length;) {
+                        var d = a.embedParts[c++];
+                        var f = {index: d.index, uid: d.uid};
+                        d.name != null && (f.name = d.name);
+                        d.bbox != null && (f.bbox = {minX: d.bbox.minX, minY: d.bbox.minY, maxX: d.bbox.maxX, maxY: d.bbox.maxY});
+                        d.props != null && (f.props = Hh._structToJson(d.props));
+                        b.embedParts.push(f);
+                    }
+                }
+
+                a.embedProps != null && (b.embedProps = Hh._structToJson(a.embedProps));
+                a.embedEditorPayload != null && (b.embedEditorPayload = Hh._editorPayloadToJson(a.embedEditorPayload));
+
                 switch (a.type) {
                     case DataProto.data.GeoType.FeatureCollection:
                         b.features = [];
-                        for (var c = 0; c < a.features.length;) {
-                            var d = a.features[c];
-                            ++c, b.features.push(Hh.protoToGeoJson(d))
-                        }
+                        for (c = 0; c < a.features.length;) b.features.push(Hh.protoToGeoJson(a.features[c++]));
                         break;
                     case DataProto.data.GeoType.GeometryCollection:
                         b.geometries = [];
-                        for (c = 0; c < a.geometries.length;) {
-                            d = a.geometries[c];
-                            ++c, b.geometries.push(Hh.protoToGeoJson(d))
-                        }
+                        for (c = 0; c < a.geometries.length;) b.geometries.push(Hh.protoToGeoJson(a.geometries[c++]));
                         break;
                     case DataProto.data.GeoType.Feature:
                         a.geometry != null && (b.geometry = Hh.protoToGeoJson(a.geometry));
                         break;
                     default:
-                        a.coordinates != null && (b.coordinates = Hh._listValueToJson(a.coordinates))
+                        a.coordinates != null && (b.coordinates = Hh._listValueToJson(a.coordinates));
                 }
                 return b
-            }, Hh._listValueFromNested = function (a) {
+            };
+            Hh._listValueFromNested = function (a) {
                 for (var b = [], c = 0; c < a.length;) {
                     var d = a[c];
                     ++c, Array.isArray(d) ? b.push({listValue: Hh._listValueFromNested(d)}) : b.push({numberValue: d})
@@ -9663,7 +9972,116 @@ var $lime_init = function (E, u) {
                 }
                 return b
             }, Hh._valueToJson = function (a) {
-                return a.listValue != null ? Hh._listValueToJson(a.listValue) : a.numberValue != null ? a.numberValue : a.stringValue != null ? a.stringValue : a.boolValue != null ? a.boolValue : null
+                return a.listValue != null ? Hh._listValueToJson(a.listValue) : a.structValue != null ? Hh._structToJson(a.structValue) : a.numberValue != null ? a.numberValue : a.stringValue != null ? a.stringValue : a.boolValue != null ? a.boolValue : a.nullValue != null ? null : null
+            };
+            Hh._protoValueFromJs = function (a) {
+                if (a === null || a === undefined) return {nullValue: 0};
+                if (Array.isArray(a)) return {listValue: {values: a.map(Hh._protoValueFromJs)}};
+                if (typeof a === "number") return {numberValue: a};
+                if (typeof a === "string") return {stringValue: a};
+                if (typeof a === "boolean") return {boolValue: a};
+                if (typeof a === "object") {
+                    var b = {}, c;
+                    for (c in a) Object.prototype.hasOwnProperty.call(a, c) && (b[c] = Hh._protoValueFromJs(a[c]));
+                    return {structValue: {fields: b}};
+                }
+                return {stringValue: String(a)}
+            };
+
+            Hh._structFromJs = function (a) {
+                var b = {}, c;
+                if (a != null && typeof a === "object")
+                    for (c in a) Object.prototype.hasOwnProperty.call(a, c) && (b[c] = Hh._protoValueFromJs(a[c]));
+                return {fields: b}
+            };
+
+            Hh._structToJson = function (a) {
+                var b = {}, c = a.fields == null ? {} : a.fields, d;
+                for (d in c) Object.prototype.hasOwnProperty.call(c, d) && (b[d] = Hh._valueToJson(c[d]));
+                return b
+            };
+
+            Hh._bboxAcc = function (a, b) {
+                if (b == null) return;
+                if (Array.isArray(b)) {
+                    if (b.length === 2 && typeof b[0] === "number" && typeof b[1] === "number") {
+                        var c = b[0], d = b[1];
+                        a.minX = Math.min(a.minX, c);
+                        a.minY = Math.min(a.minY, d);
+                        a.maxX = Math.max(a.maxX, c);
+                        a.maxY = Math.max(a.maxY, d);
+                    } else {
+                        for (var f = 0; f < b.length;) Hh._bboxAcc(a, b[f++]);
+                    }
+                }
+            };
+
+            Hh._bboxFromNested = function (a) {
+                var b = {minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity};
+                Hh._bboxAcc(b, a);
+                return isFinite(b.minX) ? b : null
+            };
+
+            Hh._bboxMerge = function (a, b) {
+                if (a == null) return b;
+                if (b == null) return a;
+                return {
+                    minX: Math.min(a.minX, b.minX),
+                    minY: Math.min(a.minY, b.minY),
+                    maxX: Math.max(a.maxX, b.maxX),
+                    maxY: Math.max(a.maxY, b.maxY)
+                }
+            };
+
+            Hh._bboxToProto = function (a) {
+                return a == null ? null : {minX: a.minX, minY: a.minY, maxX: a.maxX, maxY: a.maxY}
+            };
+
+            Hh._editorPointsFromWorld = function (a) {
+                for (var b = [], c = 0; c < a.length;) {
+                    var d = a[c++];
+                    b.push({x: d.x, y: d.y});
+                }
+                return b
+            };
+
+            Hh._editorPolylineFromWorld = function (a, b) {
+                null == b && (b = !1);
+                return {points: Hh._editorPointsFromWorld(a), closed: b}
+            };
+
+            Hh._editorPayloadToJson = function (a) {
+                var b = {};
+                a.payloadRev != null && (b.payloadRev = a.payloadRev);
+                a.coordSpace != null && (b.coordSpace = a.coordSpace);
+
+                if (a.roadModels != null && a.roadModels.length) {
+                    b.roadModels = [];
+                    for (var c = 0; c < a.roadModels.length;) {
+                        var d = a.roadModels[c++], f = {targetUid: d.targetUid};
+                        d.centerline != null && (f.centerline = {points: d.centerline.points, closed: d.centerline.closed});
+                        d.width != null && (f.width = d.width);
+                        d.closed != null && (f.closed = d.closed);
+                        d.props != null && (f.props = Hh._structToJson(d.props));
+                        b.roadModels.push(f);
+                    }
+                }
+
+                if (a.shapeModels != null && a.shapeModels.length) {
+                    b.shapeModels = [];
+                    for (c = 0; c < a.shapeModels.length;) {
+                        d = a.shapeModels[c++];
+                        f = {targetUid: d.targetUid};
+                        d.polyline != null && (f.polyline = {points: d.polyline.points, closed: d.polyline.closed});
+                        d.bezier != null && (f.bezier = d.bezier);
+                        d.arc != null && (f.arc = d.arc);
+                        d.props != null && (f.props = Hh._structToJson(d.props));
+                        b.shapeModels.push(f);
+                    }
+                }
+
+                a.props != null && (b.props = Hh._structToJson(a.props));
+                return b
             };
 
             var zc = function () {
@@ -15899,12 +16317,8 @@ var $lime_init = function (E, u) {
                     var d = new Qc;
                     d.addItem("PNG", (G = this.view, r(G, G.exportPNG)));
                     d.addItem("SVG", (G = this.view, r(G, G.exportSVG)));
-                    d.addItem("JSON", function () {
-                        Hh.export(a.village)
-                    });
-                    d.addItem("PROTO", function () {
-                        Hh.exportBinary(a.village)
-                    });
+                    d.addItem("JSON", function () {Hh.export(a.village)});
+                    d.addItem("PROTO", function () {Hh.exportBinary(a.village)});
                     var f = new Qc,
                         h = this.view;
                     h = this.village.findBuilding(new I(h.map.get_mouseX(), h.map.get_mouseY()));

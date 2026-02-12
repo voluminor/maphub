@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package data;
 
-import "data/dwellings/lvl.proto";
+import "data/dwellings/enum.proto";
+import "data/dwellings/types.proto";
+import "data/dwellings/level.proto";
 
 // // // //
 
@@ -12,6 +14,9 @@ message DwellingsPlanObj {
   repeated DwellingsDoorObj doors = 3;
   repeated DwellingsEdgeObj windows = 4;
   repeated DwellingsStairObj stairs = 5;
+  reserved 6 to 19;
+
+  repeated DwellingsCellObj embed_chimneys = 20;
 }
 
 //
@@ -20,4 +25,8 @@ message DwellingsObj {
   repeated DwellingsPlanObj floors = 1;
   DwellingsEdgeObj exit = 2;
   DwellingsEdgeObj spiral = 3;
+  reserved 4 to 19;
+
+  optional string embed_name = 20;
+  optional DwellingsArchitectureType embed_architecture = 21;
 }

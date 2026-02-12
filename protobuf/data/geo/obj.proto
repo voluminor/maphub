@@ -4,6 +4,8 @@ package data;
 
 import "google/protobuf/struct.proto";
 import "data/geo/enum.proto";
+import "data/geo/common.proto";
+import "data/geo/editor.proto";
 
 // // // //
 
@@ -11,22 +13,28 @@ message GeoObj {
   GeoType type = 1;
   GeoObj geometry = 2;
   google.protobuf.ListValue coordinates = 3;
-  reserved 4 to 9;
+  reserved 4 to 8;
+  string embed_uid = 9;
 
   repeated GeoObj features = 10;
   repeated GeoObj geometries = 11;
-  reserved 12 to 19;
+  reserved 12 to 16;
+  repeated GeoPartObj embed_parts = 17;
+  GeoTransformObj embed_export_transform = 18;
+  GeoBBoxObj embed_bbox = 19;
 
   optional GeoGeneratorType generator = 20;
   optional GeoFeatureType id = 21;
   optional string version = 22;
   optional string name = 23;
   optional double width = 24;
-  reserved 25 to 39;
+  reserved 25 to 38;
+  google.protobuf.Struct embed_props = 39;
 
   optional double road_width = 40;
   optional double river_width = 41;
   optional double tower_radius = 42;
   optional double wall_thickness = 43;
   reserved 44 to 79;
+  EditorPayloadObj embed_editor_payload = 80;
 }
