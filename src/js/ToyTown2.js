@@ -18383,8 +18383,11 @@ if (params !== null) (function (S, u) {
                         case DataProto.data.GeoType[DataProto.data.GeoType.GeometryCollection]:
                             a = a.geometries;
                             c = [];
-                            if(typeof a === "array"){
-                                for (b = 0; b < a.length;) d = a[b], ++b, c.push(new lf(this.getLineString(d), d.width));
+                            if (Array.isArray(a)) {
+                                for (var i = 0; i < a.length; i++) {
+                                    var d = a[i];
+                                    c.push(new lf(this.getLineString(d), d.width));
+                                }
                             }
                             return c;
                         default:
