@@ -16661,13 +16661,13 @@ var $lime_init = function (A, t) {
                     d.addItem("Reroll all", (G = this.model, l(G, G.rerollDistricts)))
                 },
                 exportPNG: function (a) {
-                    if (a)
+                    if (a){
                         for (a = this.labels.iterator(); a.hasNext();) {
-                            var b =
-                                a.next();
+                            var b = a.next();
                             b.set_filters([]);
                             b.addOutline()
-                        } else {
+                        }
+                    } else {
                         a = !1;
                         null == a && (a = !0);
                         a = 2 * K.getStrokeWidth(K.strokeThick, a);
