@@ -3,22 +3,20 @@ syntax = "proto3";
 package data;
 
 import "data/dwellings/enum.proto";
+import "data/dwellings/types.proto";
+import "data/dwellings/decor.proto";
 
 // // // //
-
-message DwellingsCellObj {
-  int32 i = 1;
-  int32 j = 2;
-}
 
 message DwellingsRoomObj {
   optional string name = 1;
   repeated DwellingsCellObj cells = 2;
-}
+  reserved 3 to 9;
 
-message DwellingsEdgeObj {
-  DwellingsCellObj cell = 1;
-  DwellingsDirectionType dir = 2;
+  optional string embed_type_id = 10;
+  optional DwellingsLightObj embed_light = 11;
+  repeated DwellingsPropObj embed_props = 12;
+  repeated DwellingsDecorGroupObj embed_decor = 13;
 }
 
 message DwellingsDoorObj {
@@ -30,4 +28,7 @@ message DwellingsStairObj {
   DwellingsCellObj cell = 1;
   DwellingsDirectionType dir = 2;
   bool up = 3;
+  reserved 4 to 9;
+
+  optional bool embed_trapdoor = 10;
 }

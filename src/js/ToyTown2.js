@@ -17034,6 +17034,11 @@ if (params !== null) (function (S, u) {
                     }
                     d = kf.render(h, !1, 2);
                     Cc.addStartCap(d, e);
+
+                    if (!f || f.length < 2) {
+                        console.warn("Bad road poly:", d);
+                        continue;
+                    }
                     this.addSubGeometry(new Cc(d, e))
                 }
             };
@@ -17633,8 +17638,12 @@ if (params !== null) (function (S, u) {
             };
             ia.addWall = function (a, b, c, d, e, f) {
                 var h = Q.distance(b, e),
-                    r = Math.min(c.y, d.y) - ia.zero,
-                    m = 1.8,
+                    r = Math.min(c.y, d.y) - ia.zero;
+                if (!isFinite(h) || h <= 1e-6 || !isFinite(r) || r <= 0) {
+                    ia.addWindowlessWall(a, b, c, d, e, f);
+                    return;
+                }
+                var m = 1.8,
                     C = 3,
                     g = 2,
                     k = 1.5;
@@ -17642,6 +17651,10 @@ if (params !== null) (function (S, u) {
                     1));
                 var n = Math.floor((h - 2 * g + C) / (.8 + C)),
                     l = Math.floor((r - k - q + m) / (1.2 + m));
+                if (!isFinite(n) || !isFinite(l) || n < 1 || l < 1) {
+                    ia.addWindowlessWall(a, b, c, d, e, f);
+                    return;
+                }
                 if (1 > n || 1 > l) ia.addWindowlessWall(a, b, c, d, e, f);
                 else {
                     var p = (r - 1.2 * l) / (k + (l - 1) * m + q);
@@ -18071,6 +18084,10 @@ if (params !== null) (function (S, u) {
                 d *= Math.pow(kd.area(b) / kd.rectArea(e), 2);
                 var f = ba.distance(e[0], e[1]),
                     h = ba.distance(e[2], e[1]);
+                if (!isFinite(q) || q <= 1e-6) {
+                    Pf.add(a, b, c, true);
+                    return;
+                }
                 if (f < h) {
                     var r = vc.lerp(e[0], e[1]);
                     var m = vc.lerp(e[2], e[3]);
@@ -18368,28 +18385,69 @@ if (params !== null) (function (S, u) {
                     DataProto.data.GeoGeneratorType[DataProto.data.GeoGeneratorType.mfcg] == this.generator && (7 > a[1] || 7 == a[1] && 5 > a[2]) && (this.scale = bc.LEGACY_SCALE)
                 },
                 getThickMultiLineString: function (a, b) {
-                    null == b && (b = 0);
-                    var c = a.type;
-                    if (null == c) return this.thicken(this.getMultiLineString(a), b);
-                    switch (c) {
+                    if (b == null) b = 0;
+                    var defaultWidth = b;
+
+                    var t = a.type;
+                    if (t == null) {
+                        var lines = this.getMultiLineString(a) || [];
+                        var out0 = [];
+                        for (var i0 = 0; i0 < lines.length; i0++) {
+                            var line0 = lines[i0];
+                            if (!line0 || line0.length < 2) {
+                                console.warn("Skip bad line (need >=2 points):", line0);
+                                continue;
+                            }
+                            out0.push(new lf(line0, defaultWidth));
+                        }
+                        return out0;
+                    }
+
+                    switch (t) {
                         case DataProto.data.GeoType[DataProto.data.GeoType.FeatureCollection]:
-                            a = a.features;
-                            c = [];
-                            for (b = 0; b < a.length;) {
-                                var d = a[b];
-                                ++b;
-                                c.push(new lf(this.getLineString(d.geometry), d.width))
+                            var features = a.features || [];
+                            var out = [];
+                            for (var i = 0; i < features.length; i++) {
+                                var f = features[i];
+                                var poly = this.getLineString(f.geometry);
+                                if (!poly || poly.length < 2) {
+                                    console.warn("Skip bad road feature (need >=2 points):", f);
+                                    continue;
+                                }
+                                var w = (f.width != null) ? f.width : defaultWidth;
+                                out.push(new lf(poly, w));
                             }
-                            return c;
+                            return out;
+
                         case DataProto.data.GeoType[DataProto.data.GeoType.GeometryCollection]:
-                            a = a.geometries;
-                            c = [];
-                            if(typeof a === "array"){
-                                for (b = 0; b < a.length;) d = a[b], ++b, c.push(new lf(this.getLineString(d), d.width));
+                            var geoms = a.geometries || [];
+                            var out2 = [];
+                            if (Array.isArray(geoms)) {
+                                for (var j = 0; j < geoms.length; j++) {
+                                    var g = geoms[j];
+                                    var poly2 = this.getLineString(g);
+                                    if (!poly2 || poly2.length < 2) {
+                                        console.warn("Skip bad road geometry (need >=2 points):", g);
+                                        continue;
+                                    }
+                                    var w2 = (g.width != null) ? g.width : defaultWidth;
+                                    out2.push(new lf(poly2, w2));
+                                }
                             }
-                            return c;
+                            return out2;
+
                         default:
-                            return this.thicken(this.getMultiLineString(a), b)
+                            var lines2 = this.getMultiLineString(a) || [];
+                            var out3 = [];
+                            for (var k = 0; k < lines2.length; k++) {
+                                var line = lines2[k];
+                                if (!line || line.length < 2) {
+                                    console.warn("Skip bad line (need >=2 points):", line);
+                                    continue;
+                                }
+                                out3.push(new lf(line, defaultWidth));
+                            }
+                            return out3;
                     }
                 },
                 getThickMultiPolygon: function (a, b) {

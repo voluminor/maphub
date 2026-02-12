@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package data;
+
+import "google/protobuf/struct.proto";
+
+// // // //
+
+message GeoTransformObj {
+  double scale = 1;
+  double cx    = 2;
+  double cy    = 3;
+  bool invert_y = 4;
+  uint32 precision_pow10 = 5;
+}
+
+message GeoBBoxObj {
+  double min_x = 1;
+  double min_y = 2;
+  double max_x = 3;
+  double max_y = 4;
+}
+
+message GeoPartObj {
+  uint32 index = 1;
+  string uid = 2;
+  google.protobuf.Struct props = 3;
+  string name = 4;
+  GeoBBoxObj bbox = 5;
+}

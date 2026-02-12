@@ -1,7 +1,7 @@
 {
   "name": "fantasy-maphub",
   "name_full": "Fantasy MapHub Generators",
-  "version": "1.2.3-add-data-any-imports.0",
+  "version": "1.2.3",
   "description": "An offline-first hub that bundles several Watabou map generators into one consistent web app: same UI patterns, local assets, and modern import/export. It adds OpenAPI docs, proto-first serialization (including pure protobuf files), and a PWA build so everything works without an internet connection.",
   "license": "MPL-2.0",
   "author": "mail@sunsung.fun",
@@ -27,7 +27,8 @@
     "build:rewrite:tags": "node scripts/replace-tags-dist.mjs",
     "build:rewrite:minify": "node scripts/minify-static-js.mjs",
     "build:rewrite:hash-url": "node scripts/add-query-hash.mjs",
-    "build:list": "run-s build:gen:index-pages build:gen:icons build:gen:languages build:gen:openapi build:rewrite:tags build:rewrite:minify build:rewrite:hash-url",
+    "build:gen:sitemap": "node scripts/generate-sitemap.mjs",
+    "build:list": "run-s build:gen:index-pages build:gen:icons build:gen:languages build:gen:openapi build:rewrite:tags build:rewrite:minify build:rewrite:hash-url build:gen:sitemap",
     "build": "vite build && npm run build:list",
     "preview": "vite preview",
     "test": "vitest run",
