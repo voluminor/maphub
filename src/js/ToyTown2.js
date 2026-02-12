@@ -17637,8 +17637,12 @@ if (params !== null) (function (S, u) {
             };
             ia.addWall = function (a, b, c, d, e, f) {
                 var h = Q.distance(b, e),
-                    r = Math.min(c.y, d.y) - ia.zero,
-                    m = 1.8,
+                    r = Math.min(c.y, d.y) - ia.zero;
+                if (!isFinite(h) || h <= 1e-6 || !isFinite(r) || r <= 0) {
+                    ia.addWindowlessWall(a, b, c, d, e, f);
+                    return;
+                }
+                var m = 1.8,
                     C = 3,
                     g = 2,
                     k = 1.5;
@@ -17646,6 +17650,10 @@ if (params !== null) (function (S, u) {
                     1));
                 var n = Math.floor((h - 2 * g + C) / (.8 + C)),
                     l = Math.floor((r - k - q + m) / (1.2 + m));
+                if (!isFinite(n) || !isFinite(l) || n < 1 || l < 1) {
+                    ia.addWindowlessWall(a, b, c, d, e, f);
+                    return;
+                }
                 if (1 > n || 1 > l) ia.addWindowlessWall(a, b, c, d, e, f);
                 else {
                     var p = (r - 1.2 * l) / (k + (l - 1) * m + q);
@@ -18075,6 +18083,10 @@ if (params !== null) (function (S, u) {
                 d *= Math.pow(kd.area(b) / kd.rectArea(e), 2);
                 var f = ba.distance(e[0], e[1]),
                     h = ba.distance(e[2], e[1]);
+                if (!isFinite(q) || q <= 1e-6) {
+                    Pf.add(a, b, c, true);
+                    return;
+                }
                 if (f < h) {
                     var r = vc.lerp(e[0], e[1]);
                     var m = vc.lerp(e[2], e[3]);
