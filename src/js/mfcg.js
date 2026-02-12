@@ -7892,18 +7892,52 @@ var $lime_init = function (A, t) {
             };
             g.JsonExporter = lg,
                 lg.__name__ = "JsonExporter",
+                lg.jsToValue = function (a) {
+                    if (a === null || a === void 0) return new DataProto.default.google.protobuf.Value({nullValue: 0});
+                    if (a instanceof DataProto.default.google.protobuf.Value) return a;
+                    if (Array.isArray(a)) return new DataProto.default.google.protobuf.Value({listValue: lg.toListValue(a)});
+                    switch (typeof a) {
+                        case "number":
+                            return new DataProto.default.google.protobuf.Value({numberValue: a});
+                        case "string":
+                            return new DataProto.default.google.protobuf.Value({stringValue: a});
+                        case "boolean":
+                            return new DataProto.default.google.protobuf.Value({boolValue: a});
+                        case "object":
+                            return new DataProto.default.google.protobuf.Value({structValue: lg.toStruct(a)});
+                        default:
+                            return new DataProto.default.google.protobuf.Value({stringValue: String(a)})
+                    }
+                },
                 lg.toValue = function (a) {
-                    return a instanceof DataProto.default.google.protobuf.Value ? a : Array.isArray(a) ? new DataProto.default.google.protobuf.Value({listValue: lg.toListValue(a)}) : new DataProto.default.google.protobuf.Value({numberValue: a})
+                    return lg.jsToValue(a)
                 },
                 lg.toListValue = function (a) {
                     for (var b = [], c = 0; c < a.length;) {
                         var d = a[c];
-                        ++c, b.push(lg.toValue(d))
+                        ++c, b.push(lg.jsToValue(d))
                     }
                     return new DataProto.default.google.protobuf.ListValue({values: b})
                 },
+                lg.toStruct = function (a) {
+                    if (a == null || typeof a !== "object" || Array.isArray(a)) return new DataProto.default.google.protobuf.Struct({fields: {}});
+                    var b = {}, c = Object.keys(a), d = 0;
+                    for (; d < c.length;) {
+                        var f = c[d++], h = a[f];
+                        h === null || h === void 0 || (b[f] = lg.jsToValue(h))
+                    }
+                    return new DataProto.default.google.protobuf.Struct({fields: b})
+                },
+                lg.structToJson = function (a) {
+                    var b = {};
+                    if (a != null && a.fields != null) for (var c = Object.keys(a.fields), d = 0; d < c.length;) {
+                        var f = c[d++];
+                        b[f] = lg.valueToJson(a.fields[f])
+                    }
+                    return b
+                },
                 lg.valueToJson = function (a) {
-                    return a == null ? null : a.listValue != null && Object.hasOwnProperty.call(a, "listValue") ? lg.listValueToJson(a.listValue) : a.numberValue != null && Object.hasOwnProperty.call(a, "numberValue") ? a.numberValue : a.stringValue != null && Object.hasOwnProperty.call(a, "stringValue") ? a.stringValue : a.boolValue != null && Object.hasOwnProperty.call(a, "boolValue") ? a.boolValue : null
+                    return a == null ? null : a.listValue != null && Object.hasOwnProperty.call(a, "listValue") ? lg.listValueToJson(a.listValue) : a.structValue != null && Object.hasOwnProperty.call(a, "structValue") ? lg.structToJson(a.structValue) : a.numberValue != null && Object.hasOwnProperty.call(a, "numberValue") ? a.numberValue : a.stringValue != null && Object.hasOwnProperty.call(a, "stringValue") ? a.stringValue : a.boolValue != null && Object.hasOwnProperty.call(a, "boolValue") ? a.boolValue : a.nullValue != null && Object.hasOwnProperty.call(a, "nullValue") ? null : null
                 },
                 lg.listValueToJson = function (a) {
                     for (var b = [], c = 0, d = a.values; c < d.length;) {
@@ -7911,6 +7945,132 @@ var $lime_init = function (A, t) {
                         ++c, b.push(lg.valueToJson(f))
                     }
                     return b
+                },
+                lg.makeTransform = function () {
+                    var a = new DataProto.data.GeoTransformObj;
+                    return a.scale = Wa.SCALE, a.cx = Wa.CX, a.cy = Wa.CY, a.invertY = !0, a.precisionPow10 = 3, a
+                },
+                lg._bboxWalk = function (a, b) {
+                    if (a == null) return;
+                    if (Array.isArray(a)) {
+                        if (2 <= a.length && typeof a[0] === "number" && typeof a[1] === "number") {
+                            var c = a[0], d = a[1];
+                            c < b.minX && (b.minX = c);
+                            d < b.minY && (b.minY = d);
+                            c > b.maxX && (b.maxX = c);
+                            d > b.maxY && (b.maxY = d);
+                            return
+                        }
+                        for (c = 0; c < a.length;) d = a[c], ++c, lg._bboxWalk(d, b)
+                    }
+                },
+                lg.bboxFromCoords = function (a) {
+                    var b = {minX: 1 / 0, minY: 1 / 0, maxX: -1 / 0, maxY: -1 / 0};
+                    lg._bboxWalk(a, b);
+                    if (b.minX === 1 / 0) return null;
+                    var c = new DataProto.data.GeoBBoxObj;
+                    return c.minX = b.minX, c.minY = b.minY, c.maxX = b.maxX, c.maxY = b.maxY, c
+                },
+                lg.mergeBbox = function (a, b) {
+                    if (a == null) return b;
+                    if (b == null) return a;
+                    var c = new DataProto.data.GeoBBoxObj;
+                    return c.minX = Math.min(a.minX, b.minX), c.minY = Math.min(a.minY, b.minY), c.maxX = Math.max(a.maxX, b.maxX), c.maxY = Math.max(a.maxY, b.maxY), c
+                },
+                lg.computeBbox = function (a) {
+                    if (a == null) return null;
+                    var b = null;
+                    if (a.coordinates != null && Object.hasOwnProperty.call(a, "coordinates")) {
+                        var c = lg.listValueToJson(a.coordinates);
+                        b = lg.bboxFromCoords(c)
+                    } else if (a.geometry != null && Object.hasOwnProperty.call(a, "geometry")) b = lg.computeBbox(a.geometry);
+                    else if (a.features != null && a.features.length) {
+                        c = 0;
+                        for (var d = a.features; c < d.length;) {
+                            var f = d[c];
+                            ++c;
+                            b = lg.mergeBbox(b, lg.computeBbox(f))
+                        }
+                    } else if (a.geometries != null && a.geometries.length) {
+                        c = 0;
+                        for (d = a.geometries; c < d.length;) f = d[c], ++c, b = lg.mergeBbox(b, lg.computeBbox(f))
+                    }
+                    return b
+                },
+                lg.ensureParts = function (a) {
+                    if (a == null) return;
+                    if (!(a.type == DataProto.data.GeoType.MultiPolygon || a.type == DataProto.data.GeoType.MultiPoint || a.type == DataProto.data.GeoType.MultiLineString)) return;
+                    if (a.coordinates == null || !Object.hasOwnProperty.call(a, "coordinates")) return;
+                    if (a.embedParts != null && a.embedParts.length) return;
+                    var b = lg.listValueToJson(a.coordinates);
+                    if (!Array.isArray(b)) return;
+                    a.embedParts = [];
+                    for (var c = 0; c < b.length;) {
+                        var d = c, f = b[c++];
+                        var h = new DataProto.data.GeoPartObj;
+                        h.index = d;
+                        h.uid = (a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") ? a.embedUid : "obj") + ":part:" + d;
+                        a.name != null && Object.hasOwnProperty.call(a, "name") && (h.name = "" + a.name + " #" + (d + 1));
+                        var k = lg.bboxFromCoords(f);
+                        k != null && (h.bbox = k);
+                        h.props = lg.toStruct({parentUid: a.embedUid, index: d});
+                        a.embedParts.push(h)
+                    }
+                },
+                lg.buildPropsForObj = function (a) {
+                    if (a == null) return null;
+                    var b = {geoType: DataProto.data.GeoType[a.type]};
+                    a.id != null && Object.hasOwnProperty.call(a, "id") && (b.featureId = DataProto.data.GeoFeatureType[a.id]);
+                    a.width != null && Object.hasOwnProperty.call(a, "width") && (b.width = a.width);
+                    a.roadWidth != null && Object.hasOwnProperty.call(a, "roadWidth") && (b.roadWidth = a.roadWidth);
+                    a.riverWidth != null && Object.hasOwnProperty.call(a, "riverWidth") && (b.riverWidth = a.riverWidth);
+                    a.towerRadius != null && Object.hasOwnProperty.call(a, "towerRadius") && (b.towerRadius = a.towerRadius);
+                    a.wallThickness != null && Object.hasOwnProperty.call(a, "wallThickness") && (b.wallThickness = a.wallThickness);
+                    a.generator != null && Object.hasOwnProperty.call(a, "generator") && (b.generator = DataProto.data.GeoGeneratorType[a.generator]);
+                    a.version != null && Object.hasOwnProperty.call(a, "version") && (b.version = a.version);
+                    a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") && (b.uid = a.embedUid);
+                    a.embedName != null && Object.hasOwnProperty.call(a, "embedName") && (b.displayName = a.embedName);
+                    return b
+                },
+                lg.enrichGeoObj = function (a, b) {
+                    if (a == null) return;
+                    a.embedExportTransform == null && b != null && b.transform != null && (a.embedExportTransform = b.transform);
+                    (a.embedUid == null || "" === a.embedUid) && b != null && b.uid != null && (a.embedUid = b.uid);
+                    a.embedName == null && (a.name != null && Object.hasOwnProperty.call(a, "name") ? a.embedName = a.name : a.id != null && Object.hasOwnProperty.call(a, "id") && (a.embedName = DataProto.data.GeoFeatureType[a.id]));
+                    if (a.embedProps == null) {
+                        var c = lg.buildPropsForObj(a);
+                        c != null && (a.embedProps = lg.toStruct(c))
+                    }
+                    lg.ensureParts(a);
+                    a.embedBbox == null && (a.embedBbox = lg.computeBbox(a));
+                    if (a.geometry != null && Object.hasOwnProperty.call(a, "geometry")) lg.enrichGeoObj(a.geometry, {uid: a.embedUid + "/geometry", transform: a.embedExportTransform});
+                    if (a.features != null && a.features.length) for (c = 0; c < a.features.length;) {
+                        var d = a.features[c], f = d != null && d.id != null && Object.hasOwnProperty.call(d, "id") ? DataProto.data.GeoFeatureType[d.id] : "" + c;
+                        ++c;
+                        lg.enrichGeoObj(d, {uid: a.embedUid + "/features/" + f, transform: a.embedExportTransform})
+                    }
+                    if (a.geometries != null && a.geometries.length) for (c = 0; c < a.geometries.length;) d = a.geometries[c], f = "" + c, ++c, lg.enrichGeoObj(d, {uid: a.embedUid + "/geometries/" + f, transform: a.embedExportTransform})
+                },
+                lg.makeEditorPayload = function (a) {
+                    ba.init();
+                    za.init();
+                    var b = new DataProto.data.EditorPayloadObj;
+                    b.payloadRev = 1;
+                    b.coordSpace = DataProto.data.EditorCoordSpaceType.EDITOR_COORD_SPACE_EXPORT;
+                    var c = {state: ba.data, url: za.data};
+                    a != null && (c.blueprint = a.bp, c.name = a.name);
+                    b.props = lg.toStruct(c);
+                    return b
+                },
+                lg.enrichRoot = function (a, b) {
+                    if (a == null) return;
+                    var c = lg.makeTransform();
+                    a.embedExportTransform = c;
+                    a.embedUid = "root";
+                    b != null && b.name != null && (a.embedName = b.name);
+                    a.embedEditorPayload = lg.makeEditorPayload(b);
+                    a.embedProps == null && (a.embedProps = lg.toStruct({generator: "mfcg", version: A.current.meta.h.version, blueprint: b != null ? b.bp : null, state: ba.data, url: za.data}));
+                    lg.enrichGeoObj(a, {uid: "root", transform: c})
                 },
                 lg.toJsonObject = function (a) {
                     var b = DataProto.data.GeoType[a.type], c = {type: b};
@@ -7923,6 +8083,52 @@ var $lime_init = function (A, t) {
                     a.generator != null && Object.hasOwnProperty.call(a, "generator") && (c.generator = DataProto.data.GeoGeneratorType[a.generator]);
                     a.version != null && Object.hasOwnProperty.call(a, "version") && (c.version = a.version);
                     a.riverWidth != null && Object.hasOwnProperty.call(a, "riverWidth") && (c.riverWidth = a.riverWidth);
+                    a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") && (c.embedUid = a.embedUid);
+                    a.embedName != null && Object.hasOwnProperty.call(a, "embedName") && (c.embedName = a.embedName);
+                    a.embedExportTransform != null && Object.hasOwnProperty.call(a, "embedExportTransform") && (c.embedExportTransform = {scale: a.embedExportTransform.scale, cx: a.embedExportTransform.cx, cy: a.embedExportTransform.cy, invertY: a.embedExportTransform.invertY, precisionPow10: a.embedExportTransform.precisionPow10});
+                    a.embedBbox != null && Object.hasOwnProperty.call(a, "embedBbox") && (c.embedBbox = {minX: a.embedBbox.minX, minY: a.embedBbox.minY, maxX: a.embedBbox.maxX, maxY: a.embedBbox.maxY});
+                    a.embedProps != null && Object.hasOwnProperty.call(a, "embedProps") && (c.embedProps = lg.structToJson(a.embedProps));
+                    if (a.embedParts != null && a.embedParts.length) {
+                        c.embedParts = [];
+                        for (var d2 = 0; d2 < a.embedParts.length;) {
+                            var f2 = a.embedParts[d2++];
+                            c.embedParts.push({
+                                index: f2.index,
+                                uid: f2.uid,
+                                name: f2.name,
+                                bbox: f2.bbox != null ? {minX: f2.bbox.minX, minY: f2.bbox.minY, maxX: f2.bbox.maxX, maxY: f2.bbox.maxY} : null,
+                                props: f2.props != null ? lg.structToJson(f2.props) : null
+                            })
+                        }
+                    }
+                    if (a.embedEditorPayload != null && Object.hasOwnProperty.call(a, "embedEditorPayload")) {
+                        var h2 = a.embedEditorPayload, k2 = {};
+                        h2.payloadRev != null && Object.hasOwnProperty.call(h2, "payloadRev") && (k2.payloadRev = h2.payloadRev);
+                        h2.coordSpace != null && Object.hasOwnProperty.call(h2, "coordSpace") && (k2.coordSpace = DataProto.data.EditorCoordSpaceType[h2.coordSpace]);
+                        h2.layers != null && h2.layers.length && (k2.layers = h2.layers.map(function (a2) {
+                            return {layerId: a2.layerId, visible: a2.visible, locked: a2.locked, zIndex: a2.zIndex}
+                        }));
+                        h2.groups != null && h2.groups.length && (k2.groups = h2.groups.map(function (a2) {
+                            return {groupUid: a2.groupUid, name: a2.name, memberUids: a2.memberUids, props: a2.props != null ? lg.structToJson(a2.props) : null}
+                        }));
+                        h2.links != null && h2.links.length && (k2.links = h2.links.map(function (a2) {
+                            return {aUid: a2.aUid, bUid: a2.bUid, type: DataProto.data.EditorLinkType[a2.type], props: a2.props != null ? lg.structToJson(a2.props) : null}
+                        }));
+                        h2.roadModels != null && h2.roadModels.length && (k2.roadModels = h2.roadModels.map(function (a2) {
+                            return {targetUid: a2.targetUid, centerline: a2.centerline != null ? {closed: a2.centerline.closed, points: a2.centerline.points} : null, width: a2.width, closed: a2.closed, props: a2.props != null ? lg.structToJson(a2.props) : null}
+                        }));
+                        h2.shapeModels != null && h2.shapeModels.length && (k2.shapeModels = h2.shapeModels.map(function (a2) {
+                            return {targetUid: a2.targetUid, polyline: a2.polyline, bezier: a2.bezier, arc: a2.arc, props: a2.props != null ? lg.structToJson(a2.props) : null}
+                        }));
+                        h2.snapNodes != null && h2.snapNodes.length && (k2.snapNodes = h2.snapNodes.map(function (a2) {
+                            return {nodeUid: a2.nodeUid, pos: a2.pos, incidentUids: a2.incidentUids, props: a2.props != null ? lg.structToJson(a2.props) : null}
+                        }));
+                        h2.constraints != null && h2.constraints.length && (k2.constraints = h2.constraints.map(function (a2) {
+                            return {constraintUid: a2.constraintUid, type: DataProto.data.EditorConstraintType[a2.type], targetUids: a2.targetUids, params: a2.params != null ? lg.structToJson(a2.params) : null}
+                        }));
+                        h2.props != null && Object.hasOwnProperty.call(h2, "props") && (k2.props = lg.structToJson(h2.props));
+                        c.embedEditorPayload = k2
+                    }
                     switch (a.type) {
                         case DataProto.data.GeoType.Feature:
                             a.geometry != null && Object.hasOwnProperty.call(a, "geometry") && (c.geometry = lg.toJsonObject(a.geometry));
@@ -8071,11 +8277,14 @@ var $lime_init = function (A, t) {
                     n = [];
                     g2 = k.keys();
                     for (; g2.hasNext();) l2 = g2.next(), n.push(l2);
-                    return b = lg.featureCollection([p, q2, u2, w2, r2, lg.multiThick(DataProto.data.GeoFeatureType.planks, n, null, function (a2) {
+                    b = lg.featureCollection([p, q2, u2, w2, r2, lg.multiThick(DataProto.data.GeoFeatureType.planks, n, null, function (a2) {
                         return a2
                     }, function (a2) {
                         return k.h[a2.__id__]
-                    }), lg.multiPolygon(DataProto.data.GeoFeatureType.buildings, b), lg.multiPolygon(DataProto.data.GeoFeatureType.prisms, c), lg.multiPolygon(DataProto.data.GeoFeatureType.squares, d), lg.multiPolygon(DataProto.data.GeoFeatureType.greens, f), lg.multiPolygon(DataProto.data.GeoFeatureType.fields, h), lg.multiPoint(DataProto.data.GeoFeatureType.trees, x2), m]), 0 < a.waterEdgeE.length && b.features.push(lg.multiPolygon(DataProto.data.GeoFeatureType.water, [Ua.toPoly(a.waterEdgeE)])), b
+                    }), lg.multiPolygon(DataProto.data.GeoFeatureType.buildings, b), lg.multiPolygon(DataProto.data.GeoFeatureType.prisms, c), lg.multiPolygon(DataProto.data.GeoFeatureType.squares, d), lg.multiPolygon(DataProto.data.GeoFeatureType.greens, f), lg.multiPolygon(DataProto.data.GeoFeatureType.fields, h), lg.multiPoint(DataProto.data.GeoFeatureType.trees, x2), m]);
+                    0 < a.waterEdgeE.length && b.features.push(lg.multiPolygon(DataProto.data.GeoFeatureType.water, [Ua.toPoly(a.waterEdgeE)]));
+                    lg.enrichRoot(b, a);
+                    return b
                 },
                 lg.multiThick = function (a, b, c, d, f) {
                     c == null && (c = !1);
@@ -8087,7 +8296,6 @@ var $lime_init = function (A, t) {
                     }
                     return lg.geometryCollection(a, h)
                 };
-
             var Rd = function () {
             };
             g["SvgExporter"] = Rd;
