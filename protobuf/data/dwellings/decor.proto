@@ -21,3 +21,11 @@ message DwellingsPropObj {
   DwellingsEdgeObj from_edge = 4;
   DwellingsEdgeObj to_edge = 5;
 }
+
+message DwellingsPolygonObj {
+  repeated DwellingsPointObj points = 1;
+}
+
+message DwellingsDecorGroupObj {
+  repeated DwellingsPolygonObj polygons = 1;
+}

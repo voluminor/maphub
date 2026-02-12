@@ -16,7 +16,7 @@ message DwellingsRoomObj {
   optional string embed_type_id = 10;
   optional DwellingsLightObj embed_light = 11;
   repeated DwellingsPropObj embed_props = 12;
-  optional uint32 embed_decor_seed = 13;
+  repeated DwellingsDecorGroupObj embed_decor = 13;
 }
 
 message DwellingsDoorObj {

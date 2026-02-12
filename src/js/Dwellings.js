@@ -6606,6 +6606,7 @@ var $lime_init = function (K, v) {
                 var d=sb.light2proto(a.light);
                 d!=null&&(b.embedLight=d);
                 if(a.props!=null&&a.props.set!=null&&0<a.props.set.length){for(var e=[],f=0,g=a.props.set;f<g.length;){var p=g[f];++f;var q=sb.prop2proto(p);q!=null&&e.push(q)}0<e.length&&(b.embedProps=e)}
+                if(a.clutter!=null&&a.clutter.shapes!=null&&0<a.clutter.shapes.length){for(var dec=[],di=0,ds=a.clutter.shapes;di<ds.length;){var grp=ds[di];++di;for(var polys=[],pi=0;pi<grp.length;){var poly=grp[pi];++pi;for(var pts=[],ti=0;ti<poly.length;){var pt=poly[ti];++ti;pts.push(new DataProto.data.DwellingsPointObj({x:pt.x,y:pt.y}))}polys.push(new DataProto.data.DwellingsPolygonObj({points:pts}))}dec.push(new DataProto.data.DwellingsDecorGroupObj({polygons:polys}))}b.embedDecor=dec}
                 return b
             };
             sb.door2proto=function(a){
