@@ -6563,8 +6563,8 @@ var $lime_init = function (K, v) {
                 return sb.house2proto(a)
             };
             sb.export=function(a){
-                var b=sb.exportProto(a),c=sb.proto2json(b),d=id.fixName(a.name);
-                id.saveJSON(c,d,!0);
+                var b=sb.exportProto(a),d=id.fixName(a.name);
+                id.saveJSON(b,d,!0);
                 return b
             };
             sb.exportAsProto=function(a){
@@ -6666,43 +6666,6 @@ var $lime_init = function (K, v) {
                     b.kind=DataProto.data.DwellingsPropType.BED
                 }else return null;
                 return b
-            };
-            sb.enum2json=function(a,b){
-                var c=a[b];
-                return c===void 0?b:c
-            };
-            sb.proto2json=function(a){
-                for(var b={floors:[],exit:sb.edgeProto2json(a.exit)},c=0,d=a.floors;c<d.length;){var g=d[c];++c,b.floors.push(sb.planProto2json(g))}
-                a.spiral!=null&&Object.prototype.hasOwnProperty.call(a,"spiral")&&(b.spiral=sb.edgeProto2json(a.spiral));
-                return b
-            };
-            sb.planProto2json=function(a){
-                for(var b={level:a.level,rooms:[],doors:[],windows:[],stairs:[]},c=0,d=a.rooms;c<d.length;){var g=d[c];++c,b.rooms.push(sb.roomProto2json(g))}
-                for(c=0,d=a.doors;c<d.length;)g=d[c],++c,b.doors.push(sb.doorProto2json(g));
-                for(c=0,d=a.windows;c<d.length;)g=d[c],++c,b.windows.push(sb.edgeProto2json(g));
-                for(c=0,d=a.stairs;c<d.length;)g=d[c],++c,b.stairs.push(sb.stairProto2json(g));
-                return b
-            };
-            sb.roomProto2json=function(a){
-                var b={};
-                a.name!=null&&Object.prototype.hasOwnProperty.call(a,"name")&&(b.name=a.name);
-                for(var c=[],d=0,g=a.cells;d<g.length;){var f=g[d];++d,c.push(sb.cellProto2json(f))}
-                b.cells=c;
-                return b
-            };
-            sb.doorProto2json=function(a){
-                var b={edge:sb.edgeProto2json(a.edge)};
-                a.type!=null&&Object.prototype.hasOwnProperty.call(a,"type")&&(b.type=sb.enum2json(DataProto.data.DwellingsDoorType,a.type));
-                return b
-            };
-            sb.stairProto2json=function(a){
-                return{cell:sb.cellProto2json(a.cell),dir:sb.enum2json(DataProto.data.DwellingsDirectionType,a.dir),up:a.up}
-            };
-            sb.edgeProto2json=function(a){
-                return{cell:sb.cellProto2json(a.cell),dir:sb.enum2json(DataProto.data.DwellingsDirectionType,a.dir)}
-            };
-            sb.cellProto2json=function(a){
-                return{i:a.i,j:a.j}
             };
             sb.house2data=function(a){
                 for(var b={},c=[],d=0,g=a.floors;d<g.length;){var f=g[d];++d,c.push(sb.plan2data(f))}
