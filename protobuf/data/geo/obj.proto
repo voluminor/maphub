@@ -3,30 +3,90 @@ syntax = "proto3";
 package data;
 
 import "google/protobuf/struct.proto";
+import "google/protobuf/any.proto";
 import "data/geo/enum.proto";
 
-// // // //
+// Метадані перетворення координат для round-trip:
+// x_export = cx + x_world * scale
+// y_export = cy - y_world * scale  (якщо invert_y = true)
+// precision_pow10 = 3 означає, що координати округлялись до 1e-3
+message GeoTransformObj {
+  double scale = 1;            // ДОДАНО: масштаб експорту (SCALE)
+  double cx    = 2;            // ДОДАНО: зсув по X (CX)
+  double cy    = 3;            // ДОДАНО: зсув по Y (CY)
+  bool invert_y = 4;           // ДОДАНО: інверсія осі Y (CY - y*scale)
+  uint32 precision_pow10 = 5;  // ДОДАНО: десяткові знаки округлення (3 => 1e-3)
+}
+
+// Bounding box для швидкого fit-to-view та хіт-тесту
+message GeoBBoxObj {
+  double min_x = 1;            // ДОДАНО: min X в експортних координатах
+  double min_y = 2;            // ДОДАНО: min Y в експортних координатах
+  double max_x = 3;            // ДОДАНО: max X в експортних координатах
+  double max_y = 4;            // ДОДАНО: max Y в експортних координатах
+}
+
+// Опис “частини” всередині Multi* геометрій (MultiPolygon/MultiPoint/MultiLineString).
+// index відповідає порядку координат у Multi*.
+message GeoPartObj {
+  uint32 index = 1;                 // ДОДАНО: індекс частини всередині Multi*
+  string uid = 2;                   // ДОДАНО: стабільний ID саме цього об’єкта (будинку/дерева/сегмента)
+  google.protobuf.Struct props = 3; // ДОДАНО: атрибути конкретної частини (тип, клас, висота, тощо)
+  string name = 4;                  // ДОДАНО: опціональна назва частини (для UI/дебагу)
+  GeoBBoxObj bbox = 5;              // ДОДАНО: опціональний bbox частини для швидкого selection/hit-test
+}
 
 message GeoObj {
   GeoType type = 1;
   GeoObj geometry = 2;
   google.protobuf.ListValue coordinates = 3;
-  reserved 4 to 9;
+  reserved 4 to 8;
+
+  string embed_uid = 9;
+  // ДОДАНО: UID для “об’єкта як цілого”, якщо це НЕ Multi* (Polygon/LineString/Point),
+  // або якщо хочеш мати UID шару/feature.
+  // Для Multi* деталізація зазвичай іде через embed_parts[].uid.
+
 
   repeated GeoObj features = 10;
   repeated GeoObj geometries = 11;
-  reserved 12 to 19;
+
+  reserved 12 to 16;
+
+  repeated GeoPartObj embed_parts = 17;
+  // ДОДАНО: метадані для редагування всередині Multi* геометрій.
+  // Ключове для “редагувати без болю”: можна виділити/пересунути 1 будинок,
+  // не розпаковуючи MultiPolygon в купу Feature-ів.
+
+  GeoTransformObj embed_export_transform = 18;
+  // ДОДАНО: трансформація координат експорту.
+  // Рекомендація: заповнювати на корені FeatureCollection або у values-feature (id=values).
+  // Можна й локально на шарах, але краще 1 раз у корені.
+
+  GeoBBoxObj embed_bbox = 19;
+  // ДОДАНО: bbox для об’єкта (корінь/шар/feature).
+  // Рекомендація: як мінімум — bbox всього файлу на корені або values-feature.
 
   optional GeoGeneratorType generator = 20;
   optional GeoFeatureType id = 21;
   optional string version = 22;
   optional string name = 23;
   optional double width = 24;
-  reserved 25 to 39;
+
+  reserved 25 to 38;
+
+  google.protobuf.Struct embed_props = 39;
+  // ДОДАНО: атрибути об’єкта/шару/feature (тип, клас дороги, параметри стилю, джерело, індекси тощо).
+  // Це замінює “евристики по геометрії”
 
   optional double road_width = 40;
   optional double river_width = 41;
   optional double tower_radius = 42;
   optional double wall_thickness = 43;
+
   reserved 44 to 79;
+
+  google.protobuf.Any embed_editor_payload = 80;
+  // ДОДАНО: опціональний “стан редактора/проєкту” для round-trip,
+  // якщо треба відновлювати не лише векторну геометрію, а й внутрішню модель (wards/cells/seed/graph).
 }
