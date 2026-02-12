@@ -8029,14 +8029,12 @@ var $lime_init = function (A, t) {
                     a.generator != null && Object.hasOwnProperty.call(a, "generator") && (b.generator = DataProto.data.GeoGeneratorType[a.generator]);
                     a.version != null && Object.hasOwnProperty.call(a, "version") && (b.version = a.version);
                     a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") && (b.uid = a.embedUid);
-                    a.embedName != null && Object.hasOwnProperty.call(a, "embedName") && (b.displayName = a.embedName);
                     return b
                 },
                 lg.enrichGeoObj = function (a, b) {
                     if (a == null) return;
                     a.embedExportTransform == null && b != null && b.transform != null && (a.embedExportTransform = b.transform);
                     (a.embedUid == null || "" === a.embedUid) && b != null && b.uid != null && (a.embedUid = b.uid);
-                    a.embedName == null && (a.name != null && Object.hasOwnProperty.call(a, "name") ? a.embedName = a.name : a.id != null && Object.hasOwnProperty.call(a, "id") && (a.embedName = DataProto.data.GeoFeatureType[a.id]));
                     if (a.embedProps == null) {
                         var c = lg.buildPropsForObj(a);
                         c != null && (a.embedProps = lg.toStruct(c))
@@ -8067,7 +8065,6 @@ var $lime_init = function (A, t) {
                     var c = lg.makeTransform();
                     a.embedExportTransform = c;
                     a.embedUid = "root";
-                    b != null && b.name != null && (a.embedName = b.name);
                     a.embedEditorPayload = lg.makeEditorPayload(b);
                     a.embedProps == null && (a.embedProps = lg.toStruct({generator: "mfcg", version: A.current.meta.h.version, blueprint: b != null ? b.bp : null, state: ba.data, url: za.data}));
                     lg.enrichGeoObj(a, {uid: "root", transform: c})
@@ -8084,7 +8081,6 @@ var $lime_init = function (A, t) {
                     a.version != null && Object.hasOwnProperty.call(a, "version") && (c.version = a.version);
                     a.riverWidth != null && Object.hasOwnProperty.call(a, "riverWidth") && (c.riverWidth = a.riverWidth);
                     a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") && (c.embedUid = a.embedUid);
-                    a.embedName != null && Object.hasOwnProperty.call(a, "embedName") && (c.embedName = a.embedName);
                     a.embedExportTransform != null && Object.hasOwnProperty.call(a, "embedExportTransform") && (c.embedExportTransform = {scale: a.embedExportTransform.scale, cx: a.embedExportTransform.cx, cy: a.embedExportTransform.cy, invertY: a.embedExportTransform.invertY, precisionPow10: a.embedExportTransform.precisionPow10});
                     a.embedBbox != null && Object.hasOwnProperty.call(a, "embedBbox") && (c.embedBbox = {minX: a.embedBbox.minX, minY: a.embedBbox.minY, maxX: a.embedBbox.maxX, maxY: a.embedBbox.maxY});
                     a.embedProps != null && Object.hasOwnProperty.call(a, "embedProps") && (c.embedProps = lg.structToJson(a.embedProps));

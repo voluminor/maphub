@@ -6578,7 +6578,7 @@ var $lime_init = function (K, v) {
                 a.basement!=null&&b.push(sb.plan2proto(a.basement,a.chimneys));
                 var c=new DataProto.data.DwellingsObj({floors:b,exit:sb.edge2proto(a.floors[0].entrance.door)});
                 a.floors[0].spiral!=null&&(c.spiral=sb.edge2proto(a.floors[0].spiral.entrance));
-                a.name!=null&&a.name!=""&&(c.embedName=a.name);
+                a.name!=null&&a.name!="";
                 var e=ib.get("architecture");
                 if(e!=null){var f=DataProto.data.DwellingsArchitectureType[e];f!==void 0&&(c.embedArchitecture=f)}
                 return c

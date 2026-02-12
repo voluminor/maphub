@@ -7,19 +7,14 @@ import "data/geo/enum.proto";
 
 // // // //
 
-// Метадані перетворення координат для round-trip.
-// x_export = cx + x_world * scale
-// y_export = cy - y_world * scale  (якщо invert_y = true)
-// precision_pow10 = 3 => округлення до 1e-3
 message GeoTransformObj {
-  double scale = 1;             // SCALE
-  double cx    = 2;             // CX
-  double cy    = 3;             // CY
-  bool invert_y = 4;            // інверсія осі Y
-  uint32 precision_pow10 = 5;   // 3 => 0.001
+  double scale = 1;
+  double cx    = 2;
+  double cy    = 3;
+  bool invert_y = 4;
+  uint32 precision_pow10 = 5;
 }
 
-// Bounding box (у тій системі координат, в якій лежить geometry/coordinates)
 message GeoBBoxObj {
   double min_x = 1;
   double min_y = 2;
@@ -27,136 +22,101 @@ message GeoBBoxObj {
   double max_y = 4;
 }
 
-// “Частина” всередині Multi* геометрій.
-// index відповідає порядку координат у MultiPolygon/MultiPoint/MultiLineString.
 message GeoPartObj {
-  uint32 index = 1;                 // індекс частини в Multi*
-  string uid = 2;                   // стабільний ID частини
-  google.protobuf.Struct props = 3; // атрибути частини (тип, клас, параметри редагування)
-  string name = 4;                  // опціональна назва (UI)
-  GeoBBoxObj bbox = 5;              // опціонально: bbox частини для швидкого hit-test
+  uint32 index = 1;
+  string uid = 2;
+  google.protobuf.Struct props = 3;
+  string name = 4;
+  GeoBBoxObj bbox = 5;
 }
 
-
-// Уточнення: в якій системі координат лежать точки в EditorPayloadObj.
-// Рекомендація: WORLD (до застосування export_transform), щоб редагувати “як у редакторі”.
 enum EditorCoordSpaceType {
   EDITOR_COORD_SPACE_UNSPECIFIED = 0;
-
-  // Координати як у редакторі (world): +Y вгору, без SCALE/CX/CY (або ваша “внутрішня”).
   EDITOR_COORD_SPACE_WORLD = 1;
-
-  // Координати як у файлі (export): ті самі, що в GeoObj.coordinates.
   EDITOR_COORD_SPACE_EXPORT = 2;
 }
 
-// Проста 2D-точка для редакторських примітивів
 message EditorPoint2DObj {
   double x = 1;
   double y = 2;
 }
-
-// Полілінія (центрлайн, контур для редагування, тощо)
 message EditorPolylineObj {
-  repeated EditorPoint2DObj points = 1; // контрольні/вузлові точки
-  bool closed = 2;                     // замкнено (для контурів)
+  repeated EditorPoint2DObj points = 1;
+  bool closed = 2;
 }
-
-// Кубічний Bezier шлях (для випадків, коли геометрія в файлі вже “дискретизована”,
-// а ти хочеш зберегти оригінальні контрольні точки)
 message EditorBezierObj {
-  // Для cubic bezier зазвичай: (P0, C1, C2, P1) * N сегментів.
-  // Тобто кількість точок кратна 4 або 3+1 залежно від вашої конвенції.
   repeated EditorPoint2DObj control_points = 1;
 
-  bool closed = 2;                     // замкнено
-  uint32 segments = 3;                 // підказка: скільки сегментів у control_points
+  bool closed = 2;
+  uint32 segments = 3;
 }
 
-// Дуга (якщо в редакторі є арки, а в експорті лише ламана)
 message EditorArcObj {
-  EditorPoint2DObj center = 1;         // центр
-  double radius = 2;                   // радіус
-  double start_angle_rad = 3;          // початок (радіани)
-  double end_angle_rad = 4;            // кінець (радіани)
-  bool ccw = 5;                        // напрям
+  EditorPoint2DObj center = 1;
+  double radius = 2;
+  double start_angle_rad = 3;
+  double end_angle_rad = 4;
+  bool ccw = 5;
 }
 
-// Тип зв’язку між об’єктами (не відновлюється з геометрії)
 enum EditorLinkType {
   EDITOR_LINK_TYPE_UNSPECIFIED = 0;
-
-  // Структурні
-  EDITOR_LINK_TYPE_PARENT_CHILD = 1;   // b є “дочірній” для a
-  EDITOR_LINK_TYPE_GROUP_MEMBER = 2;   // b входить у групу a (або навпаки — визначіть правило)
-
-  // Геометричні/логічні
-  EDITOR_LINK_TYPE_ATTACH = 3;         // прив’язка (building->plot, tree->district, тощо)
-  EDITOR_LINK_TYPE_OVER_UNDER = 4;     // міст над річкою/дорогою, тунель, рівні
-  EDITOR_LINK_TYPE_ALONG = 5;          // “уздовж” (наприклад, паркани вздовж дороги)
+  EDITOR_LINK_TYPE_PARENT_CHILD = 1;
+  EDITOR_LINK_TYPE_GROUP_MEMBER = 2;
+  EDITOR_LINK_TYPE_ATTACH = 3;
+  EDITOR_LINK_TYPE_OVER_UNDER = 4;
+  EDITOR_LINK_TYPE_ALONG = 5;
 }
 
-// Опис зв’язку
 message EditorLinkObj {
-  string a_uid = 1;                    // UID першого об’єкта
-  string b_uid = 2;                    // UID другого об’єкта
-  EditorLinkType type = 3;             // тип зв’язку
-  google.protobuf.Struct props = 4;    // опціональні параметри зв’язку (рівень, offset, тощо)
+  string a_uid = 1;
+  string b_uid = 2;
+  EditorLinkType type = 3;
+  google.protobuf.Struct props = 4;
 }
 
-// Стан шарів/видимість/блокування — не відновлюється з геометрії,
-// але корисно для “проектного” round-trip (якщо тобі це треба).
 message EditorLayerStateObj {
-  string layer_id = 1;                 // напр. "roads", "buildings" або enum-ім'я
-  bool visible = 2;                    // видимий
-  bool locked = 3;                     // заблокований для редагування
-  int32 z_index = 4;                   // порядок малювання (якщо є)
+  string layer_id = 1;
+  bool visible = 2;
+  bool locked = 3;
+  int32 z_index = 4;
 }
 
-// Групи (виділення “як один об’єкт”, пакетні операції) — теж не відновлюються з геометрії.
 message EditorGroupObj {
-  string group_uid = 1;                // UID групи
-  string name = 2;                     // назва групи
-  repeated string member_uids = 3;     // члени групи
-  google.protobuf.Struct props = 4;    // опціональні атрибути
+  string group_uid = 1;
+  string name = 2;
+  repeated string member_uids = 3;
+  google.protobuf.Struct props = 4;
 }
 
-// Дороги часто рендеряться як полігони, але редагуються як центрлінія + ширина.
-// З полігону центрлінію відновити однозначно не можна -> зберігаємо її явно.
 message EditorRoadModelObj {
-  string target_uid = 1;               // UID дороги (або UID частини, якщо Multi*)
-  EditorPolylineObj centerline = 2;    // центрлайн для редагування
-  double width = 3;                    // ширина (якщо не хочеш шукати в props)
-  bool closed = 4;                     // для кільцевих доріг (опціонально)
-  google.protobuf.Struct props = 5;    // клас дороги, обмеження, тощо
+  string target_uid = 1;
+  EditorPolylineObj centerline = 2;
+  double width = 3;
+  bool closed = 4;
+  google.protobuf.Struct props = 5;
 }
 
-// Узагальнена “редакторська форма” для об’єкта, коли експортна геометрія — вже результат,
-// а редагувати хочеться “по контрольних точках/примітивах”.
 message EditorShapeModelObj {
-  string target_uid = 1;               // UID об’єкта/частини, до якого відноситься модель
+  string target_uid = 1;
 
   oneof model {
-    EditorPolylineObj polyline = 2;    // редагувати як полілінію (напр. річка/паркан/дорога-ось)
-    EditorBezierObj bezier = 3;        // редагувати як bezier
-    EditorArcObj arc = 4;              // редагувати як арку
+    EditorPolylineObj polyline = 2;
+    EditorBezierObj bezier = 3;
+    EditorArcObj arc = 4;
   }
 
-  google.protobuf.Struct props = 10;   // параметри моделі (tessellation, snapping, тощо)
+  google.protobuf.Struct props = 10;
 }
 
-// Снап-ноди (вузли) для стабільного графа/стикування.
-// Перетини/вузли з полігонів/ламаниx відновлюються не завжди стабільно (особливо після ручних правок),
-// тому якщо у редактора є “граф” — збережи його явно.
+
 message EditorSnapNodeObj {
-  string node_uid = 1;                // UID вузла
-  EditorPoint2DObj pos = 2;           // позиція
-  repeated string incident_uids = 3;  // які об’єкти/сегменти під’єднані (UID)
-  google.protobuf.Struct props = 4;   // тип вузла, пріоритет, тощо
+  string node_uid = 1;
+  EditorPoint2DObj pos = 2;
+  repeated string incident_uids = 3;
+  google.protobuf.Struct props = 4;
 }
 
-// Обмеження/констрейнти (якщо у редакторі є): паралельність, фіксована довжина, тощо.
-// Це 100% не відновлюється з геометрії.
 enum EditorConstraintType {
   EDITOR_CONSTRAINT_TYPE_UNSPECIFIED = 0;
   EDITOR_CONSTRAINT_TYPE_SNAP = 1;
@@ -166,73 +126,52 @@ enum EditorConstraintType {
 }
 
 message EditorConstraintObj {
-  string constraint_uid = 1;           // UID обмеження
-  EditorConstraintType type = 2;       // тип
-  repeated string target_uids = 3;     // до чого прив’язано (UID об’єктів/частин/нод)
-  google.protobuf.Struct params = 4;   // параметри (довжина, кут, допуск, тощо)
+  string constraint_uid = 1;
+  EditorConstraintType type = 2;
+  repeated string target_uids = 3;
+  google.protobuf.Struct params = 4;
 }
 
-// Головний payload для round-trip редагування без Any.
-// УСЕ ТУТ — опціональне: імпортер має вміти працювати, навіть якщо payload порожній,
-// використовуючи embed_uid/embed_parts/embed_props + geometry.
 message EditorPayloadObj {
-  uint32 payload_rev = 1;              // ревізія формату payload (для міграцій)
-  EditorCoordSpaceType coord_space = 2;    // WORLD або EXPORT
-
-  // Проектні/редакторські речі (не обов’язково)
-  repeated EditorLayerStateObj layers = 10;  // стани шарів (visible/locked/z)
-  repeated EditorGroupObj groups = 11;       // групи
-  repeated EditorLinkObj links = 12;         // зв’язки між об’єктами
-
-  // Редакторські моделі геометрії (те, що не відновиш з “готової” геометрії)
-  repeated EditorRoadModelObj road_models = 20;    // центрлайни доріг + ширини
-  repeated EditorShapeModelObj shape_models = 21;  // сплайни/арки/редакторські ламані
-
-  // Граф/снапінг/констрейнти (за потреби)
+  uint32 payload_rev = 1;
+  EditorCoordSpaceType coord_space = 2;
+  repeated EditorLayerStateObj layers = 10;
+  repeated EditorGroupObj groups = 11;
+  repeated EditorLinkObj links = 12;
+  repeated EditorRoadModelObj road_models = 20;
+  repeated EditorShapeModelObj shape_models = 21;
   repeated EditorSnapNodeObj snap_nodes = 30;
   repeated EditorConstraintObj constraints = 31;
-
-  // Глобальні параметри редактора/проекту (опційно): одиниці, дефолти стилю, тощо
   google.protobuf.Struct props = 40;
 }
 
-// ===========================================================
 
 message GeoObj {
   GeoType type = 1;
   GeoObj geometry = 2;
   google.protobuf.ListValue coordinates = 3;
-
-  reserved 4 to 7;
-
-  string embed_uid = 8;  // UID об’єкта (або шару/feature). Для Multi* зазвичай UID-и в embed_parts.
-  string embed_name = 9; // Додаткове ім'я (щоб не плутатись з існуючим `name`)
+  reserved 4 to 8;
+  string embed_uid = 9;
 
   repeated GeoObj features = 10;
   repeated GeoObj geometries = 11;
-
   reserved 12 to 16;
-
-  repeated GeoPartObj embed_parts = 17;           // Метадані частин Multi*
-  GeoTransformObj embed_export_transform = 18;    // Transform для round-trip
-  GeoBBoxObj embed_bbox = 19;                    // bbox (файл/шар/об’єкт)
+  repeated GeoPartObj embed_parts = 17;
+  GeoTransformObj embed_export_transform = 18;
+  GeoBBoxObj embed_bbox = 19;
 
   optional GeoGeneratorType generator = 20;
   optional GeoFeatureType id = 21;
   optional string version = 22;
   optional string name = 23;
   optional double width = 24;
-
   reserved 25 to 38;
-
-  google.protobuf.Struct embed_props = 39;        // Атрибути об’єкта/шару/feature
+  google.protobuf.Struct embed_props = 39;
 
   optional double road_width = 40;
   optional double river_width = 41;
   optional double tower_radius = 42;
   optional double wall_thickness = 43;
-
   reserved 44 to 79;
-
   EditorPayloadObj embed_editor_payload = 80;
 }

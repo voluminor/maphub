@@ -9463,7 +9463,6 @@ var $lime_init = function (E, u) {
                         version: params.meta.ver_app,
                         wallThickness: Ua.SCALE,
                         embedUid: "meta",
-                        embedName: "meta",
                         embedProps: Hh._structFromJs({
                             name: a.name,
                             pop: a.pop,
@@ -9496,7 +9495,6 @@ var $lime_init = function (E, u) {
                     id: DataProto.data.GeoFeatureType.earth,
                     coordinates: Hh._listValueFromNested(m),
                     embedUid: "earth",
-                    embedName: "earth",
                     embedBbox: Hh._bboxToProto(n),
                     embedProps: Hh._structFromJs({kind: "earth"})
                 });
@@ -9515,7 +9513,6 @@ var $lime_init = function (E, u) {
                             width: D * Ua.SCALE,
                             coordinates: Hh._listValueFromNested(H),
                             embedUid: J,
-                            embedName: J,
                             embedBbox: Hh._bboxToProto(I),
                             embedProps: Hh._structFromJs({kind: "road", roadType: F.type, widthWorld: D})
                         });
@@ -9536,7 +9533,6 @@ var $lime_init = function (E, u) {
                     id: DataProto.data.GeoFeatureType.roads,
                     geometries: A,
                     embedUid: "roads",
-                    embedName: "roads",
                     embedBbox: Hh._bboxToProto(B),
                     embedProps: Hh._structFromJs({kind: "roads"})
                 };
@@ -9554,7 +9550,6 @@ var $lime_init = function (E, u) {
                         width: 5 * Ua.SCALE,
                         coordinates: Hh._listValueFromNested(N),
                         embedUid: P,
-                        embedName: P,
                         embedBbox: Hh._bboxToProto(O),
                         embedProps: Hh._structFromJs({kind: "plank", widthWorld: 5})
                     });
@@ -9572,7 +9567,6 @@ var $lime_init = function (E, u) {
                     id: DataProto.data.GeoFeatureType.planks,
                     geometries: A,
                     embedUid: "planks",
-                    embedName: "planks",
                     embedBbox: Hh._bboxToProto(B),
                     embedProps: Hh._structFromJs({kind: "planks"})
                 };
@@ -9682,7 +9676,6 @@ var $lime_init = function (E, u) {
                     id: DataProto.data.GeoFeatureType.buildings,
                     coordinates: Hh._listValueFromNested(X),
                     embedUid: "buildings",
-                    embedName: "buildings",
                     embedBbox: Hh._bboxToProto(ga),
                     embedParts: fa,
                     embedProps: Hh._structFromJs({kind: "buildings"})
@@ -9693,7 +9686,6 @@ var $lime_init = function (E, u) {
                     id: DataProto.data.GeoFeatureType.prisms,
                     coordinates: Hh._listValueFromNested(Y),
                     embedUid: "prisms",
-                    embedName: "prisms",
                     embedBbox: Hh._bboxToProto(B),
                     embedParts: ma,
                     embedProps: Hh._structFromJs({kind: "prisms"})
@@ -9704,7 +9696,6 @@ var $lime_init = function (E, u) {
                     id: DataProto.data.GeoFeatureType.trees,
                     coordinates: Hh._listValueFromNested(na2),
                     embedUid: "trees",
-                    embedName: "trees",
                     embedBbox: Hh._bboxToProto(oa),
                     embedParts: pa,
                     embedProps: Hh._structFromJs({kind: "trees"})
@@ -9717,7 +9708,6 @@ var $lime_init = function (E, u) {
                     type: DataProto.data.GeoType.FeatureCollection,
                     features: b,
                     embedUid: "root",
-                    embedName: a.name,
                     embedExportTransform: f,
                     embedBbox: Hh._bboxToProto(l),
                     embedEditorPayload: {
@@ -9758,7 +9748,6 @@ var $lime_init = function (E, u) {
                         id: DataProto.data.GeoFeatureType.water,
                         coordinates: Hh._listValueFromNested(ua),
                         embedUid: "water",
-                        embedName: "water",
                         embedBbox: Hh._bboxToProto(wa),
                         embedParts: va,
                         embedProps: Hh._structFromJs({kind: "water"})
@@ -9781,7 +9770,6 @@ var $lime_init = function (E, u) {
                         id: DataProto.data.GeoFeatureType.extendable,
                         coordinates: Hh._listValueFromNested(Fa),
                         embedUid: "extendable",
-                        embedName: "extendable",
                         embedBbox: Hh._bboxToProto(Ga),
                         embedParts: Ha,
                         embedProps: Hh._structFromJs({kind: "extendable"})
@@ -9807,7 +9795,6 @@ var $lime_init = function (E, u) {
                         id: DataProto.data.GeoFeatureType.squares,
                         coordinates: Hh._listValueFromNested([Na2]),
                         embedUid: "squares",
-                        embedName: "squares",
                         embedBbox: Hh._bboxToProto(Oa2),
                         embedParts: [{
                             index: 0,
@@ -9850,7 +9837,6 @@ var $lime_init = function (E, u) {
                         id: DataProto.data.GeoFeatureType.palisade,
                         coordinates: Hh._listValueFromNested(Pa2),
                         embedUid: "palisade",
-                        embedName: "palisade",
                         embedBbox: Hh._bboxToProto(Ra2),
                         embedParts: Qa2,
                         embedProps: Hh._structFromJs({kind: "palisade"})
@@ -9898,7 +9884,6 @@ var $lime_init = function (E, u) {
                         id: DataProto.data.GeoFeatureType.fields,
                         coordinates: Hh._listValueFromNested(da2),
                         embedUid: "fields",
-                        embedName: "fields",
                         embedBbox: Hh._bboxToProto(ga2),
                         embedParts: ka2,
                         embedProps: Hh._structFromJs({kind: "fields"})
@@ -9926,7 +9911,6 @@ var $lime_init = function (E, u) {
                 a.version != null && (b.version = a.version);
 
                 a.embedUid != null && (b.embedUid = a.embedUid);
-                a.embedName != null && (b.embedName = a.embedName);
 
                 a.embedExportTransform != null && (b.embedExportTransform = {
                     scale: a.embedExportTransform.scale,
