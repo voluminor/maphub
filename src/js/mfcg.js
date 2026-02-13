@@ -7922,15 +7922,23 @@ var $lime_init = function (A, t) {
             };
             be.decodeImportFile = function (a, b) {
                 var c = null, d = DataGeo.bytesToUtf8Text(b);
-                try {
-                    c = JSON.parse(d)
-                } catch (h) {
-                    try {
-                        console.error("MFCG import JSON parse failed:", h);
-                    } catch (k) {
+                var f = null != a ? String(a).toLowerCase() : "";
+                var k = f.endsWith(".pb") || f.endsWith(".mf.pb");
+                if (!k) {
+                    var h = d != null ? String(d).trim() : "";
+                    var n = 0 < h.length && ("{" == h.charAt(0) || "[" == h.charAt(0));
+                    if (n || f.endsWith(".json") || f.endsWith(".mf.json")) {
+                        try {
+                            c = JSON.parse(d)
+                        } catch (p) {
+                            try {
+                                console.error("MFCG import JSON parse failed:", p);
+                            } catch (g2) {
+                            }
+                        }
+                        if (null != c) return be.extractPayloadFromJson(c)
                     }
                 }
-                if (null != c) return be.extractPayloadFromJson(c);
                 var f = DataGeo.toUint8Array(b);
                 if (null == f) throw new Error("Invalid data buffer.");
                 var k = null;
