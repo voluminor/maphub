@@ -8,6 +8,7 @@ import * as DataMfcg from "./shared/data/mfcg.js";
 import * as FuncBin from "./shared/data/bin-verify.js";
 
 import * as DataProto from "./struct/data.js";
+import * as DataGeo from "./shared/data/data.js";
 import {paletteProtoBytesFromObj} from "./shared/data/mfcg.js";
 import {exportBin} from "./shared/data/bin-verify.js";
 
@@ -7889,6 +7890,113 @@ var $lime_init = function (A, t) {
                 var bb = FuncBin.exportBin(c, DataProto.data.DataType.geo);
                 a = a.name, ge.saveBinary(Td.fromArrayBuffer(bb), "" + a + ".mf.pb", "application/x-protobuf")
             };
+            be.importFromFile = function (a, b) {
+                var c = be.decodeImportFile(a, b);
+                return be.applyImportPayload(c.payload, c.state, c.url)
+            };
+            be.applyImportPayload = function (a, b, c) {
+                var d = null;
+                null == b && null != a && typeof a === "object" && (b = a.state);
+                null == c && null != a && typeof a === "object" && (c = a.url);
+                "string" == typeof a ? d = a : null != a && "object" == typeof a && (Object.prototype.hasOwnProperty.call(a, "model") ? d = a.model : Object.prototype.hasOwnProperty.call(a, "data") && (d = a.data));
+                if (null == d) throw new Error("This file does not include MFCG editor state. Export a new map from MFCG to continue editing.");
+                var f = null;
+                try {
+                    f = pd.run(d)
+                } catch (h) {
+                    throw new Error("An error occurred while restoring the map: " + (h && h.message ? h.message : String(h)));
+                }
+                if (null == f) throw new Error("An error occurred while restoring the map.");
+                if (null != b && "object" == typeof b) {
+                    ba.init();
+                    ba.data = b;
+                    ba.so.data = ba.data;
+                    ba.so.flush()
+                }
+                if (null != c && "object" == typeof c) za.data = c, za.update();
+                K.restore();
+                Ub.instance = f;
+                bb.switchScene(Ec);
+                Bb.newModel.dispatch(f);
+                return f
+            };
+            be.decodeImportFile = function (a, b) {
+                var c = null, d = DataGeo.bytesToUtf8Text(b);
+                try {
+                    c = JSON.parse(d)
+                } catch (h) {
+                    try {
+                        console.error("MFCG import JSON parse failed:", h);
+                    } catch (k) {
+                    }
+                }
+                if (null != c) return be.extractPayloadFromJson(c);
+                var f = DataGeo.toUint8Array(b);
+                if (null == f) throw new Error("Invalid data buffer.");
+                var k = null;
+                try {
+                    k = FuncBin.importBin(f)
+                } catch (n) {
+                    try {
+                        console.error("MFCG import bin decode failed:", n);
+                    } catch (p) {
+                    }
+                }
+                if (null != k) {
+                    if (k.number != DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, k.number);
+                    f = new Uint8Array(k.buffer)
+                }
+                var p = null;
+                try {
+                    p = DataProto.data.GeoObj.decode(f)
+                } catch (n2) {
+                    try {
+                        console.error("MFCG import proto decode failed:", n2);
+                    } catch (p2) {
+                    }
+                }
+                if (null == p) {
+                    var g2 = be.stripLengthDelimited(f);
+                    if (null != g2) try {
+                        p = DataProto.data.GeoObj.decode(g2)
+                    } catch (m2) {
+                        try {
+                            console.error("MFCG import length-delimited proto decode failed:", m2);
+                        } catch (p3) {
+                        }
+                    }
+                }
+                if (null == p) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                return be.extractPayloadFromProto(p)
+            };
+            be.extractPayloadFromJson = function (a) {
+                var b = null;
+                if (null != a && "object" == typeof a) {
+                    b = a.embedProps;
+                    null == b && null != a.embedEditorPayload && (b = a.embedEditorPayload.props)
+                }
+                var c = null, d = null, f = null;
+                null != b && "object" == typeof b && (c = b.mfcgPayload, d = b.state, f = b.url);
+                return {payload: c, state: d, url: f}
+            };
+            be.extractPayloadFromProto = function (a) {
+                var b = null;
+                a.embedProps != null && Object.hasOwnProperty.call(a, "embedProps") && (b = lg.structToJson(a.embedProps));
+                null == b && a.embedEditorPayload != null && a.embedEditorPayload.props != null && (b = lg.structToJson(a.embedEditorPayload.props));
+                var c = null, d = null, f = null;
+                null != b && "object" == typeof b && (c = b.mfcgPayload, d = b.state, f = b.url);
+                return {payload: c, state: d, url: f}
+            };
+            be.stripLengthDelimited = function (a) {
+                for (var b = 0, c = 0, d = 0; b < a.length && 35 > d;) {
+                    var f = a[b++];
+                    c |= (f & 127) << d;
+                    if (0 == (f & 128)) break;
+                    d += 7
+                }
+                if (!(0 >= b || b >= a.length || 0 >= c || b + c > a.length)) return a.subarray(b, b + c);
+                return null
+            };
             var lg = function () {
             };
             g.JsonExporter = lg,
@@ -7924,8 +8032,8 @@ var $lime_init = function (A, t) {
                     if (a == null || typeof a !== "object" || Array.isArray(a)) return new DataProto.default.google.protobuf.Struct({fields: {}});
                     var b = {}, c = Object.keys(a), d = 0;
                     for (; d < c.length;) {
-                        if(c[d++] === "blueprint" || c[d++] === "url") continue;
-                        var f = c[d++], h = a[f];
+                        var f = c[d++];
+                        var h = a[f];
                         h === null || h === void 0 || (b[f] = lg.jsToValue(h))
                     }
                     return new DataProto.default.google.protobuf.Struct({fields: b})
@@ -8062,13 +8170,54 @@ var $lime_init = function (A, t) {
                     b.props = lg.toStruct(c);
                     return b
                 },
+                lg.makeMfcgPayload = function (a) {
+                    if (a == null) return null;
+                    try {
+                        var b = Bd.USE_CACHE;
+                        var c = null;
+                        var d = [];
+                        if (a.cells != null && a.cells.length) {
+                            for (var f = 0; f < a.cells.length;) {
+                                var h = a.cells[f++];
+                                if (h != null && Object.prototype.hasOwnProperty.call(h, "view") && h.view != null) {
+                                    d.push({obj: h, view: h.view});
+                                    h.view = null
+                                }
+                            }
+                        }
+                        Bd.USE_CACHE = !0;
+                        var k = Bd.run(a);
+                        Bd.USE_CACHE = b;
+                        for (var n = 0; n < d.length;) {
+                            var p = d[n++];
+                            p.obj.view = p.view
+                        }
+                        return {rev: 1, model: k}
+                    } catch (c) {
+                        Bd.USE_CACHE = b;
+                        for (var g2 = 0; g2 < d.length;) {
+                            var m2 = d[g2++];
+                            m2.obj.view = m2.view
+                        }
+                        hb.trace("Unable to serialize map: " + (c && c.message ? c.message : String(c)), {
+                            className: "JsonExporter",
+                            methodName: "makeMfcgPayload"
+                        });
+                        return null
+                    }
+                },
                 lg.enrichRoot = function (a, b) {
                     if (a == null) return;
                     var c = lg.makeTransform();
                     a.embedExportTransform = c;
                     a.embedUid = "root";
                     a.embedEditorPayload = lg.makeEditorPayload(b);
-                    a.embedProps == null && (a.embedProps = lg.toStruct({generator: "mfcg", version: A.current.meta.h.version, blueprint: b != null ? b.bp : null, state: ba.data, url: za.data}));
+                    if (a.embedProps == null) {
+                        var d = {generator: "mfcg", version: A.current.meta.h.version, blueprint: b != null ? b.bp : null, state: ba.data, url: za.data};
+                        var f = lg.makeMfcgPayload(b);
+                        f != null && (d.mfcgPayload = f);
+                        a.embedProps = lg.toStruct(d)
+                    }
                     lg.enrichGeoObj(a, {uid: "root", transform: c})
                 },
                 lg.toJsonObject = function (a) {
@@ -13603,6 +13752,10 @@ var $lime_init = function (A, t) {
                 c.set_width(96);
                 c.action.add(l(this, this.onExport));
                 b.add(c);
+                c = new fb("Import");
+                c.set_width(96);
+                c.click.add(l(this, this.onImport));
+                b.add(c);
                 this.add(b);
                 Bb.newModel.add(l(this, this.onNewModel));
                 Bb.titleChanged.add(l(this, this.onTitleChanged));
@@ -13693,6 +13846,27 @@ var $lime_init = function (A, t) {
                             be.asSVG();
                         case "PROTO":
                             be.asPROTO();
+                    }
+                },
+                onImport: function () {
+                    var a = this,
+                        b = new Gf;
+                    b.addEventListener("select", function (c) {
+                        b.addEventListener("complete", l(a, a.onImportLoaded));
+                        b.load()
+                    });
+                    b.browse([new Th("Map", "*.json;*.pb;")])
+                },
+                onImportLoaded: function (a) {
+                    try {
+                        var b = va.__cast(a.target, Gf);
+                        be.importFromFile(b.name, b.data)
+                    } catch (c) {
+                        try {
+                            console.error("MFCG import failed:", c);
+                        } catch (d) {
+                        }
+                        q.show(c && c.message ? c.message : String(c));
                     }
                 },
                 onNewModel: function (a) {
