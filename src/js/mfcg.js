@@ -7965,12 +7965,17 @@ var $lime_init = function (A, t) {
                         try {
                             c = JSON.parse(d)
                         } catch (p) {
-                            try {
-                                console.error("MFCG import JSON parse failed:", p);
-                            } catch (g2) {
-                            }
+                            throw new Error("An error occurred while parsing: " + (p && p.message ? p.message : String(p)));
                         }
-                        if (null != c) return be.extractPayloadFromJson(c)
+                        if (null != c) {
+                            var t = DataGeo.detectLegacyRootType(c);
+                            if (t != null && t !== DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, t);
+                            if (c == null || "object" != typeof c || Array.isArray(c)) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                            var r = c.type != null && (c.features != null || c.geometries != null || c.geometry != null || c.coordinates != null);
+                            if (!r) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                            if (c.embedProps == null && c.embedEditorPayload == null) throw new Error("This format is too outdated and cannot be opened because it does not contain the necessary data.");
+                            return be.extractPayloadFromJson(c)
+                        }
                     }
                 }
                 var f = DataGeo.toUint8Array(b);
@@ -8009,6 +8014,9 @@ var $lime_init = function (A, t) {
                     }
                 }
                 if (null == p) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                var r2 = p.type != null && (p.features != null || p.geometries != null || p.geometry != null || p.coordinates != null);
+                if (!r2) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                if (p.embedProps == null && p.embedEditorPayload == null) throw new Error("Этот формат слишком устаревший и не может быть открыт, так как в нем нет нужных данных.");
                 return be.extractPayloadFromProto(p)
             };
             be.extractPayloadFromJson = function (a) {
