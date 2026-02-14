@@ -8098,77 +8098,6 @@ var $lime_init = function (A, t) {
                     }
                     return b
                 },
-                lg.makeTransform = function () {
-                    var a = new DataProto.data.GeoTransformObj;
-                    return a.scale = Wa.SCALE, a.cx = Wa.CX, a.cy = Wa.CY, a.invertY = !0, a.precisionPow10 = 3, a
-                },
-                lg._bboxWalk = function (a, b) {
-                    if (a == null) return;
-                    if (Array.isArray(a)) {
-                        if (2 <= a.length && typeof a[0] === "number" && typeof a[1] === "number") {
-                            var c = a[0], d = a[1];
-                            c < b.minX && (b.minX = c);
-                            d < b.minY && (b.minY = d);
-                            c > b.maxX && (b.maxX = c);
-                            d > b.maxY && (b.maxY = d);
-                            return
-                        }
-                        for (c = 0; c < a.length;) d = a[c], ++c, lg._bboxWalk(d, b)
-                    }
-                },
-                lg.bboxFromCoords = function (a) {
-                    var b = {minX: 1 / 0, minY: 1 / 0, maxX: -1 / 0, maxY: -1 / 0};
-                    lg._bboxWalk(a, b);
-                    if (b.minX === 1 / 0) return null;
-                    var c = new DataProto.data.GeoBBoxObj;
-                    return c.minX = b.minX, c.minY = b.minY, c.maxX = b.maxX, c.maxY = b.maxY, c
-                },
-                lg.mergeBbox = function (a, b) {
-                    if (a == null) return b;
-                    if (b == null) return a;
-                    var c = new DataProto.data.GeoBBoxObj;
-                    return c.minX = Math.min(a.minX, b.minX), c.minY = Math.min(a.minY, b.minY), c.maxX = Math.max(a.maxX, b.maxX), c.maxY = Math.max(a.maxY, b.maxY), c
-                },
-                lg.computeBbox = function (a) {
-                    if (a == null) return null;
-                    var b = null;
-                    if (a.coordinates != null && Object.hasOwnProperty.call(a, "coordinates")) {
-                        var c = lg.listValueToJson(a.coordinates);
-                        b = lg.bboxFromCoords(c)
-                    } else if (a.geometry != null && Object.hasOwnProperty.call(a, "geometry")) b = lg.computeBbox(a.geometry);
-                    else if (a.features != null && a.features.length) {
-                        c = 0;
-                        for (var d = a.features; c < d.length;) {
-                            var f = d[c];
-                            ++c;
-                            b = lg.mergeBbox(b, lg.computeBbox(f))
-                        }
-                    } else if (a.geometries != null && a.geometries.length) {
-                        c = 0;
-                        for (d = a.geometries; c < d.length;) f = d[c], ++c, b = lg.mergeBbox(b, lg.computeBbox(f))
-                    }
-                    return b
-                },
-                lg.ensureParts = function (a) {
-                    if (a == null) return;
-                    if (!(a.type == DataProto.data.GeoType.MultiPolygon || a.type == DataProto.data.GeoType.MultiPoint || a.type == DataProto.data.GeoType.MultiLineString)) return;
-                    if (a.coordinates == null || !Object.hasOwnProperty.call(a, "coordinates")) return;
-                    if (a.embedParts != null && a.embedParts.length) return;
-                    var b = lg.listValueToJson(a.coordinates);
-                    if (!Array.isArray(b)) return;
-                    a.embedParts = [];
-                    for (var c = 0; c < b.length;) {
-                        var d = c, f = b[c++];
-                        var h = new DataProto.data.GeoPartObj;
-                        h.index = d;
-                        h.uid = (a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") ? a.embedUid : "obj") + ":part:" + d;
-                        a.name != null && Object.hasOwnProperty.call(a, "name") && (h.name = "" + a.name + " #" + (d + 1));
-                        var k = lg.bboxFromCoords(f);
-                        k != null && (h.bbox = k);
-                        h.props = lg.toStruct({parentUid: a.embedUid, index: d});
-                        a.embedParts.push(h)
-                    }
-                },
                 lg.buildPropsForObj = function (a) {
                     if (a == null) return null;
                     var b = {geoType: DataProto.data.GeoType[a.type]};
@@ -8180,26 +8109,21 @@ var $lime_init = function (A, t) {
                     a.wallThickness != null && Object.hasOwnProperty.call(a, "wallThickness") && (b.wallThickness = a.wallThickness);
                     a.generator != null && Object.hasOwnProperty.call(a, "generator") && (b.generator = DataProto.data.GeoGeneratorType[a.generator]);
                     a.version != null && Object.hasOwnProperty.call(a, "version") && (b.version = a.version);
-                    a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") && (b.uid = a.embedUid);
                     return b
                 },
-                lg.enrichGeoObj = function (a, b) {
+                lg.enrichGeoObj = function (a) {
                     if (a == null) return;
-                    a.embedExportTransform == null && b != null && b.transform != null && (a.embedExportTransform = b.transform);
-                    (a.embedUid == null || "" === a.embedUid) && b != null && b.uid != null && (a.embedUid = b.uid);
                     if (a.embedProps == null) {
                         var c = lg.buildPropsForObj(a);
                         c != null && (a.embedProps = lg.toStruct(c))
                     }
-                    lg.ensureParts(a);
-                    a.embedBbox == null && (a.embedBbox = lg.computeBbox(a));
-                    if (a.geometry != null && Object.hasOwnProperty.call(a, "geometry")) lg.enrichGeoObj(a.geometry, {uid: a.embedUid + "/geometry", transform: a.embedExportTransform});
+                    if (a.geometry != null && Object.hasOwnProperty.call(a, "geometry")) lg.enrichGeoObj(a.geometry);
                     if (a.features != null && a.features.length) for (c = 0; c < a.features.length;) {
-                        var d = a.features[c], f = d != null && d.id != null && Object.hasOwnProperty.call(d, "id") ? DataProto.data.GeoFeatureType[d.id] : "" + c;
+                        var d = a.features[c];
                         ++c;
-                        lg.enrichGeoObj(d, {uid: a.embedUid + "/features/" + f, transform: a.embedExportTransform})
+                        lg.enrichGeoObj(d)
                     }
-                    if (a.geometries != null && a.geometries.length) for (c = 0; c < a.geometries.length;) d = a.geometries[c], f = "" + c, ++c, lg.enrichGeoObj(d, {uid: a.embedUid + "/geometries/" + f, transform: a.embedExportTransform})
+                    if (a.geometries != null && a.geometries.length) for (c = 0; c < a.geometries.length;) d = a.geometries[c], ++c, lg.enrichGeoObj(d)
                 },
                 lg.makeEditorPayload = function (a) {
                     ba.init();
@@ -8250,9 +8174,6 @@ var $lime_init = function (A, t) {
                 },
                 lg.enrichRoot = function (a, b) {
                     if (a == null) return;
-                    var c = lg.makeTransform();
-                    a.embedExportTransform = c;
-                    a.embedUid = "root";
                     a.embedEditorPayload = lg.makeEditorPayload(b);
                     if (a.embedProps == null) {
                         var d = {generator: "mfcg", version: A.current.meta.h.version, blueprint: b != null ? b.bp : null, state: ba.data, url: za.data};
@@ -8260,7 +8181,7 @@ var $lime_init = function (A, t) {
                         f != null && (d.mfcgPayload = f);
                         a.embedProps = lg.toStruct(d)
                     }
-                    lg.enrichGeoObj(a, {uid: "root", transform: c})
+                    lg.enrichGeoObj(a)
                 },
                 lg.toJsonObject = function (a) {
                     var b = DataProto.data.GeoType[a.type], c = {type: b};
@@ -8273,48 +8194,11 @@ var $lime_init = function (A, t) {
                     a.generator != null && Object.hasOwnProperty.call(a, "generator") && (c.generator = DataProto.data.GeoGeneratorType[a.generator]);
                     a.version != null && Object.hasOwnProperty.call(a, "version") && (c.version = a.version);
                     a.riverWidth != null && Object.hasOwnProperty.call(a, "riverWidth") && (c.riverWidth = a.riverWidth);
-                    a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") && (c.embedUid = a.embedUid);
-                    a.embedExportTransform != null && Object.hasOwnProperty.call(a, "embedExportTransform") && (c.embedExportTransform = {scale: a.embedExportTransform.scale, cx: a.embedExportTransform.cx, cy: a.embedExportTransform.cy, invertY: a.embedExportTransform.invertY, precisionPow10: a.embedExportTransform.precisionPow10});
-                    a.embedBbox != null && Object.hasOwnProperty.call(a, "embedBbox") && (c.embedBbox = {minX: a.embedBbox.minX, minY: a.embedBbox.minY, maxX: a.embedBbox.maxX, maxY: a.embedBbox.maxY});
                     a.embedProps != null && Object.hasOwnProperty.call(a, "embedProps") && (c.embedProps = lg.structToJson(a.embedProps));
-                    if (a.embedParts != null && a.embedParts.length) {
-                        c.embedParts = [];
-                        for (var d2 = 0; d2 < a.embedParts.length;) {
-                            var f2 = a.embedParts[d2++];
-                            c.embedParts.push({
-                                index: f2.index,
-                                uid: f2.uid,
-                                name: f2.name,
-                                bbox: f2.bbox != null ? {minX: f2.bbox.minX, minY: f2.bbox.minY, maxX: f2.bbox.maxX, maxY: f2.bbox.maxY} : null,
-                                props: f2.props != null ? lg.structToJson(f2.props) : null
-                            })
-                        }
-                    }
                     if (a.embedEditorPayload != null && Object.hasOwnProperty.call(a, "embedEditorPayload")) {
                         var h2 = a.embedEditorPayload, k2 = {};
                         h2.payloadRev != null && Object.hasOwnProperty.call(h2, "payloadRev") && (k2.payloadRev = h2.payloadRev);
                         h2.coordSpace != null && Object.hasOwnProperty.call(h2, "coordSpace") && (k2.coordSpace = DataProto.data.EditorCoordSpaceType[h2.coordSpace]);
-                        h2.layers != null && h2.layers.length && (k2.layers = h2.layers.map(function (a2) {
-                            return {layerId: a2.layerId, visible: a2.visible, locked: a2.locked, zIndex: a2.zIndex}
-                        }));
-                        h2.groups != null && h2.groups.length && (k2.groups = h2.groups.map(function (a2) {
-                            return {groupUid: a2.groupUid, name: a2.name, memberUids: a2.memberUids, props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.links != null && h2.links.length && (k2.links = h2.links.map(function (a2) {
-                            return {aUid: a2.aUid, bUid: a2.bUid, type: DataProto.data.EditorLinkType[a2.type], props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.roadModels != null && h2.roadModels.length && (k2.roadModels = h2.roadModels.map(function (a2) {
-                            return {targetUid: a2.targetUid, centerline: a2.centerline != null ? {closed: a2.centerline.closed, points: a2.centerline.points} : null, width: a2.width, closed: a2.closed, props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.shapeModels != null && h2.shapeModels.length && (k2.shapeModels = h2.shapeModels.map(function (a2) {
-                            return {targetUid: a2.targetUid, polyline: a2.polyline, bezier: a2.bezier, arc: a2.arc, props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.snapNodes != null && h2.snapNodes.length && (k2.snapNodes = h2.snapNodes.map(function (a2) {
-                            return {nodeUid: a2.nodeUid, pos: a2.pos, incidentUids: a2.incidentUids, props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.constraints != null && h2.constraints.length && (k2.constraints = h2.constraints.map(function (a2) {
-                            return {constraintUid: a2.constraintUid, type: DataProto.data.EditorConstraintType[a2.type], targetUids: a2.targetUids, params: a2.params != null ? lg.structToJson(a2.params) : null}
-                        }));
                         h2.props != null && Object.hasOwnProperty.call(h2, "props") && (k2.props = lg.structToJson(h2.props));
                         c.embedEditorPayload = k2
                     }
