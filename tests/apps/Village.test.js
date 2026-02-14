@@ -4,6 +4,7 @@ import {
     paletteLegacyJsonFromObj,
     decodePaletteFile,
 } from "../../src/js/shared/data/Village.js";
+import { decodeCityFile } from "../../src/js/shared/data/data.js";
 import {
     findFileByName,
     findFirstFile,
@@ -23,6 +24,14 @@ for (const version of Object.keys(filesByVersion)) {
     const palettePbFile = findFirstFile(
         files,
         (file) => file.name === "PaletteVillageObj.pb" && file.relPath.includes("/Village/")
+    );
+    const geoJsonFile = findFirstFile(
+        files,
+        (file) => file.name === "GeoObj.json" && file.relPath.includes("/Village/")
+    );
+    const geoPbFile = findFirstFile(
+        files,
+        (file) => file.name === "GeoObj.pb" && file.relPath.includes("/Village/")
     );
     const wrongPaletteFile = findFirstFile(
         files,
@@ -47,10 +56,25 @@ for (const version of Object.keys(filesByVersion)) {
             expect(() => decodePaletteFile("palette.pb", pb)).not.toThrow();
         });
 
+        it("imports geo JSON and PB", () => {
+            if (!geoJsonFile) return;
+            const geoLegacy = readTestJson(geoJsonFile.relPath);
+            expect(() => decodeCityFile("geo.json", JSON.stringify(geoLegacy))).not.toThrow();
+            if (!geoPbFile) return;
+            const pb = readTestBytes(geoPbFile.relPath);
+            expect(() => decodeCityFile("geo.pb", pb)).not.toThrow();
+        });
+
         it("rejects mfcg palette when village palette is expected", () => {
             if (!wrongPaletteFile) return;
             const wrongPalette = readTestJson(wrongPaletteFile.relPath);
             expect(() => paletteObjFromLegacyJsonText(JSON.stringify(wrongPalette))).toThrow(/uploaded|expected/i);
+        });
+
+        it("rejects palette data when geo data is expected", () => {
+            if (!paletteJsonFile || !geoJsonFile) return;
+            const paletteLegacy = readTestJson(paletteJsonFile.relPath);
+            expect(() => decodeCityFile("geo.json", JSON.stringify(paletteLegacy))).toThrow(/uploaded|expected/i);
         });
     });
 }
