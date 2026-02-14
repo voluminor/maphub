@@ -1785,12 +1785,12 @@ var $lime_init = function (A, t) {
                         var d = new Uint8Array(c.length);
                         for (var f = 0; f < c.length;) d[f] = c.charCodeAt(f) & 255, ++f;
                         a = be.decodeImportFile("mfcg.pb", d.buffer);
-                        be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator);
+                        be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator, !0);
                         return !0
                     }
                     if ("j" === b) {
                         a = be.decodeImportFile("mfcg.json", c);
-                        be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator);
+                        be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator, !0);
                         return !0
                     }
                 } catch (g) {
@@ -7871,6 +7871,7 @@ var $lime_init = function (A, t) {
             };
             g["classExport"] = be;
             be.__name__ = "classExport";
+            be.importMode = !1;
             be.asPNG = function () {
                 var a = Ub.instance,
                     b = a.getViewport(),
@@ -7929,7 +7930,7 @@ var $lime_init = function (A, t) {
             };
             be.importFromFile = function (a, b) {
                 var c = be.decodeImportFile(a, b);
-                return be.applyImportPayload(c.payload, c.state, c.url, c.blueprint, c.generator)
+                return be.applyImportPayload(c.payload, c.state, c.url, c.blueprint, c.generator, !0)
             };
             be.goToVillageFromBlueprint = function (a) {
                 if (a == null || "object" != typeof a) return !1;
@@ -7960,7 +7961,7 @@ var $lime_init = function (A, t) {
                 window.open(b, "_self");
                 return !0
             };
-            be.applyImportPayload = function (a, b, c, d, f) {
+            be.applyImportPayload = function (a, b, c, d, f, g) {
                 var e = null;
                 null == b && null != a && typeof a === "object" && (b = a.state);
                 null == c && null != a && typeof a === "object" && (c = a.url);
@@ -7978,13 +7979,24 @@ var $lime_init = function (A, t) {
                     throw new Error("An error occurred while restoring the map: " + (h && h.message ? h.message : String(h)));
                 }
                 if (null == h) throw new Error("An error occurred while restoring the map.");
+                if (g) {
+                    be.importMode = !0;
+                    const url = new URL(window.location);
+                    url.search = '?import_mode=1';
+                    window.history.replaceState({}, document.title, url);
+                }
                 if (null != b && "object" == typeof b) {
                     ba.init();
                     ba.data = b;
                     ba.so.data = ba.data;
                     ba.so.flush()
                 }
-                if (null != c && "object" == typeof c) za.data = c, za.update();
+                if (g) {
+                    za.data = {
+                        import_mode: "1"
+                    };
+                    za.update()
+                } else if (null != c && "object" == typeof c) za.data = c, za.update();
                 K.restore();
                 Ub.instance = h;
                 bb.switchScene(Ec);
@@ -13656,12 +13668,14 @@ var $lime_init = function (A, t) {
                 },
                 build: function (a) {
                     this.saveFeatures();
+                    be.importMode = !1;
                     new Ub(Fd.create(a, C.seed));
                     bb.switchScene(Ec);
                     this.stage.set_focus(this)
                 },
                 rebuild: function () {
                     this.saveFeatures();
+                    be.importMode = !1;
                     new Ub(Fd.similar(Ub.instance.bp));
                     bb.switchScene(Ec)
                 },
@@ -13707,7 +13721,9 @@ var $lime_init = function (A, t) {
                 var b = new ed;
                 b.setMargins(0, 8);
                 var c = new fb("Permalink");
+                this.permalinkBtn = c;
                 c.set_width(96);
+                c.set_enabled(!be.importMode);
                 c.click.add(l(this, this.onCopyURL));
                 b.add(c);
                 c = new fe("Export", ["PNG", "SVG", "JSON", "PROTO"]);
@@ -13826,6 +13842,7 @@ var $lime_init = function (A, t) {
                 onNewModel: function (a) {
                     this.model = a;
                     this.txtName.set_text(a.name);
+                    null != this.permalinkBtn && this.permalinkBtn.set_enabled(!be.importMode);
                     this.townInfo.update(a)
                 },
                 onTitleChanged: function (a) {
@@ -14091,6 +14108,7 @@ var $lime_init = function (A, t) {
             var Ec = function () {
                 this.mouse = new I;
                 ia.call(this);
+                this.permalinkDisabled = be.importMode;
                 this.btnMenu = new fb("Menu", l(this, this.onMenu));
                 sb.preview || u.layer.addChild(this.btnMenu);
                 this.fader = Ke.create(1, l(this, this.onFadeOut))
@@ -14306,7 +14324,7 @@ var $lime_init = function (A, t) {
                     a.addItem("View in 3D", l(this, this.onViewIn3D));
                     a.addItem("Import...", l(this, this.onImport));
                     a.addSubmenu("Export as", c);
-                    a.addItem("Permalink..", l(this, this.onPermalink))
+                    a.addItem("Permalink..", !this.permalinkDisabled ? l(this, this.onPermalink) : null)
 
                     a.addSeparator();
                     c = function (c, f) {
@@ -14334,6 +14352,7 @@ var $lime_init = function (A, t) {
                     u.showDialog(new hh(this.model.addLandmark(this.mouse.clone())))
                 },
                 buildNew: function () {
+                    be.importMode = !1;
                     new Ub(Fd.create(Ub.nextSize, C.seed));
                     bb.switchScene(Ec)
                 },
@@ -19555,6 +19574,7 @@ var $lime_init = function (A, t) {
                 generate: function () {
                     var a = this.input.get_text();
                     za.fromString(a);
+                    be.importMode = !1;
                     new Ub(Fd.fromURL());
                     bb.switchScene(Ec);
                     a = u.findForm(Kd);
@@ -20303,6 +20323,7 @@ var $lime_init = function (A, t) {
                 za.set(a, b ? "1" : "0")
             };
             za.getParams = function () {
+                if (be.importMode) return "?import_mode=1";
                 for (var a = "", b = za.data, c = ya.fields(b), d = 0; d < c.length;) {
                     var f = c[d++];
                     a += ("" == a ? "?" : "&") + ("" + f + "=" + H.string(b[f]))
@@ -20313,8 +20334,7 @@ var $lime_init = function (A, t) {
                 return za.baseURL + za.getParams()
             };
             za.update = function () {
-                window.history.replaceState(za.data,
-                    "", za.getParams())
+                window.history.replaceState(za.data, "", za.getParams())
             };
             za.fromString = function (a) {
                 za.data = {};
