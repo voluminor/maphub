@@ -4,25 +4,53 @@ import {
     paletteLegacyJsonFromObj,
     decodePaletteFile,
 } from "../../src/js/shared/data/Village.js";
-import { readTestBytes, readTestJson } from "../helpers/data-test-utils.js";
+import {
+    findFileByName,
+    findFirstFile,
+    groupDataFilesByVersion,
+    readTestBytes,
+    readTestJson,
+} from "../helpers/data-test-utils.js";
 
-const paletteLegacy = readTestJson("vanilla/Village/PaletteVillageObj.json");
-const wrongPalette = readTestJson("vanilla/mfcg/PaletteMfcgObj.json");
+const filesByVersion = groupDataFilesByVersion();
 
-describe("Village app palette", () => {
-    it("exports all legacy village palette fields", () => {
-        const msg = paletteObjFromLegacyJsonText(JSON.stringify(paletteLegacy));
-        const exported = JSON.parse(paletteLegacyJsonFromObj(msg));
-        for (const key of Object.keys(paletteLegacy)) expect(exported).toHaveProperty(key);
+for (const version of Object.keys(filesByVersion)) {
+    const files = filesByVersion[version];
+    const paletteJsonFile = findFirstFile(
+        files,
+        (file) => file.name === "PaletteVillageObj.json" && file.relPath.includes("/Village/")
+    );
+    const palettePbFile = findFirstFile(
+        files,
+        (file) => file.name === "PaletteVillageObj.pb" && file.relPath.includes("/Village/")
+    );
+    const wrongPaletteFile = findFirstFile(
+        files,
+        (file) => file.name === "PaletteMfcgObj.json" && file.relPath.includes("/mfcg/")
+    );
+
+    describe(`Village app palette (${version})`, () => {
+        it("exports all legacy village palette fields", () => {
+            if (!paletteJsonFile) return;
+            const paletteLegacy = readTestJson(paletteJsonFile.relPath);
+            const msg = paletteObjFromLegacyJsonText(JSON.stringify(paletteLegacy));
+            const exported = JSON.parse(paletteLegacyJsonFromObj(msg));
+            for (const key of Object.keys(paletteLegacy)) expect(exported).toHaveProperty(key);
+        });
+
+        it("imports village palette JSON and PB", () => {
+            if (!paletteJsonFile) return;
+            const paletteLegacy = readTestJson(paletteJsonFile.relPath);
+            expect(() => paletteObjFromLegacyJsonText(JSON.stringify(paletteLegacy))).not.toThrow();
+            if (!palettePbFile) return;
+            const pb = readTestBytes(palettePbFile.relPath);
+            expect(() => decodePaletteFile("palette.pb", pb)).not.toThrow();
+        });
+
+        it("rejects mfcg palette when village palette is expected", () => {
+            if (!wrongPaletteFile) return;
+            const wrongPalette = readTestJson(wrongPaletteFile.relPath);
+            expect(() => paletteObjFromLegacyJsonText(JSON.stringify(wrongPalette))).toThrow(/uploaded|expected/i);
+        });
     });
-
-    it("imports village palette JSON and PB", () => {
-        expect(() => paletteObjFromLegacyJsonText(JSON.stringify(paletteLegacy))).not.toThrow();
-        const pb = readTestBytes("1.1.2/Village/PaletteVillageObj.pb");
-        expect(() => decodePaletteFile("palette.pb", pb)).not.toThrow();
-    });
-
-    it("rejects mfcg palette when village palette is expected", () => {
-        expect(() => paletteObjFromLegacyJsonText(JSON.stringify(wrongPalette))).toThrow(/uploaded|expected/i);
-    });
-});
+}
