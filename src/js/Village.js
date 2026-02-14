@@ -9411,6 +9411,21 @@ var $lime_init = function (E, u) {
                 var d = FuncBin.exportBin(c, DataProto.data.DataType.geo);
                 return Sd.saveBinary(wd.fromArrayBuffer(d), a.name + ".vg.pb", "application/x-protobuf"), b
             },
+                Hh._blueprintForExport = function (a) {
+                    if (a == null) return null;
+                    return {
+                        seed: a.seed,
+                        tags: a.tags,
+                        width: a.width,
+                        height: a.height,
+                        treeSeed: a.treeSeed,
+                        name: a.name,
+                        pop: a.pop,
+                        numbered: a.numbered,
+                        varSeed: a.varSeed,
+                        style: a.style
+                    }
+                },
                 Hh.getData = function (a) {
                     Ua.CX = 0, Ua.CY = 0, Ua.SCALE = .7;
                     var b = new La;
@@ -9455,6 +9470,7 @@ var $lime_init = function (E, u) {
                 };
             Hh.getProto = function (a) {
                 Ua.CX = 0, Ua.CY = 0, Ua.SCALE = .7;
+                var blueprint = Hh._blueprintForExport(a.bp);
                 var b = [],
                     c = {
                         type: DataProto.data.GeoType.Feature,
@@ -9465,12 +9481,7 @@ var $lime_init = function (E, u) {
                         wallThickness: Ua.SCALE,
                         embedUid: "meta",
                         embedProps: Hh._structFromJs({
-                            name: a.name,
-                            pop: a.pop,
-                            //seed: a.bp.seed,
-                            numbered: a.bp.numbered,
-                            realW: a.realW,
-                            realH: a.realH
+                            blueprint: blueprint
                         })
                     },
                     d = Fc.rect(a.realW, a.realH),
@@ -9718,7 +9729,7 @@ var $lime_init = function (E, u) {
                         shapeModels: k,
                         props: Hh._structFromJs({generator: "vg", version: params.meta.ver_app})
                     },
-                    embedProps: Hh._structFromJs({generator: "vg", version: params.meta.ver_app, name: a.name})
+                    embedProps: Hh._structFromJs({generator: "vg", version: params.meta.ver_app, blueprint: blueprint})
                 };
 
                 if (a.water != null) {

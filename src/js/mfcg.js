@@ -7892,21 +7892,55 @@ var $lime_init = function (A, t) {
             };
             be.importFromFile = function (a, b) {
                 var c = be.decodeImportFile(a, b);
-                return be.applyImportPayload(c.payload, c.state, c.url)
+                return be.applyImportPayload(c.payload, c.state, c.url, c.blueprint, c.generator)
             };
-            be.applyImportPayload = function (a, b, c) {
-                var d = null;
+            be.goToVillageFromBlueprint = function (a) {
+                if (a == null || "object" != typeof a) return !1;
+                var b = FuncProto.paramsUrlString(params.routes.village);
+                var c = [];
+                var d = a.seed;
+                d != null && c.push("seed=" + encodeURIComponent("" + d));
+                var f = a.tags;
+                Array.isArray(f) && (f = f.join(","));
+                f != null && "" !== f && c.push("tags=" + encodeURIComponent("" + f));
+                var h = a.width;
+                h != null && 0 != h && c.push("width=" + encodeURIComponent("" + h));
+                var k = a.height;
+                k != null && 0 != k && c.push("height=" + encodeURIComponent("" + k));
+                var p = a.treeSeed;
+                p != null && d != null && p !== d && c.push("trees=" + encodeURIComponent("" + p));
+                var l = a.name;
+                l != null && "" !== l && c.push("name=" + encodeURIComponent("" + l));
+                var m = a.pop;
+                m != null && 0 != m && c.push("pop=" + encodeURIComponent("" + m));
+                var n = a.varSeed;
+                n != null && 0 != n && c.push("roads=" + encodeURIComponent("" + n));
+                var q = a.numbered;
+                Array.isArray(q) && q.length && c.push("marked=" + encodeURIComponent(q.join(",")));
+                var r = a.style;
+                r != null && "" !== r && c.push("style=" + encodeURIComponent("" + r));
+                b = c.length ? b + "?" + c.join("&") : b;
+                window.open(b, "_self");
+                return !0
+            };
+            be.applyImportPayload = function (a, b, c, d, f) {
+                var e = null;
                 null == b && null != a && typeof a === "object" && (b = a.state);
                 null == c && null != a && typeof a === "object" && (c = a.url);
-                "string" == typeof a ? d = a : null != a && "object" == typeof a && (Object.prototype.hasOwnProperty.call(a, "model") ? d = a.model : Object.prototype.hasOwnProperty.call(a, "data") && (d = a.data));
-                if (null == d) throw new Error("This file does not include MFCG editor state. Export a new map from MFCG to continue editing.");
-                var f = null;
+                null == d && null != a && typeof a === "object" && (d = a.blueprint);
+                null == f && null != a && typeof a === "object" && (f = a.generator);
+                "string" == typeof a ? e = a : null != a && "object" == typeof a && (Object.prototype.hasOwnProperty.call(a, "model") ? e = a.model : Object.prototype.hasOwnProperty.call(a, "data") && (e = a.data));
+                if (null == e) {
+                    if (d != null && ("vg" == f || "village" == f) && be.goToVillageFromBlueprint(d)) return null;
+                    throw new Error("This file does not include MFCG editor state. Export a new map from MFCG to continue editing.");
+                }
+                var h = null;
                 try {
-                    f = pd.run(d)
+                    h = pd.run(e)
                 } catch (h) {
                     throw new Error("An error occurred while restoring the map: " + (h && h.message ? h.message : String(h)));
                 }
-                if (null == f) throw new Error("An error occurred while restoring the map.");
+                if (null == h) throw new Error("An error occurred while restoring the map.");
                 if (null != b && "object" == typeof b) {
                     ba.init();
                     ba.data = b;
@@ -7915,10 +7949,10 @@ var $lime_init = function (A, t) {
                 }
                 if (null != c && "object" == typeof c) za.data = c, za.update();
                 K.restore();
-                Ub.instance = f;
+                Ub.instance = h;
                 bb.switchScene(Ec);
-                Bb.newModel.dispatch(f);
-                return f
+                Bb.newModel.dispatch(h);
+                return h
             };
             be.decodeImportFile = function (a, b) {
                 var c = null, d = DataGeo.bytesToUtf8Text(b);
@@ -7983,17 +8017,17 @@ var $lime_init = function (A, t) {
                     b = a.embedProps;
                     null == b && null != a.embedEditorPayload && (b = a.embedEditorPayload.props)
                 }
-                var c = null, d = null, f = null;
-                null != b && "object" == typeof b && (c = b.mfcgPayload, d = b.state, f = b.url);
-                return {payload: c, state: d, url: f}
+                var c = null, d = null, f = null, h = null, k = null;
+                null != b && "object" == typeof b && (c = b.mfcgPayload, d = b.state, f = b.url, h = b.blueprint, k = b.generator);
+                return {payload: c, state: d, url: f, blueprint: h, generator: k}
             };
             be.extractPayloadFromProto = function (a) {
                 var b = null;
                 a.embedProps != null && Object.hasOwnProperty.call(a, "embedProps") && (b = lg.structToJson(a.embedProps));
                 null == b && a.embedEditorPayload != null && a.embedEditorPayload.props != null && (b = lg.structToJson(a.embedEditorPayload.props));
-                var c = null, d = null, f = null;
-                null != b && "object" == typeof b && (c = b.mfcgPayload, d = b.state, f = b.url);
-                return {payload: c, state: d, url: f}
+                var c = null, d = null, f = null, h = null, k = null;
+                null != b && "object" == typeof b && (c = b.mfcgPayload, d = b.state, f = b.url, h = b.blueprint, k = b.generator);
+                return {payload: c, state: d, url: f, blueprint: h, generator: k}
             };
             be.stripLengthDelimited = function (a) {
                 for (var b = 0, c = 0, d = 0; b < a.length && 35 > d;) {
