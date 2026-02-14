@@ -4,6 +4,7 @@ import {
     paletteObjFromLegacyJsonText,
     paletteLegacyJsonFromObj,
     decodePaletteFile,
+    paletteProtoBytesFromObj,
 } from "../../../src/js/shared/data/Dwellings.js";
 
 const VALID_DW_JSON = {
@@ -38,6 +39,34 @@ describe("Dwellings: paletteObjFromLegacyJsonText", () => {
         expect(msg.colors).toBeTruthy();
         expect(msg.strokes).toBeTruthy();
         expect(msg.misc).toBeTruthy();
+    });
+
+    it("accepts proto-like palette objects", () => {
+        const protoLike = {
+            colors: {
+                ink: { r: 1, g: 2, b: 3 },
+                paper: { r: 4, g: 5, b: 6 },
+                floor: { r: 7, g: 8, b: 9 },
+                walls: { r: 10, g: 11, b: 12 },
+                props: { r: 13, g: 14, b: 15 },
+                windows: { r: 16, g: 17, b: 18 },
+                stairs: { r: 19, g: 20, b: 21 },
+                roof: { r: 22, g: 23, b: 24 },
+                labels: { r: 25, g: 26, b: 27 },
+            },
+            strokes: { normal: 0.1, grid: 0.2 },
+            misc: {
+                alphaGrid: 0.3,
+                alphaAo: 0.4,
+                alphaLights: 0.5,
+                fontRoom: { face: "", embedded: "", size: 12, bold: false, italic: true },
+                hatching: true,
+            },
+        };
+        const msg = paletteObjFromLegacyJsonText(JSON.stringify(protoLike));
+        expect(msg.colors.paper).toEqual({ r: 4, g: 5, b: 6 });
+        expect(msg.misc.fontRoom.size).toBe(12);
+        expect(msg.misc.hatching).toBe(true);
     });
 
     it("parses all 9 colors correctly", () => {
@@ -93,6 +122,32 @@ describe("Dwellings: paletteDwellingsObjFromLegacyJson", () => {
     it("accepts parsed JSON object", () => {
         const msg = paletteDwellingsObjFromLegacyJson(VALID_DW_JSON);
         expect(msg.colors.ink).toEqual({ r: 34, g: 34, b: 34 });
+    });
+
+    it("accepts proto-like palette objects", () => {
+        const msg = paletteDwellingsObjFromLegacyJson({
+            colors: {
+                ink: { r: 1, g: 2, b: 3 },
+                paper: { r: 4, g: 5, b: 6 },
+                floor: { r: 7, g: 8, b: 9 },
+                walls: { r: 10, g: 11, b: 12 },
+                props: { r: 13, g: 14, b: 15 },
+                windows: { r: 16, g: 17, b: 18 },
+                stairs: { r: 19, g: 20, b: 21 },
+                roof: { r: 22, g: 23, b: 24 },
+                labels: { r: 25, g: 26, b: 27 },
+            },
+            strokes: { normal: 0.12, grid: 0.15 },
+            misc: {
+                alphaGrid: 0.1,
+                alphaAo: 0.2,
+                alphaLights: 0.3,
+                fontRoom: { face: "x", embedded: "y", size: 10, bold: false, italic: false },
+                hatching: false,
+            },
+        });
+        expect(msg.strokes.normal).toBeCloseTo(0.12);
+        expect(msg.misc.hatching).toBe(false);
     });
 
     it("throws on viewer palette (has 'ground' key)", () => {
@@ -161,6 +216,25 @@ describe("Dwellings: import/export roundtrip", () => {
         const msg2 = paletteObjFromLegacyJsonText(exported1);
         const exported2 = paletteLegacyJsonFromObj(msg2);
         expect(exported2).toBe(exported1);
+    });
+});
+
+// ─── paletteProtoBytesFromObj ───────────────────────────────────
+
+describe("Dwellings: paletteProtoBytesFromObj", () => {
+    it("returns ArrayBuffer", () => {
+        const msg = paletteObjFromLegacyJsonText(validDwJsonText());
+        const bytes = paletteProtoBytesFromObj(msg);
+        expect(bytes).toBeInstanceOf(ArrayBuffer);
+        expect(bytes.byteLength).toBeGreaterThan(0);
+    });
+
+    it("proto bytes decode back via decodePaletteFile", () => {
+        const msg = paletteObjFromLegacyJsonText(validDwJsonText());
+        const bytes = paletteProtoBytesFromObj(msg);
+        const decoded = decodePaletteFile("test.bin", bytes);
+        expect(decoded.colors.ink).toEqual(msg.colors.ink);
+        expect(decoded.misc.hatching).toBe(msg.misc.hatching);
     });
 });
 

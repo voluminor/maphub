@@ -44,6 +44,7 @@ export function detectLegacyRootType(obj) {
     if (obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features)) return DT.geo;
     if (!isPlainObject(obj)) return null;
 
+    if (isPlainObject(obj.colors) && isPlainObject(obj.trees) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.misc)) return DT.palette_glade;
     if (isPlainObject(obj.colors) && isPlainObject(obj.misc) && isPlainObject(obj.strokes)) return DT.palette_dwellings;
     if (isPlainObject(obj.colors) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.hatching)) return DT.palette_cave;
 

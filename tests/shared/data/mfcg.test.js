@@ -36,6 +36,20 @@ describe("MFCG: paletteObjFromLegacyJsonText", () => {
         expect(msg.tints).toBeTruthy();
     });
 
+    it("accepts proto-like palette objects", () => {
+        const protoLike = {
+            colors: {
+                paper: { r: 1, g: 2, b: 3 },
+                light: { r: 4, g: 5, b: 6 },
+                dark: { r: 7, g: 8, b: 9 },
+            },
+            tints: { method: 1, strength: 60, weathering: 10 },
+        };
+        const msg = paletteObjFromLegacyJsonText(JSON.stringify(protoLike));
+        expect(msg.colors.paper).toEqual({ r: 1, g: 2, b: 3 });
+        expect(msg.tints.strength).toBe(60);
+    });
+
     it("parses required colors", () => {
         const msg = paletteObjFromLegacyJsonText(validMfcgJsonText());
         expect(msg.colors.paper).toEqual({ r: 245, g: 240, b: 230 });

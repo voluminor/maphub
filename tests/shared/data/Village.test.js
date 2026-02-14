@@ -3,6 +3,7 @@ import {
     paletteObjFromLegacyJsonText,
     paletteLegacyJsonFromObj,
     decodePaletteFile,
+    paletteProtoBytesFromObj,
 } from "../../../src/js/shared/data/Village.js";
 
 const VALID_VILLAGE_JSON = {
@@ -73,6 +74,71 @@ describe("Village: paletteObjFromLegacyJsonText", () => {
         expect(msg.lighting).toBeTruthy();
         expect(msg.text).toBeTruthy();
         expect(msg.misc).toBeTruthy();
+    });
+
+    it("accepts proto-like palette objects", () => {
+        const protoLike = {
+            terrain: {
+                ground: [{ r: 1, g: 2, b: 3 }],
+                relief: 1,
+                sand: { r: 4, g: 5, b: 6 },
+                plank: { r: 7, g: 8, b: 9 },
+            },
+            houses: {
+                roofLight: [{ r: 10, g: 11, b: 12 }],
+                roofStroke: { r: 13, g: 14, b: 15 },
+                roofVariance: 0.2,
+                roofSlope: 0.3,
+                roofType: 2,
+            },
+            roads: {
+                road: { r: 16, g: 17, b: 18 },
+                largeRoad: 2,
+                smallRoad: 1,
+                outlineRoads: 1,
+                mergeRoads: false,
+            },
+            fields: {
+                fieldLight: [{ r: 19, g: 20, b: 21 }],
+                fieldFurrow: { r: 22, g: 23, b: 24 },
+                fieldVariance: 0.4,
+                outlineFields: 2,
+            },
+            water: {
+                waterShallow: { r: 25, g: 26, b: 27 },
+                waterDeep: { r: 28, g: 29, b: 30 },
+                waterTide: { r: 31, g: 32, b: 33 },
+                shallowBands: 2,
+            },
+            trees: {
+                tree: [{ r: 34, g: 35, b: 36 }],
+                thicket: { r: 37, g: 38, b: 39 },
+                treeDetails: { r: 40, g: 41, b: 42 },
+                treeVariance: 0.6,
+                treeShape: 1,
+            },
+            lighting: {
+                shadowColor: { r: 43, g: 44, b: 45 },
+                shadowLength: 1.5,
+                shadowAngleDeg: 90,
+                lights: { r: 46, g: 47, b: 48 },
+            },
+            text: {
+                fontHeader: { face: "A", size: 10, bold: false, italic: false, embedded: "x" },
+                fontPopulation: { face: "B", size: 11, bold: true, italic: false, embedded: "y" },
+                fontNumber: { face: "C", size: 12, bold: false, italic: true, embedded: "z" },
+            },
+            misc: {
+                ink: { r: 49, g: 50, b: 51 },
+                paper: { r: 52, g: 53, b: 54 },
+                strokeNormal: 1,
+                strokeThin: 0.5,
+            },
+        };
+        const msg = paletteObjFromLegacyJsonText(JSON.stringify(protoLike));
+        expect(msg.terrain.ground[0]).toEqual({ r: 1, g: 2, b: 3 });
+        expect(msg.lighting.shadowAngleDeg).toBe(90);
+        expect(msg.text.fontHeader.size).toBe(10);
     });
 
     it("parses terrain colors as rgb list", () => {
@@ -269,6 +335,25 @@ describe("Village: import/export roundtrip", () => {
         const msg2 = paletteObjFromLegacyJsonText(exp1);
         const exp2 = paletteLegacyJsonFromObj(msg2);
         expect(exp2).toBe(exp1);
+    });
+});
+
+// ─── paletteProtoBytesFromObj ───────────────────────────────────
+
+describe("Village: paletteProtoBytesFromObj", () => {
+    it("returns ArrayBuffer", () => {
+        const msg = paletteObjFromLegacyJsonText(validVillageJsonText());
+        const bytes = paletteProtoBytesFromObj(msg);
+        expect(bytes).toBeInstanceOf(ArrayBuffer);
+        expect(bytes.byteLength).toBeGreaterThan(0);
+    });
+
+    it("proto bytes decode back via decodePaletteFile", () => {
+        const msg = paletteObjFromLegacyJsonText(validVillageJsonText());
+        const bytes = paletteProtoBytesFromObj(msg);
+        const decoded = decodePaletteFile("test.bin", bytes);
+        expect(decoded.terrain.ground).toHaveLength(2);
+        expect(decoded.misc.ink).toEqual(msg.misc.ink);
     });
 });
 

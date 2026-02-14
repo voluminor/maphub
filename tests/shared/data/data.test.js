@@ -14,6 +14,10 @@ import {
     createTypeMismatchError,
     decodeDataFromFile,
     encodeDataToBytes,
+    geoJsonToProtoObject,
+    geoJsonFromProtoMessage,
+    decodeCityFromJsonText,
+    decodeCityFile,
 } from "../../../src/js/shared/data/data.js";
 import { data as DataProto } from "../../../src/js/struct/data.js";
 
@@ -121,6 +125,50 @@ describe("protoStructToJs", () => {
 
     it("returns empty object for missing fields", () => {
         expect(protoStructToJs({})).toEqual({});
+    });
+});
+
+// ─── geoJsonToProtoObject / geoJsonFromProtoMessage ─────────────
+
+describe("geoJsonToProtoObject ↔ geoJsonFromProtoMessage", () => {
+    it("converts GeoJSON to proto-ready object", () => {
+        const input = {
+            type: "FeatureCollection",
+            features: [
+                {
+                    type: "Feature",
+                    id: "roads",
+                    generator: "mfcg",
+                    properties: { road_width: 2 },
+                    geometry: {
+                        type: "LineString",
+                        coordinates: [[1, 2], [3, 4]],
+                    },
+                },
+            ],
+        };
+
+        const protoObj = geoJsonToProtoObject(input);
+        expect(protoObj.type).toBe(DataProto.GeoType.FeatureCollection);
+        expect(protoObj.features[0].type).toBe(DataProto.GeoType.Feature);
+        expect(protoObj.features[0].id).toBe(DataProto.GeoFeatureType.roads);
+        expect(protoObj.features[0].generator).toBe(DataProto.GeoGeneratorType.mfcg);
+        expect(protoObj.features[0].roadWidth).toBe(2);
+        expect(protoListValueToJs(protoObj.features[0].geometry.coordinates)).toEqual([[1, 2], [3, 4]]);
+    });
+
+    it("converts proto message back to GeoJSON", () => {
+        const msg = {
+            type: DataProto.GeoType.FeatureCollection,
+            id: DataProto.GeoFeatureType.values,
+            generator: DataProto.GeoGeneratorType.mfcg,
+            features: [],
+        };
+
+        const json = geoJsonFromProtoMessage(msg);
+        expect(json.type).toBe("FeatureCollection");
+        expect(json.id).toBe("values");
+        expect(json.generator).toBe("mfcg");
     });
 });
 
@@ -337,6 +385,39 @@ describe("createTypeMismatchError", () => {
     });
 });
 
+// ─── decodeCityFromJsonText / decodeCityFile ────────────────────
+
+describe("decodeCityFromJsonText", () => {
+    it("accepts minimal FeatureCollection GeoJSON", () => {
+        const text = JSON.stringify({ type: "FeatureCollection", features: [] });
+        const obj = decodeCityFromJsonText(text);
+        expect(obj.type).toBe("FeatureCollection");
+    });
+
+    it("throws on malformed JSON", () => {
+        expect(() => decodeCityFromJsonText("{bad")).toThrow("An error occurred while parsing");
+    });
+});
+
+describe("decodeCityFile", () => {
+    it("preserves hood generator override in values feature", () => {
+        const city = {
+            type: "FeatureCollection",
+            features: [
+                {
+                    type: "Feature",
+                    id: "values",
+                    generator: "hood",
+                    geometry: { type: "LineString", coordinates: [[0, 0], [1, 1]] },
+                },
+            ],
+        };
+        const bytes = new TextEncoder().encode(JSON.stringify(city));
+        const out = decodeCityFile("city.json", bytes);
+        expect(out.features[0].generator).toBe("hood");
+    });
+});
+
 // ─── decodeDataFromFile with DataType ──────────────────────────
 
 describe("decodeDataFromFile", () => {
@@ -357,6 +438,12 @@ describe("decodeDataFromFile", () => {
 
     it("throws on invalid data", () => {
         expect(() => decodeDataFromFile(DT.geo, () => { throw new Error("not JSON"); }, new Uint8Array([0, 0, 0, 0, 0]))).toThrow();
+    });
+
+    it("throws on unknown bin-verify data type", () => {
+        const frame = encodeDataToBytes(999, new Uint8Array([1, 2, 3]));
+        expect(() => decodeDataFromFile(DT.geo, () => { throw new Error("not JSON"); }, frame))
+            .toThrow("unknown data type");
     });
 });
 
