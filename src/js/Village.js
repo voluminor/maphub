@@ -5,6 +5,7 @@ import * as OthersShared from "./shared/others.js";
 import * as FuncProto from "./shared/proto.js";
 
 import * as DataVillage from "./shared/data/Village.js";
+import * as DataGeo from "./shared/data/data.js";
 
 import * as DataProto from "./struct/data.js";
 import * as FuncBin from "./shared/data/bin-verify.js";
@@ -16055,6 +16056,7 @@ var $lime_init = function (E, u) {
                     f.addItem("Reroll village", r(this, this.rerollVillage));
                     f.addItem("Rename village...", r(this, this.rename));
                     f.addItem("View in 3D", r(this, this.onViewIn3D));
+                    f.addItem("Import...", r(this, this.onImport));
                     f.addSubmenu("Export as", d);
                     f.addItem("Permalink...", r(this, this.showURL));
 
@@ -16222,6 +16224,128 @@ var $lime_init = function (E, u) {
                         Ra.fromString(b);
                         a.restoreVillage()
                     }))
+                },
+                onImport: function () {
+                    var a = this,
+                        b = new Bg;
+                    b.addEventListener("select", function (c) {
+                        b.addEventListener("complete", r(a, a.onImportLoaded));
+                        b.load()
+                    });
+                    var c = [new gj("Map", "*.json;*.pb;")];
+                    b.browse(c)
+                },
+                onImportLoaded: function (a) {
+                    try {
+                        var b = Ka.__cast(a.target, Bg);
+                        var c = this.decodeImportFile(b.name, b.data);
+                        if ("mfcg" === c.generator) {
+                            this.forwardImportToMfcg(c);
+                            return
+                        }
+                        if ("vg" === c.generator || "village" === c.generator) {
+                            this.applyImportedVillage(c.blueprint);
+                            return
+                        }
+                        throw new Error("This file does not include Village or MFCG editor data.")
+                    } catch (d) {
+                        Qa.lastError = d;
+                        w.showToast(d && d.message ? d.message : String(d))
+                    }
+                },
+                decodeImportFile: function (a, b) {
+                    var c = null, d = DataGeo.bytesToUtf8Text(b);
+                    var f = null;
+                    try {
+                        c = JSON.parse(d);
+                        f = !0
+                    } catch (e) {
+                        f = !1
+                    }
+                    if (f) {
+                        var h = null;
+                        null != c && "object" == typeof c && (h = c.embedProps != null ? c.embedProps : c.embedEditorPayload != null && c.embedEditorPayload.props != null ? c.embedEditorPayload.props : null);
+                        return {
+                            generator: h != null ? h.generator : null,
+                            blueprint: h != null ? h.blueprint : null,
+                            rawType: "json",
+                            rawText: d
+                        }
+                    }
+                    var k = DataGeo.toUint8Array(b);
+                    if (null == k) throw new Error("Invalid data buffer.");
+                    var p = k;
+                    var l = null;
+                    try {
+                        l = FuncBin.importBin(k)
+                    } catch (m) {
+                    }
+                    if (null != l) {
+                        if (l.number != DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, l.number);
+                        p = new Uint8Array(l.buffer)
+                    }
+                    var n = null;
+                    try {
+                        n = DataProto.data.GeoObj.decode(p)
+                    } catch (q) {
+                    }
+                    if (null == n) {
+                        var g2 = this.stripLengthDelimited(p);
+                        if (null != g2) try {
+                            n = DataProto.data.GeoObj.decode(g2)
+                        } catch (r2) {
+                        }
+                    }
+                    if (null == n) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                    var t = null;
+                    n.embedProps != null && Object.hasOwnProperty.call(n, "embedProps") && (t = DataGeo.protoStructToJs(n.embedProps));
+                    null == t && n.embedEditorPayload != null && n.embedEditorPayload.props != null && (t = DataGeo.protoStructToJs(n.embedEditorPayload.props));
+                    return {
+                        generator: t != null ? t.generator : null,
+                        blueprint: t != null ? t.blueprint : null,
+                        rawType: "proto",
+                        rawBytes: k
+                    }
+                },
+                stripLengthDelimited: function (a) {
+                    for (var b = 0, c = 0, d = 0; b < a.length && 35 > d;) {
+                        var f = a[b++];
+                        c |= (f & 127) << d;
+                        if (0 == (f & 128)) break;
+                        d += 7
+                    }
+                    if (!(0 >= b || b >= a.length || 0 >= c || b + c > a.length)) return a.subarray(b, b + c);
+                    return null
+                },
+                forwardImportToMfcg: function (a) {
+                    if ("proto" === a.rawType) {
+                        var b = a.rawBytes;
+                        var c = "", d = 0;
+                        for (; d < b.length;) {
+                            var f = d + 32768;
+                            f > b.length && (f = b.length);
+                            c += String.fromCharCode.apply(null, b.subarray(d, f));
+                            d = f
+                        }
+                        window.localStorage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", "p" + c)
+                    } else {
+                        window.localStorage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", "j" + a.rawText)
+                    }
+                    this.goToMfcg(!1)
+                },
+                applyImportedVillage: function (a) {
+                    if (null == a || "object" != typeof a) throw new Error("This file does not include Village editor data.");
+                    var b = null;
+                    Array.isArray(a.tags) ? b = a.tags : "string" == typeof a.tags && (b = a.tags.split(","));
+                    var c = new jc(a.seed || 0, b, a.width != null ? a.width : 0, a.height != null ? a.height : 0);
+                    a.treeSeed != null && (c.treeSeed = a.treeSeed);
+                    c.name = a.name != null ? a.name : null;
+                    c.pop = a.pop != null ? a.pop : 0;
+                    c.numbered = Array.isArray(a.numbered) ? a.numbered : [];
+                    c.varSeed = a.varSeed != null ? a.varSeed : 0;
+                    c.style = a.style != null ? a.style : null;
+                    null != c.style && x.setPalette(Rb.fromAsset(c.style));
+                    this.createVillage(c)
                 },
                 onViewIn3D: function (inNewWindow = true) {
                     try {

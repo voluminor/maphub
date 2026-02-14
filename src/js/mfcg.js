@@ -1754,13 +1754,50 @@ var $lime_init = function (A, t) {
                 ba.init(null, kd.prepare);
                 K.restore();
                 this.stage.showDefaultContextMenu = !1;
+                var b = sb.takeLocalStorageTownBuf();
                 var a = Fd.fromURL();
                 null == a ? a = Fd.create(25, C.seed) : null != a.style && K.setPalette(Xc.fromAsset(a.style));
                 new Ub(a);
-                bb.call(this, Ec)
+                bb.call(this, Ec);
+                null != b && sb.applyLocalStorageTownBuf(b)
             };
             g["fMain"] = sb;
             sb.__name__ = "fMain";
+            sb.takeLocalStorageTownBuf = function () {
+                var a = null;
+                try {
+                    var b = qf.getLocalStorage();
+                    if (null != b) {
+                        a = b.getItem("{{LOCALSTORAGE_TOWN_BUF}}");
+                        null != a && b.removeItem("{{LOCALSTORAGE_TOWN_BUF}}")
+                    }
+                } catch (c) {
+                    Ta.lastError = c
+                }
+                return a
+            };
+            sb.applyLocalStorageTownBuf = function (a) {
+                if (null == a || "" === a) return !1;
+                var b = a.charAt(0),
+                    c = a.substring(1);
+                try {
+                    if ("p" === b) {
+                        var d = new Uint8Array(c.length);
+                        for (var f = 0; f < c.length;) d[f] = c.charCodeAt(f) & 255, ++f;
+                        a = be.decodeImportFile("mfcg.pb", d.buffer);
+                        be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator);
+                        return !0
+                    }
+                    if ("j" === b) {
+                        a = be.decodeImportFile("mfcg.json", c);
+                        be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator);
+                        return !0
+                    }
+                } catch (g) {
+                    Ta.lastError = g
+                }
+                return !1
+            };
             sb.__super__ = bb;
             sb.prototype = v(bb.prototype, {
                 getScale: function (a,
