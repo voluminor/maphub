@@ -6579,6 +6579,111 @@ var $lime_init = function (K, v) {
             h["dwellings.model.JsonExporter"]=sb;
             sb.__name__="dwellings.model.JsonExporter";
             sb.grid=null;
+            sb._busyOverlay = {
+                active: !1,
+                el: null,
+                textEl: null,
+                listeners: null,
+                ensure: function () {
+                    if (null != this.el) return;
+                    var a = window.document;
+                    var b = a.createElement("div");
+                    b.id = "dwellings-busy-overlay";
+                    b.style.cssText = "position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,0.55);color:#fff;z-index:2147483647;pointer-events:auto;";
+                    var c = a.createElement("div");
+                    c.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 22px;border-radius:10px;background:rgba(0,0,0,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:80vw;";
+                    var d = a.createElement("div");
+                    d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:dwellings-busy-spin 0.8s linear infinite;";
+                    var f = a.createElement("div");
+                    f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
+                    f.textContent = "Please wait...";
+                    c.appendChild(d);
+                    c.appendChild(f);
+                    b.appendChild(c);
+                    this.el = b;
+                    this.textEl = f;
+                    (a.body || a.documentElement).appendChild(b);
+                    if (null == a.getElementById("dwellings-busy-style")) {
+                        var h = a.createElement("style");
+                        h.id = "dwellings-busy-style";
+                        h.textContent = "@keyframes dwellings-busy-spin{to{transform:rotate(360deg);}}";
+                        (a.head || a.documentElement).appendChild(h)
+                    }
+                },
+                attach: function () {
+                    if (null != this.listeners) return;
+                    var a = this;
+                    var b = function (c) {
+                        if (!a.active) return;
+                        c.preventDefault();
+                        c.stopPropagation();
+                        return !1
+                    };
+                    var c = {
+                        capture: !0,
+                        passive: !1
+                    };
+                    var d = window.document;
+                    var f = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel", "touchstart", "touchmove", "touchend", "touchcancel", "pointerdown", "pointermove", "pointerup"];
+                    var h = 0;
+                    for (; h < f.length;) d.addEventListener(f[h++], b, c);
+                    this.listeners = {
+                        handler: b,
+                        options: c,
+                        events: f
+                    };
+                    try {
+                        null != d.activeElement && d.activeElement.blur()
+                    } catch (k) {
+                    }
+                },
+                detach: function () {
+                    if (null == this.listeners) return;
+                    var a = window.document;
+                    var b = this.listeners.events;
+                    var c = this.listeners.handler;
+                    var d = this.listeners.options;
+                    var f = 0;
+                    for (; f < b.length;) a.removeEventListener(b[f++], c, d);
+                    this.listeners = null
+                },
+                show: function (a) {
+                    this.ensure();
+                    this.textEl.textContent = null != a && "" !== a ? a : "Please wait...";
+                    this.el.style.display = "flex";
+                    this.active = !0;
+                    this.attach()
+                },
+                hide: function () {
+                    if (null == this.el) return;
+                    this.active = !1;
+                    this.el.style.display = "none";
+                    this.detach()
+                }
+            };
+            sb.runBusy = function (a, b, c) {
+                sb._busyOverlay.show(a);
+                var d = function () {
+                    try {
+                        b()
+                    } catch (f) {
+                        if ("function" == typeof c) {
+                            c(f);
+                            return
+                        }
+                        throw f
+                    } finally {
+                        sb._busyOverlay.hide()
+                    }
+                };
+                if (null != window.requestAnimationFrame) {
+                    window.requestAnimationFrame(function () {
+                        window.requestAnimationFrame(function () {
+                            window.setTimeout(d, 0)
+                        })
+                    })
+                } else window.setTimeout(d, 0)
+            };
             sb.exportProto=function(a){
                 sb.grid=a.floors[0].grid;
                 return sb.house2proto(a)
@@ -9460,17 +9565,18 @@ var $lime_init = function (K, v) {
                     b.browse([new xk("Dwellings", "*.json;*.pb;")])
                 },
                 onPlanLoaded: function (a) {
-                    try {
-                        var b = sb.importFromFile(a.name, a.data);
-                        this.applyImportedHouse(b)
-                    } catch (c) {
+                    var b = this;
+                    sb.runBusy("Importing dwelling file...", function () {
+                        var c = sb.importFromFile(a.name, a.data);
+                        b.applyImportedHouse(c)
+                    }, function (c) {
                         Ha.lastError = c;
                         var msg = c && c.message || "" + c;
                         if (msg === "empty") msg = "The file is empty or contains no floor data.";
                         else if (msg === "bad bounds") msg = "The file contains invalid geometry data.";
                         console.error(msg);
                         ma.showToast(msg)
-                    }
+                    })
                 },
                 applyImportedHouse: function (a) {
                     fd.inst = a;
@@ -9886,10 +9992,24 @@ var $lime_init = function (K, v) {
                     this.updateView()
                 },
                 exportAsPNG: function () {
-                    zb.facadeAsPNG(this.house, this.elevation, this.view)
+                    var a = this;
+                    sb.runBusy("Exporting PNG file...", function () {
+                        zb.facadeAsPNG(a.house, a.elevation, a.view)
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        ma.showToast(msg)
+                    })
                 },
                 exportAsSVG: function () {
-                    zb.facadeAsSVG(this.house, this.elevation, this.view)
+                    var a = this;
+                    sb.runBusy("Exporting SVG file...", function () {
+                        zb.facadeAsSVG(a.house, a.elevation, a.view)
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        ma.showToast(msg)
+                    })
                 },
                 applyColors: function (a) {
                     ub.prototype.applyColors.call(this, a);
@@ -10041,8 +10161,24 @@ var $lime_init = function (K, v) {
                     var b =
                         this;
                     ub.prototype.fillExportMenu.call(this, a);
-                    a.addItem("JSON", function () {sb.export(b.house)});
-                    a.addItem("PROTO",function(){sb.exportAsProto(b.house)});
+                    a.addItem("JSON", function () {
+                        sb.runBusy("Exporting JSON file...", function () {
+                            sb.export(b.house)
+                        }, function (c) {
+                            var msg = c && c.message || "" + c;
+                            console.error(msg);
+                            ma.showToast(msg)
+                        })
+                    });
+                    a.addItem("PROTO", function () {
+                        sb.runBusy("Exporting PROTO file...", function () {
+                            sb.exportAsProto(b.house)
+                        }, function (c) {
+                            var msg = c && c.message || "" + c;
+                            console.error(msg);
+                            ma.showToast(msg)
+                        })
+                    });
                     a.addItem("Advanced...", m(this, this.multiExport))
                 },
                 reset: function (a) {
@@ -10269,12 +10405,25 @@ var $lime_init = function (K, v) {
                     }
                 },
                 exportAsPNG: function () {
-                    zb.planAsPNG(this.house, this.map, sd.curFloor);
-                    this.map.updateLabels(this.house)
+                    var a = this;
+                    sb.runBusy("Exporting PNG file...", function () {
+                        zb.planAsPNG(a.house, a.map, sd.curFloor);
+                        a.map.updateLabels(a.house)
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        ma.showToast(msg)
+                    })
                 },
                 exportAsSVG: function () {
-                    zb.planAsSVG(this.house, this.map,
-                        sd.curFloor)
+                    var a = this;
+                    sb.runBusy("Exporting SVG file...", function () {
+                        zb.planAsSVG(a.house, a.map, sd.curFloor)
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        ma.showToast(msg)
+                    })
                 },
                 multiExport: function () {
                     null == ma.findForm(sc) && ma.showDialog(new sc(this.house, m(this, this.updateView)))
