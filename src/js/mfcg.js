@@ -7889,7 +7889,7 @@ var $lime_init = function (A, t) {
                     d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:mfcg-busy-spin 0.8s linear infinite;";
                     var f = a.createElement("div");
                     f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
-                    f.textContent = "Working...";
+                    f.textContent = "Please wait...";
                     c.appendChild(d);
                     c.appendChild(f);
                     b.appendChild(c);
@@ -7942,7 +7942,7 @@ var $lime_init = function (A, t) {
                 },
                 show: function (a) {
                     this.ensure();
-                    this.textEl.textContent = null != a && "" !== a ? a : "Working...";
+                    this.textEl.textContent = null != a && "" !== a ? a : "Please wait...";
                     this.el.style.display = "flex";
                     this.active = !0;
                     this.attach()
@@ -7971,12 +7971,14 @@ var $lime_init = function (A, t) {
                 };
                 if (null != window.requestAnimationFrame) {
                     window.requestAnimationFrame(function () {
-                        window.setTimeout(d, 0)
+                        window.requestAnimationFrame(function () {
+                            window.setTimeout(d, 0)
+                        })
                     })
                 } else window.setTimeout(d, 0)
             };
             be.asPNG = function () {
-                return be.runBusy("Exporting PNG...", function () {
+                return be.runBusy("Exporting PNG file...", function () {
                     var a = Ub.instance,
                         b = a.getViewport(),
                         c = 40 * (null != a.focus ? .25 : 1),
@@ -8021,7 +8023,7 @@ var $lime_init = function (A, t) {
                 })
             };
             be.asSVG = function () {
-                return be.runBusy("Exporting SVG...", function () {
+                return be.runBusy("Exporting SVG file...", function () {
                     var a = Ub.instance,
                         b = Rd.export(a, ia.inst);
                     a = a.name;
@@ -8031,7 +8033,7 @@ var $lime_init = function (A, t) {
                 })
             };
             be.asJSON = function () {
-                return be.runBusy("Exporting JSON...", function () {
+                return be.runBusy("Exporting JSON file...", function () {
                     var a = Ub.instance, b = lg.export(a);
                     a = a.name, ge.saveText(lg.stringify(b), "" + a + ".mf.json", "application/json");
                 }, function (a) {
@@ -8039,7 +8041,7 @@ var $lime_init = function (A, t) {
                 })
             };
             be.asPROTO = function () {
-                return be.runBusy("Exporting PROTO...", function () {
+                return be.runBusy("Exporting PROTO file...", function () {
                     var a = Ub.instance, b = lg.export(a), c = DataProto.data.GeoObj.encode(b).finish();
                     var bb = FuncBin.exportBin(c, DataProto.data.DataType.geo);
                     a = a.name, ge.saveBinary(Td.fromArrayBuffer(bb), "" + a + ".mf.pb", "application/x-protobuf")
@@ -8048,7 +8050,7 @@ var $lime_init = function (A, t) {
                 })
             };
             be.importFromFile = function (a, b) {
-                return be.runBusy("Importing file...", function () {
+                return be.runBusy("Importing map file...", function () {
                     var c = be.decodeImportFile(a, b);
                     return be.applyImportPayload(c.payload, c.state, c.url, c.blueprint, c.generator, !0)
                 }, function (c) {
