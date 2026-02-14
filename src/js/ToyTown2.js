@@ -5494,11 +5494,18 @@ if (params !== null) (function (S, u) {
                     a = this._vertexData.get_length() / 13 | 0;
                     a != this._numVertices && this.disposeVertexBuffers(this._vertexBuffer);
                     this._numVertices = a;
-                    if (0 == this._numVertices) throw new Fa("Bad data: geometry can't have zero triangles");
+                    if (0 == this._numVertices) {
+                        this._activeBuffer = null;
+                        this._activeContext = null;
+                        this._activeDataInvalid = !1;
+                        this.invalidateBounds();
+                        return
+                    }
                     this.invalidateBuffers(this._vertexDataInvalid);
                     this.invalidateBounds()
                 },
                 activateVertexBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c = b._stage3DIndex,
                         d = b._context3D;
                     c != this._contextIndex && this.updateActiveBuffer(c);
@@ -5507,6 +5514,7 @@ if (params !== null) (function (S, u) {
                     d.setVertexBufferAt(a, this._activeBuffer, 0, 3)
                 },
                 activateUVBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c = b._stage3DIndex,
                         d = b._context3D;
                     this._uvsDirty && this._autoGenerateUVs && (this._vertexData = this.updateDummyUVs(this._vertexData), this.invalidateBuffers(this._vertexDataInvalid));
@@ -5516,6 +5524,7 @@ if (params !== null) (function (S, u) {
                     d.setVertexBufferAt(a, this._activeBuffer, 9, 2)
                 },
                 activateSecondaryUVBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c = b._stage3DIndex,
                         d = b._context3D;
                     c != this._contextIndex && this.updateActiveBuffer(c);
@@ -5525,10 +5534,12 @@ if (params !== null) (function (S, u) {
                         11, 2)
                 },
                 uploadData: function (a) {
+                    if (0 == this._numVertices) return;
                     this._activeBuffer.uploadFromVector(this._vertexData, 0, this._numVertices);
                     this._vertexDataInvalid.set(a, this._activeDataInvalid = !1)
                 },
                 activateVertexNormalBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c = b._stage3DIndex,
                         d = b._context3D;
                     c != this._contextIndex && this.updateActiveBuffer(c);
@@ -5537,6 +5548,7 @@ if (params !== null) (function (S, u) {
                     d.setVertexBufferAt(a, this._activeBuffer, 3, 3)
                 },
                 activateVertexTangentBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c =
                             b._stage3DIndex,
                         d = b._context3D;
@@ -17303,8 +17315,6 @@ if (params !== null) (function (S, u) {
                         h = Math.sqrt(kd.area(e)) / 2;
                         var r = kd.center(e).get_length() / f;
                         h *= 1 + Math.pow(1 - r, 2);
-                        100 < h && console.log(
-                            e);
                         Ka.gableRoofs && 0 < aa.pitch ? Rg.add(this.buildings.fa, e, h, aa.pitch) : Pf.add(this.buildings.fa, e, h);
                         this.buildings.manage()
                     }
@@ -17663,6 +17673,10 @@ if (params !== null) (function (S, u) {
                 var n = Math.floor((h - 2 * g + C) / (.8 + C)),
                     l = Math.floor((r - k - q + m) / (1.2 + m));
                 if (!isFinite(n) || !isFinite(l) || n < 1 || l < 1) {
+                    ia.addWindowlessWall(a, b, c, d, e, f);
+                    return;
+                }
+                if (n > 200 || l > 200 || n * l > 2000) {
                     ia.addWindowlessWall(a, b, c, d, e, f);
                     return;
                 }
@@ -18509,6 +18523,8 @@ if (params !== null) (function (S, u) {
                     switch (b) {
                         case DataProto.data.GeoType[DataProto.data.GeoType.Feature]:
                             return this.getMultiPolygon(a.geometry);
+                        case DataProto.data.GeoType[DataProto.data.GeoType.Polygon]:
+                            return [this.getPolygon(a)];
                         case DataProto.data.GeoType[DataProto.data.GeoType.MultiPolygon]:
                             a = a.coordinates;
                             b = [];
@@ -18552,6 +18568,7 @@ if (params !== null) (function (S, u) {
                 },
                 getMultiLineString: function (a) {
                     if (DataProto.data.GeoType[DataProto.data.GeoType.Feature] == a.type) return this.getMultiLineString(a.geometry);
+                    if (DataProto.data.GeoType[DataProto.data.GeoType.LineString] == a.type) return [this.getLineString(a)];
                     a = a.coordinates;
                     for (var b = [], c = 0; c < a.length;) {
                         var d = a[c];
@@ -19076,6 +19093,7 @@ if (params !== null) (function (S, u) {
                 loadSample: function () {
                     Va.shuffleStyles && this.loadPresetStyle();
                     Va.lastSample = yb.random(yb.difference(Va.samples, [Va.lastSample]));
+                    console.log("ToyTown2 sample:", Va.lastSample);
                     this.load(Va.lastSample, mc.getText(Va.lastSample))
                 },
                 loadExternal: function () {
