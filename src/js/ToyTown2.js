@@ -18669,6 +18669,116 @@ if (params !== null) (function (S, u) {
             };
             g["toytown2.scenes.TownScene"] = Va;
             Va.__name__ = "toytown2.scenes.TownScene";
+            Va._busyOverlay = {
+                active: !1,
+                el: null,
+                textEl: null,
+                listeners: null,
+                ensure: function () {
+                    if (null != this.el) return;
+                    var a = window.document;
+                    var b = a.createElement("div");
+                    b.id = "toytown2-busy-overlay";
+                    b.style.cssText = "position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,0.55);color:#fff;z-index:2147483647;pointer-events:auto;";
+                    var c = a.createElement("div");
+                    c.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 22px;border-radius:10px;background:rgba(0,0,0,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:80vw;";
+                    var d = a.createElement("div");
+                    d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:toytown2-busy-spin 0.8s linear infinite;";
+                    var f = a.createElement("div");
+                    f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
+                    f.textContent = "Please wait...";
+                    c.appendChild(d);
+                    c.appendChild(f);
+                    b.appendChild(c);
+                    this.el = b;
+                    this.textEl = f;
+                    (a.body || a.documentElement).appendChild(b);
+                    if (null == a.getElementById("toytown2-busy-style")) {
+                        var h = a.createElement("style");
+                        h.id = "toytown2-busy-style";
+                        h.textContent = "@keyframes toytown2-busy-spin{to{transform:rotate(360deg);}}";
+                        (a.head || a.documentElement).appendChild(h)
+                    }
+                },
+                attach: function () {
+                    if (null != this.listeners) return;
+                    var a = this;
+                    var b = function (c) {
+                        if (!a.active) return;
+                        c.preventDefault();
+                        c.stopPropagation();
+                        return !1
+                    };
+                    var c = {
+                        capture: !0,
+                        passive: !1
+                    };
+                    var d = window.document;
+                    var f = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel", "touchstart", "touchmove", "touchend", "touchcancel", "pointerdown", "pointermove", "pointerup"];
+                    var h = 0;
+                    for (; h < f.length;) d.addEventListener(f[h++], b, c);
+                    this.listeners = {
+                        handler: b,
+                        options: c,
+                        events: f
+                    };
+                    try {
+                        null != d.activeElement && d.activeElement.blur()
+                    } catch (k) {
+                    }
+                },
+                detach: function () {
+                    if (null == this.listeners) return;
+                    var a = window.document;
+                    var b = this.listeners.events;
+                    var c = this.listeners.handler;
+                    var d = this.listeners.options;
+                    var f = 0;
+                    for (; f < b.length;) a.removeEventListener(b[f++], c, d);
+                    this.listeners = null
+                },
+                show: function (a) {
+                    this.ensure();
+                    this.textEl.textContent = null != a && "" !== a ? a : "Please wait...";
+                    this.el.style.display = "flex";
+                    this.active = !0;
+                    this.attach()
+                },
+                hide: function () {
+                    if (null == this.el) return;
+                    this.active = !1;
+                    this.el.style.display = "none";
+                    this.detach()
+                }
+            };
+            Va.runBusy = function (a, b, c, d) {
+                var f = !Va._busyOverlay.active;
+                if (f) {
+                    Va._busyOverlay.show(a);
+                    d && null != Va._busyOverlay.el && Va._busyOverlay.el.offsetHeight
+                }
+                var h = function () {
+                    try {
+                        return b()
+                    } catch (k) {
+                        if ("function" == typeof c) {
+                            c(k);
+                            return
+                        }
+                        throw k
+                    } finally {
+                        f && Va._busyOverlay.hide()
+                    }
+                };
+                if (d) return h();
+                if (null != window.requestAnimationFrame) {
+                    window.requestAnimationFrame(function () {
+                        window.requestAnimationFrame(function () {
+                            window.setTimeout(h, 0)
+                        })
+                    })
+                } else window.setTimeout(h, 0)
+            };
             Va.__super__ = oe;
             Va.prototype = l(oe.prototype, {
                 activate: function () {
@@ -18973,27 +19083,37 @@ if (params !== null) (function (S, u) {
                         b = new Of;
                     b.addEventListener("select", function (c) {
                         b.addEventListener("complete", function (c) {
-                            a.load(b.get_name(), b.data)
+                            Va.runBusy("Importing map file...", function () {
+                                a.load(b.get_name(), b.data, !0)
+                            }, function (d) {
+                                Ma.showMessage(d && d.message ? d.message : String(d))
+                            })
                         });
                         b.load()
                     });
                     var c = [new ti("Cities", "*.json;*.pb;")];
                     b.browse(c)
                 },
-                load: function (a, b) {
-                    if (null != a) try {
-                        var c = DataGeo.decodeCityFile(a, b);
-                        new bc(a, c)
-                    } catch (d) {
-                        Ia.lastError = d;
-                        a = fa.caught(d).unwrap();
-                        Ma.showMessage(n.string(a));
-                        return !1
-                    }
-                    Va.view.reset(bc.instance);
-                    null != a && (this.defaultView(!0), this.modeFly.runner = null);
-                    this.updateFog();
-                    return !0
+                load: function (a, b, c) {
+                    var d = this;
+                    var e = function () {
+                        if (null != a) try {
+                            var c = DataGeo.decodeCityFile(a, b);
+                            new bc(a, c)
+                        } catch (f) {
+                            Ia.lastError = f;
+                            a = fa.caught(f).unwrap();
+                            Ma.showMessage(n.string(a));
+                            return !1
+                        }
+                        Va.view.reset(bc.instance);
+                        null != a && (d.defaultView(!0), d.modeFly.runner = null);
+                        d.updateFog();
+                        return !0
+                    };
+                    return c ? e() : Va.runBusy("Updating scene...", e, function (f) {
+                        Ma.showMessage(f && f.message ? f.message : String(f))
+                    }, !0)
                 },
                 updateFog: function () {
                     this.navMode == this.modeStare ? Va.view.disableFog() : this.navMode == this.modeOrtho ? Va.view.enableOrthFog() : Va.view.enableFog()
@@ -19018,9 +19138,13 @@ if (params !== null) (function (S, u) {
                     this.stage.set_displayState(2 == this.stage.get_displayState() ? 1 : 2)
                 },
                 "export": function () {
-                    var a = bc.instance.name + ".obj",
-                        b = tl.export(Va.view.buildings);
-                    Og.saveText(b, a, "text/plain")
+                    Va.runBusy("Exporting OBJ file...", function () {
+                        var a = bc.instance.name + ".obj",
+                            b = tl.export(Va.view.buildings);
+                        Og.saveText(b, a, "text/plain")
+                    }, function (b) {
+                        Ma.showMessage(b && b.message ? b.message : String(b))
+                    })
                 },
                 goToPrimarySource: function (inNewWindow = true) {
                     const adr = FuncProto.paramsUrlString(params.routes.primary_source);
