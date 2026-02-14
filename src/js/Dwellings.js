@@ -5999,7 +5999,27 @@ var $lime_init = function (K, v) {
                             Fa = a.charAt(h >> 2);
                         0 != (E.parseInt("0x" + Fa) >> (h & 3) & 1) && d.push(new Hf(l, f))
                     }
-                return Gf.cloud2gridNArea(d)
+                if (0 == d.length) return null;
+                var r = Gf.cloud2gridNArea(d);
+                if (null == r) return null;
+                if (!r.grid.isConnected(r.area)) {
+                    var t = r.area.slice(),
+                        u = null;
+                    for (; 0 < t.length;) {
+                        var y = md.fill(r.grid, t, t[0]);
+                        (null == u || y.length > u.length) && (u = y);
+                        for (var p = 0; p < y.length;) {
+                            var n = y[p++];
+                            M.remove(t, n)
+                        }
+                    }
+                    if (null != u && 0 < u.length) {
+                        d = [];
+                        for (p = 0; p < u.length;) n = u[p++], d.push(new Hf(n.j + r.trimx, n.i + r.trimy));
+                        r = Gf.cloud2gridNArea(d)
+                    }
+                }
+                return r
             };
             Cc.encodeBitmap = function (a) {
                 var b = a[0].length,
@@ -6804,7 +6824,15 @@ var $lime_init = function (K, v) {
                 var grid=new Gf(c.maxJ-mj+1,c.maxI-mi+1);
 
                 var house=Object.create(fd.prototype);
-                house.bp=Xd.random(0);
+                var bp=Object.create(Xd.prototype);
+                bp.seed=0;
+                bp.tags=[];
+                bp.nFloors=a.floors!=null?a.floors.length:0;
+                bp.plan=null;
+                bp.width=0;
+                bp.height=0;
+                bp.name=null;
+                house.bp=bp;
                 house.name=(""+embedName).trim();
                 house.floors=[];
                 house.basement=null;
@@ -6918,6 +6946,8 @@ var $lime_init = function (K, v) {
                                     var fe=pr.fromEdge!=null?sb._edgeFromJson(pr.fromEdge,mi,mj,grid):null;
                                     var te=pr.toEdge!=null?sb._edgeFromJson(pr.toEdge,mi,mj,grid):null;
                                     fe!=null&&te!=null&&room.props.add(new di(fe,te))
+                                }else if(kind=="BED"){
+                                    room.props.add(new Gk())
                                 }
                             }
                             room.props.update()
@@ -6948,7 +6978,8 @@ var $lime_init = function (K, v) {
                     for(r=0;r<st.length;r++){
                         var sc=sb._cellFromJson(st[r].cell,mi,mj,grid);
                         var sd2=sb.json2dir(st[r].dir);
-                        if(sc==null||sd2==null)continue;
+                        var isTrap=st[r].embedTrapdoor===true;
+                        if(sc==null||(!isTrap&&sd2==null))continue;
                         var stair=new ff(plan,sc,sd2);
                         stair.__lvl=level;
                         key=sc.i+","+sc.j;
