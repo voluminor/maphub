@@ -13678,10 +13678,6 @@ var $lime_init = function (A, t) {
                 c.set_width(96);
                 c.action.add(l(this, this.onExport));
                 b.add(c);
-                c = new fb("Import");
-                c.set_width(96);
-                c.click.add(l(this, this.onImport));
-                b.add(c);
                 this.add(b);
                 Bb.newModel.add(l(this, this.onNewModel));
                 Bb.titleChanged.add(l(this, this.onTitleChanged));
@@ -14196,6 +14192,27 @@ var $lime_init = function (A, t) {
                 onWarp: function () {
                     bb.switchScene(jd)
                 },
+                onImport: function () {
+                    var a = this,
+                        b = new Gf;
+                    b.addEventListener("select", function (c) {
+                        b.addEventListener("complete", l(a, a.onImportLoaded));
+                        b.load()
+                    });
+                    b.browse([new Th("Map", "*.json;*.pb;")])
+                },
+                onImportLoaded: function (a) {
+                    try {
+                        var b = va.__cast(a.target, Gf);
+                        be.importFromFile(b.name, b.data)
+                    } catch (c) {
+                        try {
+                            console.error("MFCG import failed:", c);
+                        } catch (d) {
+                        }
+                        q.show(c && c.message ? c.message : String(c));
+                    }
+                },
                 createOverlays: function () {
                     ia.prototype.createOverlays.call(this);
                     this.overlays.push(this.title = new qi(this));
@@ -14259,6 +14276,7 @@ var $lime_init = function (A, t) {
                     c.addItem("PROTO", be.asPROTO);
 
                     a.addItem("View in 3D", l(this, this.onViewIn3D));
+                    a.addItem("Import...", l(this, this.onImport));
                     a.addSubmenu("Export as", c);
                     a.addItem("Permalink..", l(this, this.onPermalink))
 
