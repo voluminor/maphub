@@ -1,7 +1,7 @@
 {
   "name": "fantasy-maphub",
   "name_full": "Fantasy MapHub Generators",
-  "version": "1.2.4-add-data-any-imports.1",
+  "version": "1.2.4-add-data-any-imports.2",
   "description": "An offline-first hub that bundles several Watabou map generators into one consistent web app: same UI patterns, local assets, and modern import/export. It adds OpenAPI docs, proto-first serialization (including pure protobuf files), and a PWA build so everything works without an internet connection.",
   "license": "MPL-2.0",
   "author": "mail@sunsung.fun",

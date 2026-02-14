@@ -13792,10 +13792,6 @@ var $lime_init = function (A, t) {
                         var b = va.__cast(a.target, Gf);
                         be.importFromFile(b.name, b.data)
                     } catch (c) {
-                        try {
-                            console.error("MFCG import failed:", c);
-                        } catch (d) {
-                        }
                         q.show(c && c.message ? c.message : String(c));
                     }
                 },
@@ -14214,10 +14210,6 @@ var $lime_init = function (A, t) {
                         var b = va.__cast(a.target, Gf);
                         be.importFromFile(b.name, b.data)
                     } catch (c) {
-                        try {
-                            console.error("MFCG import failed:", c);
-                        } catch (d) {
-                        }
                         q.show(c && c.message ? c.message : String(c));
                     }
                 },
