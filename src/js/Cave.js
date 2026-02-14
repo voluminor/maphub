@@ -5560,6 +5560,111 @@ var $lime_init = function (A, r) {
                 v = fb.embedded.h[a];
                 return null != v ? (Ma.addImport(v.url), v.name) : Ma.substituteGenerics(a)
             };
+            fb._busyOverlay = {
+                active: !1,
+                el: null,
+                textEl: null,
+                listeners: null,
+                ensure: function () {
+                    if (null != this.el) return;
+                    var a = window.document;
+                    var b = a.createElement("div");
+                    b.id = "cave-busy-overlay";
+                    b.style.cssText = "position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,0.55);color:#fff;z-index:2147483647;pointer-events:auto;";
+                    var c = a.createElement("div");
+                    c.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 22px;border-radius:10px;background:rgba(0,0,0,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:80vw;";
+                    var d = a.createElement("div");
+                    d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:cave-busy-spin 0.8s linear infinite;";
+                    var f = a.createElement("div");
+                    f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
+                    f.textContent = "Please wait...";
+                    c.appendChild(d);
+                    c.appendChild(f);
+                    b.appendChild(c);
+                    this.el = b;
+                    this.textEl = f;
+                    (a.body || a.documentElement).appendChild(b);
+                    if (null == a.getElementById("cave-busy-style")) {
+                        var h = a.createElement("style");
+                        h.id = "cave-busy-style";
+                        h.textContent = "@keyframes cave-busy-spin{to{transform:rotate(360deg);}}";
+                        (a.head || a.documentElement).appendChild(h)
+                    }
+                },
+                attach: function () {
+                    if (null != this.listeners) return;
+                    var a = this;
+                    var b = function (c) {
+                        if (!a.active) return;
+                        c.preventDefault();
+                        c.stopPropagation();
+                        return !1
+                    };
+                    var c = {
+                        capture: !0,
+                        passive: !1
+                    };
+                    var d = window.document;
+                    var f = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel", "touchstart", "touchmove", "touchend", "touchcancel", "pointerdown", "pointermove", "pointerup"];
+                    var h = 0;
+                    for (; h < f.length;) d.addEventListener(f[h++], b, c);
+                    this.listeners = {
+                        handler: b,
+                        options: c,
+                        events: f
+                    };
+                    try {
+                        null != d.activeElement && d.activeElement.blur()
+                    } catch (k) {
+                    }
+                },
+                detach: function () {
+                    if (null == this.listeners) return;
+                    var a = window.document;
+                    var b = this.listeners.events;
+                    var c = this.listeners.handler;
+                    var d = this.listeners.options;
+                    var f = 0;
+                    for (; f < b.length;) a.removeEventListener(b[f++], c, d);
+                    this.listeners = null
+                },
+                show: function (a) {
+                    this.ensure();
+                    this.textEl.textContent = null != a && "" !== a ? a : "Please wait...";
+                    this.el.style.display = "flex";
+                    this.active = !0;
+                    this.attach()
+                },
+                hide: function () {
+                    if (null == this.el) return;
+                    this.active = !1;
+                    this.el.style.display = "none";
+                    this.detach()
+                }
+            };
+            fb.runBusy = function (a, b, c) {
+                fb._busyOverlay.show(a);
+                var d = function () {
+                    try {
+                        b()
+                    } catch (f) {
+                        if ("function" == typeof c) {
+                            c(f);
+                            return
+                        }
+                        throw f
+                    } finally {
+                        fb._busyOverlay.hide()
+                    }
+                };
+                if (null != window.requestAnimationFrame) {
+                    window.requestAnimationFrame(function () {
+                        window.requestAnimationFrame(function () {
+                            window.setTimeout(d, 0)
+                        })
+                    })
+                } else window.setTimeout(d, 0)
+            };
             fb.__super__ = Kd;
             fb.prototype = u(Kd.prototype, {
                 layout: function () {
@@ -5867,44 +5972,58 @@ var $lime_init = function (A, r) {
                     }))
                 },
                 exportPNG: function () {
-                    var a = this.rWidth,
-                        b = this.rHeight,
-                        c = this.model.rect.width,
-                        d = this.model.rect.height,
-                        f = .2 * Math.max(c, d);
-                    c += f;
-                    d += f;
-                    this.setSize(c, d);
-                    var h = Math.sqrt(16777215 / (c * d));
-                    c = c * h | 0;
-                    d = d * h | 0;
-                    f = new wa;
-                    f.scale(h, h);
-                    h = new Wb(c, d, !1, this.getBgColor());
-                    h.draw(this, f);
-                    fb.showTitle && (this.removeChild(this.title),
-                        this.addChild(this.title = mc.get(this.model.name, mc.format("title", 48))), this.title.set_textColor(this.view.getTextColor()));
-                    this.setSize(a, b);
-                    Ld.savePNG(h, this.model.name);
-                    h.dispose()
+                    var a = this;
+                    fb.runBusy("Exporting PNG file...", function () {
+                        var b = a.rWidth,
+                            c = a.rHeight,
+                            d = a.model.rect.width,
+                            f = a.model.rect.height,
+                            h = .2 * Math.max(d, f);
+                        d += h;
+                        f += h;
+                        a.setSize(d, f);
+                        var k = Math.sqrt(16777215 / (d * f));
+                        d = d * k | 0;
+                        f = f * k | 0;
+                        h = new wa;
+                        h.scale(k, k);
+                        k = new Wb(d, f, !1, a.getBgColor());
+                        k.draw(a, h);
+                        fb.showTitle && (a.removeChild(a.title),
+                            a.addChild(a.title = mc.get(a.model.name, mc.format("title", 48))), a.title.set_textColor(a.view.getTextColor()));
+                        a.setSize(b, c);
+                        Ld.savePNG(k, a.model.name);
+                        k.dispose()
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        Fa.showToast(msg)
+                    })
                 },
                 exportSVG: function () {
-                    var a = this.rWidth,
-                        b = this.rHeight,
-                        c = this.model.rect.width,
-                        d = this.model.rect.height,
-                        f = .2 * Math.max(c, d);
-                    this.setSize(c + f, d + f);
-                    Ma.substituteFont = fb.fixFontNames;
-                    c = Ma.create(this.rWidth, this.rHeight, this.getBgColor());
-                    d = Ma.drawSprite(this);
-                    c.root.addChild(d);
-                    this.setSize(a, b);
-                    d = Ma.getImports();
-                    c.root.addChild(d);
-                    d = Ma.getGradients();
-                    c.root.addChild(d);
-                    Ld.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + Ke.print(c.root), this.model.name + ".cv.svg", "image/svg+xml")
+                    var a = this;
+                    fb.runBusy("Exporting SVG file...", function () {
+                        var b = a.rWidth,
+                            c = a.rHeight,
+                            d = a.model.rect.width,
+                            f = a.model.rect.height,
+                            h = .2 * Math.max(d, f);
+                        a.setSize(d + h, f + h);
+                        Ma.substituteFont = fb.fixFontNames;
+                        d = Ma.create(a.rWidth, a.rHeight, a.getBgColor());
+                        f = Ma.drawSprite(a);
+                        d.root.addChild(f);
+                        a.setSize(b, c);
+                        f = Ma.getImports();
+                        d.root.addChild(f);
+                        f = Ma.getGradients();
+                        d.root.addChild(f);
+                        Ld.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + Ke.print(d.root), a.model.name + ".cv.svg", "image/svg+xml")
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        Fa.showToast(msg)
+                    })
                 },
                 toggleGlade: function () {
                     fb.showGlade = !fb.showGlade;
