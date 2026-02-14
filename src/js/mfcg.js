@@ -14386,7 +14386,7 @@ var $lime_init = function (A, t) {
                             e = f
                         }
                         window.localStorage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", "p" + d);
-                        this.goToViewer(inNewWindow, a.name)
+                        this.goToViewer(inNewWindow)
                     } catch (g) {
                         Ta.lastError = g;
                         u.showDialog(new Wj("" + g))

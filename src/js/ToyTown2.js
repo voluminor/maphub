@@ -10,7 +10,20 @@ import * as DataViewer from "./shared/data/Viewer.js";
 import * as DataProto from "./struct/data.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VIEWER}}`));
-let GetParamName = new URLSearchParams(window.location.search).get('name') || '';
+const baseTitle = document.title;
+let mapName = "";
+let isLockedMap = false;
+const setMapName = (name) => {
+    mapName = name || "";
+    document.title = mapName !== "" ? `${baseTitle} | ${mapName}` : baseTitle;
+    if (params && params.meta && params.meta.about && params.meta.about.params) {
+        if (mapName !== "") {
+            params.meta.about.params["Map Name"] = mapName;
+        } else {
+            delete params.meta.about.params["Map Name"];
+        }
+    }
+};
 const isFrame = typeof window.parent.pingFrame === "function"
 
 if (params !== null) (function (S, u) {
@@ -15447,7 +15460,7 @@ if (params !== null) (function (S, u) {
 
                 var d = [
                     new Ke("Load", p(this, this.onLoad)),
-                    new Ke("Apply", function () {if (GetParamName === "") {a(c.getPalette());}}),
+                    new Ke("Apply", function () {a(c.getPalette());}),
                     exportBtn,
                 ];
                 if (null != b) {
@@ -15494,9 +15507,7 @@ if (params !== null) (function (S, u) {
                     })
                 },
                 onEnter: function () {
-                    if (GetParamName === "") {
-                        this.onApply(this.getPalette());
-                    }
+                    this.onApply(this.getPalette());
                 },
                 layout: function () {
                     null != this.tabs && this.tabs.layout();
@@ -16648,7 +16659,7 @@ if (params !== null) (function (S, u) {
             Oe.onDrop = function (a) {
                 a.preventDefault();
                 a.stopPropagation();
-                if (0 < a.dataTransfer.files.length && GetParamName == "") {
+                if (0 < a.dataTransfer.files.length && !isLockedMap) {
                     var b = a.dataTransfer.files[0],
                         c = new FileReader;
                     c.onload = function (a) {
@@ -18152,7 +18163,7 @@ if (params !== null) (function (S, u) {
             });
             var bc = function (a, b) {
                 this.scale = 1;
-                this.name = (new Yc(a)).file;
+                this.name = b != null && b.name != null && b.name !== "" ? b.name : (new Yc(a)).file;
                 bc.points = [];
                 this.buildings = [];
                 this.walls = [];
@@ -18749,7 +18760,7 @@ if (params !== null) (function (S, u) {
                 onKey: function (a, b) {
                     if (!this.navMode.onKey(a, b) && b) switch (a) {
                         case 13:
-                            if (GetParamName === "") this.loadSample();
+                            if (!isLockedMap) this.loadSample();
                             break;
                         case 48:
                             this.switchStyle(this.keyShift ? aa.getRandom() :
@@ -18836,7 +18847,7 @@ if (params !== null) (function (S, u) {
                     this.stage.window.set_mouseLock(this.btnRight)
                 },
                 onTap: function (a) {
-                    this.tapOK && GetParamName === "" && this.loadSample()
+                    this.tapOK && !isLockedMap && this.loadSample()
                 },
                 onContext: function (a) {
                     var b = this;
@@ -18858,8 +18869,8 @@ if (params !== null) (function (S, u) {
                         function () {
                             b.setMode(b.navMode == b.modeFly ? b.modeFree : b.modeFly)
                         }, this.navMode == this.modeFly);
-                    a.addItem("New view", p(this, GetParamName != ""? null:this.loadSample));
-                    a.addItem("Import...", p(this, GetParamName != ""? null:this.loadExternal));
+                    a.addItem("New view", p(this, isLockedMap ? null : this.loadSample));
+                    a.addItem("Import...", p(this, isLockedMap ? null : this.loadExternal));
                     a.addItem("Export as OBJ", p(this, this.export));
                     a.addSeparator();
                     a.addSubmenu("View", c);
@@ -18909,11 +18920,13 @@ if (params !== null) (function (S, u) {
                             null != a && b.removeItem("{{LOCALSTORAGE_TOWN_BUF}}")
                         }
                     } catch (c) {
-                        GetParamName = "";
+                        isLockedMap = false;
+                        setMapName("");
                         Ia.lastError = c
                     }
                     if (null == a) {
-                        GetParamName = "";
+                        isLockedMap = false;
+                        setMapName("");
                         this.loadSample();
                         return
                     }
@@ -18922,23 +18935,32 @@ if (params !== null) (function (S, u) {
                     if ("p" === d) {
                         var f = new Uint8Array(e.length);
                         for (var h = 0; h < e.length;) f[h] = e.charCodeAt(h) & 255, ++h;
-                        !1 === this.load("mfcg.pb", f.buffer) && this.loadSample()
+                        if (!1 === this.load("mfcg.pb", f.buffer)) {
+                            isLockedMap = false;
+                            setMapName("");
+                            this.loadSample();
+                            return
+                        }
                     } else if ("j" === d) {
-                        !1 === this.load("mfcg.json", e) && this.loadSample()
+                        if (!1 === this.load("mfcg.json", e)) {
+                            isLockedMap = false;
+                            setMapName("");
+                            this.loadSample();
+                            return
+                        }
                     } else {
-                        GetParamName = "";
+                        isLockedMap = false;
+                        setMapName("");
                         Ma.showMessage("Invalid exchange data");
-                        this.loadSample()
+                        this.loadSample();
+                        return
                     }
-
-                    if(GetParamName != ""){
-                        document.title = document.title + ' | ' + GetParamName;
-
-                        const url = new URL(window.location.href);
-                        url.searchParams.delete('name');
-                        window.history.replaceState({}, '', url);
-
-                        params.meta.about.params["Map Name"] = GetParamName;
+                    isLockedMap = true;
+                    setMapName(bc.instance != null ? bc.instance.name : "");
+                    const url = new URL(window.location.href);
+                    if (url.searchParams.has("name")) {
+                        url.searchParams.delete("name");
+                        window.history.replaceState({}, "", url);
                     }
                 },
                 loadSample: function () {

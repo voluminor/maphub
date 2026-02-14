@@ -16238,7 +16238,7 @@ var $lime_init = function (E, u) {
                         }
 
                         window.localStorage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", "p" + d);
-                        this.goToViewer(inNewWindow, a.name);
+                        this.goToViewer(inNewWindow);
                     } catch (g) {
                         Qa.lastError = g;
                         w.showDialog(new ej("" + g));
