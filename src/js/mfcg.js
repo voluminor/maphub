@@ -7980,6 +7980,7 @@ var $lime_init = function (A, t) {
                 }
                 if (null == h) throw new Error("An error occurred while restoring the map.");
                 if (g) {
+                    var keepPreview = za.getFlag("preview") || sb.preview;
                     be.importMode = !0;
                     const url = new URL(window.location);
                     url.search = '?import_mode=1';
@@ -7995,6 +7996,7 @@ var $lime_init = function (A, t) {
                     za.data = {
                         import_mode: "1"
                     };
+                    keepPreview && (za.data.preview = "1");
                     za.update()
                 } else if (null != c && "object" == typeof c) za.data = c, za.update();
                 K.restore();
@@ -20323,7 +20325,11 @@ var $lime_init = function (A, t) {
                 za.set(a, b ? "1" : "0")
             };
             za.getParams = function () {
-                if (be.importMode) return "?import_mode=1";
+                if (be.importMode) {
+                    var a = "?import_mode=1";
+                    (sb.preview || "1" === (za.data != null ? za.data.preview : null)) && (a += "&preview=1");
+                    return a
+                }
                 for (var a = "", b = za.data, c = ya.fields(b), d = 0; d < c.length;) {
                     var f = c[d++];
                     a += ("" == a ? "?" : "&") + ("" + f + "=" + H.string(b[f]))
