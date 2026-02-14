@@ -16263,8 +16263,11 @@ var $lime_init = function (E, u) {
                         f = !1
                     }
                     if (f) {
+                        var g = DataGeo.detectLegacyRootType(c);
+                        if (g != null && g !== DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, g);
                         var h = null;
                         null != c && "object" == typeof c && (h = c.embedProps != null ? c.embedProps : c.embedEditorPayload != null && c.embedEditorPayload.props != null ? c.embedEditorPayload.props : null);
+                        if (null == h) throw new Error("This format is too outdated and cannot be opened because it does not contain the necessary data.");
                         return {
                             generator: h != null ? h.generator : null,
                             blueprint: h != null ? h.blueprint : null,
@@ -16297,6 +16300,7 @@ var $lime_init = function (E, u) {
                         }
                     }
                     if (null == n) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                    if (n.embedProps == null && n.embedEditorPayload == null) throw new Error("This format is too outdated and cannot be opened because it does not contain the necessary data.");
                     var t = null;
                     n.embedProps != null && Object.hasOwnProperty.call(n, "embedProps") && (t = DataGeo.protoStructToJs(n.embedProps));
                     null == t && n.embedEditorPayload != null && n.embedEditorPayload.props != null && (t = DataGeo.protoStructToJs(n.embedEditorPayload.props));

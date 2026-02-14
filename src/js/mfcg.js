@@ -8021,10 +8021,7 @@ var $lime_init = function (A, t) {
                 try {
                     k = FuncBin.importBin(f)
                 } catch (n) {
-                    try {
-                        console.error("MFCG import bin decode failed:", n);
-                    } catch (p) {
-                    }
+                    k = f
                 }
                 if (null != k) {
                     if (k.number != DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, k.number);
@@ -8034,26 +8031,20 @@ var $lime_init = function (A, t) {
                 try {
                     p = DataProto.data.GeoObj.decode(f)
                 } catch (n2) {
-                    try {
-                        console.error("MFCG import proto decode failed:", n2);
-                    } catch (p2) {
-                    }
+                    console.error("MFCG import proto decode failed:", n2);
                 }
                 if (null == p) {
                     var g2 = be.stripLengthDelimited(f);
                     if (null != g2) try {
                         p = DataProto.data.GeoObj.decode(g2)
                     } catch (m2) {
-                        try {
-                            console.error("MFCG import length-delimited proto decode failed:", m2);
-                        } catch (p3) {
-                        }
+                        console.error("MFCG import length-delimited proto decode failed:", m2);
                     }
                 }
                 if (null == p) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
                 var r2 = p.type != null && (p.features != null || p.geometries != null || p.geometry != null || p.coordinates != null);
                 if (!r2) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
-                if (p.embedProps == null && p.embedEditorPayload == null) throw new Error("Этот формат слишком устаревший и не может быть открыт, так как в нем нет нужных данных.");
+                if (p.embedProps == null && p.embedEditorPayload == null) throw new Error("This format is too outdated and cannot be opened because it does not contain the necessary data.");
                 return be.extractPayloadFromProto(p)
             };
             be.extractPayloadFromJson = function (a) {
