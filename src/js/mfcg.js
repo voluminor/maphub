@@ -7872,65 +7872,188 @@ var $lime_init = function (A, t) {
             g["classExport"] = be;
             be.__name__ = "classExport";
             be.importMode = !1;
-            be.asPNG = function () {
-                var a = Ub.instance,
-                    b = a.getViewport(),
-                    c = 40 * (null != a.focus ? .25 : 1),
-                    d = b.width + c,
-                    f = b.height + c;
-                b = gk.getMaxArea(ia.map);
-                c = Math.sqrt(Math.min(16777216 / (d * f), 67108864 / b));
-                var h = c * d | 0,
-                    k = c * f | 0;
-                b = new Fb(h, k, !1, K.colorPaper);
-                hb.trace(c, {
-                    className: "classExport",
-                    methodName: "asPNG",
-                    customParams: [h, k]
-                });
-                c = ia.inst;
-                k = c.rWidth;
-                var n = c.rHeight;
-                d *= c.get_mapScale();
-                f *= c.get_mapScale();
-                c.setSize(d, f);
-                f = h / d;
-                d = new ua;
-                d.scale(f, f);
-                f = ia.map;
-                h = 0;
-                for (var p = c.overlays; h < p.length;) {
-                    var g = p[h];
-                    ++h;
-                    g.exportPNG(!0)
+            be._busyOverlay = {
+                active: !1,
+                el: null,
+                textEl: null,
+                listeners: null,
+                ensure: function () {
+                    if (null != this.el) return;
+                    var a = window.document;
+                    var b = a.createElement("div");
+                    b.id = "mfcg-busy-overlay";
+                    b.style.cssText = "position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,0.55);color:#fff;z-index:2147483647;pointer-events:auto;";
+                    var c = a.createElement("div");
+                    c.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 22px;border-radius:10px;background:rgba(0,0,0,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:80vw;";
+                    var d = a.createElement("div");
+                    d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:mfcg-busy-spin 0.8s linear infinite;";
+                    var f = a.createElement("div");
+                    f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
+                    f.textContent = "Working...";
+                    c.appendChild(d);
+                    c.appendChild(f);
+                    b.appendChild(c);
+                    this.el = b;
+                    this.textEl = f;
+                    (a.body || a.documentElement).appendChild(b);
+                    if (null == a.getElementById("mfcg-busy-style")) {
+                        var h = a.createElement("style");
+                        h.id = "mfcg-busy-style";
+                        h.textContent = "@keyframes mfcg-busy-spin{to{transform:rotate(360deg);}}";
+                        (a.head || a.documentElement).appendChild(h)
+                    }
+                },
+                attach: function () {
+                    if (null != this.listeners) return;
+                    var a = this;
+                    var b = function (c) {
+                        if (!a.active) return;
+                        c.preventDefault();
+                        c.stopPropagation();
+                        return !1
+                    };
+                    var c = {
+                        capture: !0,
+                        passive: !1
+                    };
+                    var d = window.document;
+                    var f = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel", "touchstart", "touchmove", "touchend", "touchcancel", "pointerdown", "pointermove", "pointerup"];
+                    var h = 0;
+                    for (; h < f.length;) d.addEventListener(f[h++], b, c);
+                    this.listeners = {
+                        handler: b,
+                        options: c,
+                        events: f
+                    };
+                    try {
+                        null != d.activeElement && d.activeElement.blur()
+                    } catch (k) {
+                    }
+                },
+                detach: function () {
+                    if (null == this.listeners) return;
+                    var a = window.document;
+                    var b = this.listeners.events;
+                    var c = this.listeners.handler;
+                    var d = this.listeners.options;
+                    var f = 0;
+                    for (; f < b.length;) a.removeEventListener(b[f++], c, d);
+                    this.listeners = null
+                },
+                show: function (a) {
+                    this.ensure();
+                    this.textEl.textContent = null != a && "" !== a ? a : "Working...";
+                    this.el.style.display = "flex";
+                    this.active = !0;
+                    this.attach()
+                },
+                hide: function () {
+                    if (null == this.el) return;
+                    this.active = !1;
+                    this.el.style.display = "none";
+                    this.detach()
                 }
-                var q = f.get_transform().get_matrix().clone();
-                q.concat(d);
-                b.draw(f, q, null, null, null, !0);
-                h = 0;
-                for (p = c.overlays; h < p.length;) g = p[h], ++h, g.get_visible() && (q = g.get_transform().get_matrix().clone(), q.concat(d), b.draw(g, q, null, null, null, !0));
-                c.setSize(k, n);
-                c.resetOverlays();
-                ge.savePNG(b, a.name)
+            };
+            be.runBusy = function (a, b, c) {
+                be._busyOverlay.show(a);
+                var d = function () {
+                    try {
+                        b()
+                    } catch (f) {
+                        if ("function" == typeof c) {
+                            c(f);
+                            return
+                        }
+                        throw f
+                    } finally {
+                        be._busyOverlay.hide()
+                    }
+                };
+                if (null != window.requestAnimationFrame) {
+                    window.requestAnimationFrame(function () {
+                        window.setTimeout(d, 0)
+                    })
+                } else window.setTimeout(d, 0)
+            };
+            be.asPNG = function () {
+                return be.runBusy("Exporting PNG...", function () {
+                    var a = Ub.instance,
+                        b = a.getViewport(),
+                        c = 40 * (null != a.focus ? .25 : 1),
+                        d = b.width + c,
+                        f = b.height + c;
+                    b = gk.getMaxArea(ia.map);
+                    c = Math.sqrt(Math.min(16777216 / (d * f), 67108864 / b));
+                    var h = c * d | 0,
+                        k = c * f | 0;
+                    b = new Fb(h, k, !1, K.colorPaper);
+                    hb.trace(c, {
+                        className: "classExport",
+                        methodName: "asPNG",
+                        customParams: [h, k]
+                    });
+                    c = ia.inst;
+                    k = c.rWidth;
+                    var n = c.rHeight;
+                    d *= c.get_mapScale();
+                    f *= c.get_mapScale();
+                    c.setSize(d, f);
+                    f = h / d;
+                    d = new ua;
+                    d.scale(f, f);
+                    f = ia.map;
+                    h = 0;
+                    for (var p = c.overlays; h < p.length;) {
+                        var g = p[h];
+                        ++h;
+                        g.exportPNG(!0)
+                    }
+                    var q = f.get_transform().get_matrix().clone();
+                    q.concat(d);
+                    b.draw(f, q, null, null, null, !0);
+                    h = 0;
+                    for (p = c.overlays; h < p.length;) g = p[h], ++h, g.get_visible() && (q = g.get_transform().get_matrix().clone(), q.concat(d), b.draw(g, q, null, null, null, !0));
+                    c.setSize(k, n);
+                    c.resetOverlays();
+                    ge.savePNG(b, a.name)
+                }, function (a) {
+                    q.show(a && a.message ? a.message : String(a))
+                })
             };
             be.asSVG = function () {
-                var a = Ub.instance,
-                    b = Rd.export(a, ia.inst);
-                a = a.name;
-                ge.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + Df.print(b.root), "" + a + ".mf.svg", "image/svg+xml")
+                return be.runBusy("Exporting SVG...", function () {
+                    var a = Ub.instance,
+                        b = Rd.export(a, ia.inst);
+                    a = a.name;
+                    ge.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + Df.print(b.root), "" + a + ".mf.svg", "image/svg+xml")
+                }, function (a) {
+                    q.show(a && a.message ? a.message : String(a))
+                })
             };
             be.asJSON = function () {
-                var a = Ub.instance, b = lg.export(a);
-                a = a.name, ge.saveText(lg.stringify(b), "" + a + ".mf.json", "application/json");
+                return be.runBusy("Exporting JSON...", function () {
+                    var a = Ub.instance, b = lg.export(a);
+                    a = a.name, ge.saveText(lg.stringify(b), "" + a + ".mf.json", "application/json");
+                }, function (a) {
+                    q.show(a && a.message ? a.message : String(a))
+                })
             };
             be.asPROTO = function () {
-                var a = Ub.instance, b = lg.export(a), c = DataProto.data.GeoObj.encode(b).finish();
-                var bb = FuncBin.exportBin(c, DataProto.data.DataType.geo);
-                a = a.name, ge.saveBinary(Td.fromArrayBuffer(bb), "" + a + ".mf.pb", "application/x-protobuf")
+                return be.runBusy("Exporting PROTO...", function () {
+                    var a = Ub.instance, b = lg.export(a), c = DataProto.data.GeoObj.encode(b).finish();
+                    var bb = FuncBin.exportBin(c, DataProto.data.DataType.geo);
+                    a = a.name, ge.saveBinary(Td.fromArrayBuffer(bb), "" + a + ".mf.pb", "application/x-protobuf")
+                }, function (a) {
+                    q.show(a && a.message ? a.message : String(a))
+                })
             };
             be.importFromFile = function (a, b) {
-                var c = be.decodeImportFile(a, b);
-                return be.applyImportPayload(c.payload, c.state, c.url, c.blueprint, c.generator, !0)
+                return be.runBusy("Importing file...", function () {
+                    var c = be.decodeImportFile(a, b);
+                    return be.applyImportPayload(c.payload, c.state, c.url, c.blueprint, c.generator, !0)
+                }, function (c) {
+                    q.show(c && c.message ? c.message : String(c))
+                })
             };
             be.goToVillageFromBlueprint = function (a) {
                 if (a == null || "object" != typeof a) return !1;
