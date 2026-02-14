@@ -21,6 +21,10 @@ for (const version of Object.keys(filesByVersion)) {
         files,
         (file) => file.name === "PaletteViewerObj.json" && file.relPath.includes("/ToyTown2/")
     );
+    const palettePbFile = findFirstFile(
+        files,
+        (file) => file.name === "PaletteViewerObj.pb" && file.relPath.includes("/ToyTown2/")
+    );
     const wrongPaletteFile = findFirstFile(
         files,
         (file) => file.name === "PaletteVillageObj.json" && file.relPath.includes("/Village/")
@@ -33,7 +37,10 @@ for (const version of Object.keys(filesByVersion)) {
         files,
         (file) => file.name === "GeoObj.pb" && file.relPath.includes("/Village/")
     );
-    const cavePbFile = findFileByName(files, "PaletteCaveObj.pb");
+    const cavePbFile = findFirstFile(
+        files,
+        (file) => file.name === "PaletteCaveObj.pb" && file.relPath.includes("/Cave/")
+    );
 
     describe(`ToyTown2 app data (${version})`, () => {
         it("exports all legacy viewer palette fields", () => {
@@ -50,6 +57,12 @@ for (const version of Object.keys(filesByVersion)) {
             expect(() => paletteObjFromLegacyJsonText(JSON.stringify(paletteLegacy))).not.toThrow();
         });
 
+        it("imports viewer palette PB", () => {
+            if (!palettePbFile) return;
+            const pb = readTestBytes(palettePbFile.relPath);
+            expect(() => decodePaletteFile("palette.pb", pb)).not.toThrow();
+        });
+
         it("imports geo JSON and PB", () => {
             if (!geoJsonFile) return;
             const geoLegacy = readTestJson(geoJsonFile.relPath);
@@ -59,10 +72,10 @@ for (const version of Object.keys(filesByVersion)) {
             expect(() => decodeCityFile("geo.pb", pb)).not.toThrow();
         });
 
-        it("accepts cave palette PB without type wrapper", () => {
+        it("rejects cave palette PB when viewer palette is expected", () => {
             if (!cavePbFile) return;
             const pb = readTestBytes(cavePbFile.relPath);
-            expect(() => decodePaletteFile("palette.pb", pb)).not.toThrow();
+            expect(() => decodePaletteFile("palette.pb", pb)).toThrow(/uploaded|expected|recognized|decoded/i);
         });
 
         it("rejects village palette when viewer palette is expected", () => {
