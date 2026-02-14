@@ -7684,6 +7684,111 @@ var $lime_init = function (E, u) {
             };
             g["system.Exporter"] = Sd;
             Sd.__name__ = "system.Exporter";
+            Sd._busyOverlay = {
+                active: !1,
+                el: null,
+                textEl: null,
+                listeners: null,
+                ensure: function () {
+                    if (null != this.el) return;
+                    var a = window.document;
+                    var b = a.createElement("div");
+                    b.id = "vg-busy-overlay";
+                    b.style.cssText = "position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,0.55);color:#fff;z-index:2147483647;pointer-events:auto;";
+                    var c = a.createElement("div");
+                    c.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 22px;border-radius:10px;background:rgba(0,0,0,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:80vw;";
+                    var d = a.createElement("div");
+                    d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:vg-busy-spin 0.8s linear infinite;";
+                    var f = a.createElement("div");
+                    f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
+                    f.textContent = "Please wait...";
+                    c.appendChild(d);
+                    c.appendChild(f);
+                    b.appendChild(c);
+                    this.el = b;
+                    this.textEl = f;
+                    (a.body || a.documentElement).appendChild(b);
+                    if (null == a.getElementById("vg-busy-style")) {
+                        var h = a.createElement("style");
+                        h.id = "vg-busy-style";
+                        h.textContent = "@keyframes vg-busy-spin{to{transform:rotate(360deg);}}";
+                        (a.head || a.documentElement).appendChild(h)
+                    }
+                },
+                attach: function () {
+                    if (null != this.listeners) return;
+                    var a = this;
+                    var b = function (c) {
+                        if (!a.active) return;
+                        c.preventDefault();
+                        c.stopPropagation();
+                        return !1
+                    };
+                    var c = {
+                        capture: !0,
+                        passive: !1
+                    };
+                    var d = window.document;
+                    var f = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel", "touchstart", "touchmove", "touchend", "touchcancel", "pointerdown", "pointermove", "pointerup"];
+                    var h = 0;
+                    for (; h < f.length;) d.addEventListener(f[h++], b, c);
+                    this.listeners = {
+                        handler: b,
+                        options: c,
+                        events: f
+                    };
+                    try {
+                        null != d.activeElement && d.activeElement.blur()
+                    } catch (k) {
+                    }
+                },
+                detach: function () {
+                    if (null == this.listeners) return;
+                    var a = window.document;
+                    var b = this.listeners.events;
+                    var c = this.listeners.handler;
+                    var d = this.listeners.options;
+                    var f = 0;
+                    for (; f < b.length;) a.removeEventListener(b[f++], c, d);
+                    this.listeners = null
+                },
+                show: function (a) {
+                    this.ensure();
+                    this.textEl.textContent = null != a && "" !== a ? a : "Please wait...";
+                    this.el.style.display = "flex";
+                    this.active = !0;
+                    this.attach()
+                },
+                hide: function () {
+                    if (null == this.el) return;
+                    this.active = !1;
+                    this.el.style.display = "none";
+                    this.detach()
+                }
+            };
+            Sd.runBusy = function (a, b, c) {
+                Sd._busyOverlay.show(a);
+                var d = function () {
+                    try {
+                        b()
+                    } catch (f) {
+                        if ("function" == typeof c) {
+                            c(f);
+                            return
+                        }
+                        throw f
+                    } finally {
+                        Sd._busyOverlay.hide()
+                    }
+                };
+                if (null != window.requestAnimationFrame) {
+                    window.requestAnimationFrame(function () {
+                        window.requestAnimationFrame(function () {
+                            window.setTimeout(d, 0)
+                        })
+                    })
+                } else window.setTimeout(d, 0)
+            };
             Sd.saveBinary = function (a, b, c) {
                 b = Sd.fixName(b);
                 a = wd.toArrayBuffer(a);
@@ -9405,12 +9510,20 @@ var $lime_init = function (E, u) {
             };
             g["village.JSONExporter"] = Hh, Hh.__name__ = "village.JSONExporter",
                 Hh.export = function (a) {
-                    var b = Hh.getProto(a), c = Hh.stringifyProto(b);
-                    return Sd.saveText(c, a.name + ".vg.json", "application/json"), b
+                    return Sd.runBusy("Exporting JSON file...", function () {
+                        var b = Hh.getProto(a), c = Hh.stringifyProto(b);
+                        Sd.saveText(c, a.name + ".vg.json", "application/json")
+                    }, function (b) {
+                        w.showToast(b && b.message ? b.message : String(b))
+                    })
                 }, Hh.exportBinary = function (a) {
-                var b = Hh.getProto(a), c = DataProto.data.GeoObj.encode(b).finish();
-                var d = FuncBin.exportBin(c, DataProto.data.DataType.geo);
-                return Sd.saveBinary(wd.fromArrayBuffer(d), a.name + ".vg.pb", "application/x-protobuf"), b
+                return Sd.runBusy("Exporting PROTO file...", function () {
+                    var b = Hh.getProto(a), c = DataProto.data.GeoObj.encode(b).finish();
+                    var d = FuncBin.exportBin(c, DataProto.data.DataType.geo);
+                    Sd.saveBinary(wd.fromArrayBuffer(d), a.name + ".vg.pb", "application/x-protobuf")
+                }, function (b) {
+                    w.showToast(b && b.message ? b.message : String(b))
+                })
             },
                 Hh._blueprintForExport = function (a) {
                     if (a == null) return null;
@@ -12254,35 +12367,43 @@ var $lime_init = function (E, u) {
                     this.plate.set_y(b.y)
                 },
                 exportPNG: function () {
-                    var a = Math.sqrt(16777215 / (this.village.viewW2 * this.village.viewH2 * 4)),
-                        b = 2 * this.village.viewW2 * a | 0,
-                        c = 2 * this.village.viewH2 * a | 0,
-                        d = new Jb(b, c, !1, x.colorGround[0]),
-                        f = new sa;
-                    f.scale(a, a);
-                    f.translate(b / 2, c / 2);
-                    this.numbers.prepareForExport();
-                    d.draw(this.map, f, null, null, null, !0);
-                    this.numbers.update(this.village);
-                    na.showTitle && (f = new sa, f.translate(this.plate.get_x() - this.rect.get_left(), this.plate.get_y() - this.rect.get_top()), f.scale(a / this.map.get_scaleX(), a / this.map.get_scaleY()), this.plate.prepareForExport(),
-                        d.draw(this.plate, f), this.removeChild(this.plate), this.plate = new Kg(this.village), this.plate.set_visible(na.showTitle), this.addChild(this.plate), this.layoutPlate());
-                    Sd.savePNG(d, this.village.name)
+                    return Sd.runBusy("Exporting PNG file...", function () {
+                        var a = Math.sqrt(16777215 / (this.village.viewW2 * this.village.viewH2 * 4)),
+                            b = 2 * this.village.viewW2 * a | 0,
+                            c = 2 * this.village.viewH2 * a | 0,
+                            d = new Jb(b, c, !1, x.colorGround[0]),
+                            f = new sa;
+                        f.scale(a, a);
+                        f.translate(b / 2, c / 2);
+                        this.numbers.prepareForExport();
+                        d.draw(this.map, f, null, null, null, !0);
+                        this.numbers.update(this.village);
+                        na.showTitle && (f = new sa, f.translate(this.plate.get_x() - this.rect.get_left(), this.plate.get_y() - this.rect.get_top()), f.scale(a / this.map.get_scaleX(), a / this.map.get_scaleY()), this.plate.prepareForExport(),
+                            d.draw(this.plate, f), this.removeChild(this.plate), this.plate = new Kg(this.village), this.plate.set_visible(na.showTitle), this.addChild(this.plate), this.layoutPlate());
+                        Sd.savePNG(d, this.village.name)
+                    }.bind(this), function (a) {
+                        w.showToast(a && a.message ? a.message : String(a))
+                    })
                 },
                 exportSVG: function () {
-                    var a = Ha.create(2 * this.village.viewW2, 2 * this.village.viewH2, x.colorGround[0]);
-                    Ha.substituteFont = na.fixFontNames;
-                    Ha.handleObject = qc.toSVG;
-                    var b = Ha.drawSprite(this);
-                    la.clearTransform(b);
-                    la.translate(b, -this.rect.get_left(), -this.rect.get_top());
-                    la.scale(b, 1 / this.map.get_scaleX(), 1 / this.map.get_scaleY());
-                    var c = Ha.getImports();
-                    a.root.addChild(c);
-                    c = Ha.getGradients();
-                    a.root.addChild(c);
-                    na.showShading && (c = qc.getFilterSVG(), a.root.addChild(c));
-                    a.root.addChild(b);
-                    Sd.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + mf.print(a.root), this.village.name + ".vg.svg", "image/svg+xml")
+                    return Sd.runBusy("Exporting SVG file...", function () {
+                        var a = Ha.create(2 * this.village.viewW2, 2 * this.village.viewH2, x.colorGround[0]);
+                        Ha.substituteFont = na.fixFontNames;
+                        Ha.handleObject = qc.toSVG;
+                        var b = Ha.drawSprite(this);
+                        la.clearTransform(b);
+                        la.translate(b, -this.rect.get_left(), -this.rect.get_top());
+                        la.scale(b, 1 / this.map.get_scaleX(), 1 / this.map.get_scaleY());
+                        var c = Ha.getImports();
+                        a.root.addChild(c);
+                        c = Ha.getGradients();
+                        a.root.addChild(c);
+                        na.showShading && (c = qc.getFilterSVG(), a.root.addChild(c));
+                        a.root.addChild(b);
+                        Sd.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + mf.print(a.root), this.village.name + ".vg.svg", "image/svg+xml")
+                    }.bind(this), function (a) {
+                        w.showToast(a && a.message ? a.message : String(a))
+                    })
                 },
                 setShadows: function (a) {
                     this.layerShadows.set_visible(na.showShadows = a);
@@ -16236,22 +16357,23 @@ var $lime_init = function (E, u) {
                     b.browse(c)
                 },
                 onImportLoaded: function (a) {
-                    try {
-                        var b = Ka.__cast(a.target, Bg);
-                        var c = this.decodeImportFile(b.name, b.data);
-                        if ("mfcg" === c.generator) {
-                            this.forwardImportToMfcg(c);
+                    var b = this;
+                    Sd.runBusy("Importing map file...", function () {
+                        var c = Ka.__cast(a.target, Bg);
+                        var d = b.decodeImportFile(c.name, c.data);
+                        if ("mfcg" === d.generator) {
+                            b.forwardImportToMfcg(d);
                             return
                         }
-                        if ("vg" === c.generator || "village" === c.generator) {
-                            this.applyImportedVillage(c.blueprint);
+                        if ("vg" === d.generator || "village" === d.generator) {
+                            b.applyImportedVillage(d.blueprint);
                             return
                         }
                         throw new Error("This file does not include Village or MFCG editor data.")
-                    } catch (d) {
-                        Qa.lastError = d;
-                        w.showToast(d && d.message ? d.message : String(d))
-                    }
+                    }, function (c) {
+                        Qa.lastError = c;
+                        w.showToast(c && c.message ? c.message : String(c))
+                    })
                 },
                 decodeImportFile: function (a, b) {
                     var c = null, d = DataGeo.bytesToUtf8Text(b);
