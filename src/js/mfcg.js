@@ -14249,6 +14249,7 @@ var $lime_init = function (A, t) {
                 this.mouse = new I;
                 ia.call(this);
                 this.permalinkDisabled = be.importMode;
+                this.wheelZoomUntil = 0;
                 this.btnMenu = new fb("Menu", l(this, this.onMenu));
                 sb.preview || u.layer.addChild(this.btnMenu);
                 this.fader = Ke.create(1, l(this, this.onFadeOut))
@@ -14263,6 +14264,7 @@ var $lime_init = function (A, t) {
                         u.layer.addChild(new le);
                         le.inst.awake.add(l(this, this.onAwake));
                         this.stage.addEventListener("mouseMove", l(this, this.onMouseMove));
+                        this.stage.addEventListener("mouseWheel", l(this, this.onMouseWheel));
                         this.stage.addEventListener("mouseDown", l(this, this.onMouseDown));
                         this.stage.addEventListener("click", l(this, this.onClick));
                         vc.loadSaved(Ec.tools);
@@ -14288,6 +14290,7 @@ var $lime_init = function (A, t) {
                     ia.prototype.deactivate.call(this);
                     u.layer.removeChild(this.btnMenu);
                     this.stage.removeEventListener("mouseMove", l(this, this.onMouseMove));
+                    this.stage.removeEventListener("mouseWheel", l(this, this.onMouseWheel));
                     this.stage.removeEventListener("mouseDown", l(this, this.onMouseDown));
                     this.stage.removeEventListener("click", l(this, this.onClick));
                     null != le.inst && u.layer.removeChild(le.inst)
@@ -14372,6 +14375,24 @@ var $lime_init = function (A, t) {
                 },
                 onMouseMove: function (a) {
                     Sd.__neq(a.target, this.stage) || (a = ia.map, this.mouse.setTo(a.get_mouseX(), a.get_mouseY()), a = this.patch = this.model.getCell(this.mouse), a = null != a ? a.ward.getLabel() : null, le.inst.set(a))
+                },
+                onMouseWheel: function (a) {
+                    var b = Date.now();
+                    if (b < this.wheelZoomUntil) return;
+                    if (0 < a.delta) {
+                        var c = ia.map,
+                            d = new I(c.get_mouseX(), c.get_mouseY());
+                        c = this.model.getCell(d);
+                        if (null != c && null != c.district) {
+                            this.zoomIn(c.district);
+                            this.wheelZoomUntil = b + 1E3;
+                            a.stopPropagation()
+                        }
+                    } else if (0 > a.delta && null != this.model.focus) {
+                        this.zoomIn(null);
+                        this.wheelZoomUntil = b + 1E3;
+                        a.stopPropagation()
+                    }
                 },
                 onMouseDown: function (a) {
                     if (1 < a.clickCount) {
