@@ -5799,53 +5799,58 @@ var $lime_init = function (A, r) {
                     this.layout()
                 },
                 showMenu: function (a) {
-                    null == a && (a = !1);
-                    var b = this,
-                        c = new Yc,
-                        d = function (a, d) {
-                            c.addItem(a, function () {
-                                b.view.setGridMode(d)
-                            }).setCheck(Va.gridMode == d)
-                        };
-                    d("Square", 1);
-                    d("Hexagonal", 2);
-                    d("Hidden", 0);
-                    c.addSeparator();
-                    c.addItem("Customize...", 1 == Va.gridMode ? function () {
-                        lb.customize(b.model)
-                    } : null);
-                    d = new Yc;
-                    d.addItem("Narrow tunnels", l(this, this.toggleTunnels)).setCheck(la.narrowTunnels);
-                    d.addItem("Geometry...", l(this,
-                        this.showGeoForm));
-                    d.addItem("Water...", l(this, this.showWaterForm));
-                    var f = this.getViewMenu(),
-                        h = new Yc;
-                    h.addItem("PNG", l(this, this.exportPNG));
-                    h.addItem("SVG", l(this, this.exportSVG));
-                    var k = new Yc;
-                    a && (k.addItem("Rename...", l(this, this.editName)), k.addItem("Reroll", l(this, this.rerollName)), k.addSeparator());
+                    var contextThis = this;
+                    var rootMenu = new Yc;
+                    a && (rootMenu.addItem("Rename...", l(this, this.editName)), rootMenu.addSeparator());
 
-                    k.addItem("New map", function () {
-                        b.reset()
-                    });
-                    k.addItem("Rotate...", l(this, this.showRotateForm));
-                    k.addItem("Tags...", l(this, this.showTagsForm));
-                    k.addSubmenu("Export as", h);
-                    k.addItem("Permalink...", l(this, this.showURL));
+                    // BEGIN //
 
-                    k.addSeparator();
-                    k.addSubmenu("Grid", c);
-                    k.addSubmenu("Shape", d);
-                    null != f && k.addSubmenu("Display", f);
-                    k.addItem("Style...", l(this, this.showStyle));
+                    rootMenu.addItem("New map", function () {contextThis.reset()});
 
-                    k.addSeparator();
-                    k.addItem("Fullscreen", l(this, this.toggleFullscreen), 2 != this.stage.get_displayState());
-                    k.addItem("About", function () {
+                    var exportMenu = new Yc;
+                    exportMenu.addItem("PNG", l(this, this.exportPNG));
+                    exportMenu.addItem("SVG", l(this, this.exportSVG));
+                    rootMenu.addSubmenu("Export as", exportMenu);
+                    rootMenu.addItem("Permalink...", l(this, this.showURL));
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    rootMenu.addItem("Reroll name", l(this, this.rerollName))
+
+                    var editMenu = new Yc;
+                    editMenu.addItem("Grid...", 1 == Va.gridMode ? function () {lb.customize(contextThis.model)} : null);
+                    editMenu.addItem("Water...", l(this, this.showWaterForm));
+                    editMenu.addItem("Rotate...", l(this, this.showRotateForm));
+                    editMenu.addItem("Geometry...", l(this, this.showGeoForm));
+                    rootMenu.addSubmenu("Edit", editMenu);
+
+                    var gridMenu = new Yc;
+                    gridMenu.addItem("Square", function () {contextThis.view.setGridMode(1)}).setCheck(Va.gridMode == 1);
+                    gridMenu.addItem("Hexagonal", function () {contextThis.view.setGridMode(2)}).setCheck(Va.gridMode == 2);
+                    gridMenu.addItem("Hidden", function () {contextThis.view.setGridMode(0)}).setCheck(Va.gridMode == 0);
+                    rootMenu.addSubmenu("Grid", gridMenu);
+
+                    var displayMenu = this.getViewMenu();
+                    if(null != displayMenu ) {
+                        displayMenu.addItem("Narrow tunnels", l(this, this.toggleTunnels)).setCheck(la.narrowTunnels);
+                        rootMenu.addSubmenu("Display", displayMenu);
+                    }
+
+                    rootMenu.addItem("Generator...", l(this, this.showTagsForm));
+                    rootMenu.addItem("Style...", l(this, this.showStyle));
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    rootMenu.addItem("Fullscreen", l(this, this.toggleFullscreen), 2 != this.stage.get_displayState());
+                    rootMenu.addItem("About", function () {
                         null == Fa.findForm(AboutDialogForm) && Fa.showDialog(new AboutDialogForm)
                     });
-                    Fa.showMenu(k)
+                    Fa.showMenu(rootMenu);
+
+                    // END //
+
                 },
                 toggleFullscreen: function () {
                     this.stage.set_displayState(2 == this.stage.get_displayState() ? 1 : 2)

@@ -9448,14 +9448,16 @@ var $lime_init = function (K, v) {
                     Jb.prototype.activate.call(this);
                     this.stage.addEventListener("touchTap", m(this, this.onTap));
                     this.stage.addEventListener("click", m(this, this.onClick));
-                    this.stage.addEventListener("rightClick", m(this, this.onRightClick))
+                    this.stage.addEventListener("rightClick", m(this, this.onRightClick));
+                    this.stage.addEventListener("mouseWheel", m(this, this.onWheel))
                 },
                 deactivate: function () {
                     Jb.prototype.deactivate.call(this);
                     ma.layer.removeChild(this.modeSelector);
                     this.stage.removeEventListener("touchTap", m(this, this.onTap));
                     this.stage.removeEventListener("click", m(this, this.onClick));
-                    this.stage.removeEventListener("rightClick", m(this, this.onRightClick))
+                    this.stage.removeEventListener("rightClick", m(this, this.onRightClick));
+                    this.stage.removeEventListener("mouseWheel", m(this, this.onWheel))
                 },
                 onTap: function (a) {
                     ma.checkTarget(a.target) ||
@@ -9466,6 +9468,9 @@ var $lime_init = function (K, v) {
                 onRightClick: function (a) {
                     ma.checkTarget(a.target) || this.showContextMenu()
                 },
+                onWheel: function (a) {
+                    0 < a.delta ? this.onKey(39, !0) : 0 > a.delta && this.onKey(37, !0)
+                },
                 onMenuButton: function (a) {
                     a = a.getBounds(ma.layer);
                     this.showContextMenu(a.get_left(), a.get_bottom())
@@ -9473,19 +9478,15 @@ var $lime_init = function (K, v) {
                 showContextMenu: function (a, b) {
                     null == b && (b = 0);
                     null == a && (a = 0);
-                    var c = this,
-                        d = new Ac;
-                    d.addItem("New house", function () {c.reset(Xd.random())});
+                    var c = this, d = new Ac;
 
                     this.fillViewMenu(d);
-                    d.addItem("About", function () {
-                        null == ma.findForm(AboutDialogForm) && ma.showDialog(new AboutDialogForm)
-                    });
                     0 == a && 0 == b ? ma.showMenu(d) : ma.showMenuAt(d, a, b)
                 },
                 fillViewMenu: function (a) {
                     a.addSeparator();
-                    Oa.mobile || a.addItem("Fullscreen", m(this, this.toggleFullscreen), 2 != this.stage.get_displayState())
+                    Oa.mobile || a.addItem("Fullscreen", m(this, this.toggleFullscreen), 2 != this.stage.get_displayState());
+                    a.addItem("About", function () {null == ma.findForm(AboutDialogForm) && ma.showDialog(new AboutDialogForm)});
                 },
                 fillExportMenu: function (a) {
                     a.addItem("PNG", m(this, this.exportAsPNG));
@@ -9738,15 +9739,13 @@ var $lime_init = function (K, v) {
                                 ub.prototype.onKey.call(this, a, b)
                         } else 16 == a && this.view.set_showWalls(!1)
                     },
-                    fillViewMenu: function (a) {
-                        a.addItem("Random", m(this, this.random));
-                        a.addItem("Box", m(this, this.box));
-                        a.addItem("Clear", m(this, this.clear));
-                        a.addSeparator();
-                        a.addItem("Submit", m(this, this.submit));
-                        a.addItem("Discard", m(this, this.discard));
-                        a.addSeparator();
-                        ub.prototype.fillViewMenu.call(this, a)
+                    fillViewMenu: function (rootMenu) {
+                        rootMenu.addItem("Random", m(this, this.random));
+                        rootMenu.addItem("Box", m(this, this.box));
+                        rootMenu.addItem("Clear", m(this, this.clear));
+                        rootMenu.addSeparator();
+                        rootMenu.addItem("Submit", m(this, this.submit));
+                        rootMenu.addItem("Discard", m(this, this.discard));
                     },
                     submit: function () {
                         this.reset(fd.inst.bp)
@@ -9943,16 +9942,30 @@ var $lime_init = function (K, v) {
                             ub.prototype.onKey.call(this, a, b)
                     }
                 },
-                fillViewMenu: function (a) {
-                    a.addItem("Floor plans", m(this, this.switchView));
-                    a.addItem("Blueprint", m(this,
-                        this.switchToBlueprint));
-                    a.addSeparator();
-                    a.addItem("Reroll", m(this, this.rerollDimensions));
-                    a.addItem("Fortified", m(this, this.toggleFortified)).setCheck(A.fortified);
-                    a.addItem("Dark", m(this, this.toggleColors)).setCheck(I.mode == Pe.DARK);
-                    a.addItem("Fade", m(this, this.toggleFading)).setCheck(Ae.useFading);
-                    ub.prototype.fillViewMenu.call(this, a)
+                fillViewMenu: function (rootMenu) {
+                    var contextThis = this;
+
+                    rootMenu.addItem("New house", function () {contextThis.reset(Xd.random())});
+                    rootMenu.addItem("View inside", m(this, this.switchView));
+
+                    var exportMenu = new Ac;
+                    this.fillExportMenu(exportMenu);
+                    rootMenu.addSubmenu("Export as", exportMenu);
+                    rootMenu.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    rootMenu.addItem("Edit...", m(this, this.switchToBlueprint));
+                    rootMenu.addItem("Reroll", m(this, this.rerollDimensions));
+
+                    var displayMenu = new Ac;
+                    displayMenu.addItem("Fortified", m(this, this.toggleFortified)).setCheck(A.fortified);
+                    displayMenu.addItem("Dark", m(this, this.toggleColors)).setCheck(I.mode == Pe.DARK);
+                    displayMenu.addItem("Fade", m(this, this.toggleFading)).setCheck(Ae.useFading);
+                    rootMenu.addSubmenu("Display", displayMenu);
+
+                    ub.prototype.fillViewMenu.call(this, rootMenu)
                 },
                 setDir: function (a) {
                     this.sideSelector.select(bd.curDir = a);
@@ -9968,9 +9981,17 @@ var $lime_init = function (K, v) {
                     this.updateView()
                 },
                 toggleFortified: function () {
-                    A.fortified = !A.fortified;
+                    var nextFortified = !A.fortified;
+                    if (nextFortified) {
+                        this.applyArchiPreset("castle");
+                        return
+                    }
+                    A.fortified = !1;
                     A.random();
-                    this.updateView()
+                    var currentArchi = ib.get("architecture");
+                    if (null == currentArchi || "" == currentArchi || "architecture_unspecified" == currentArchi || "castle" == currentArchi) {
+                        this.applyArchiPreset("simple")
+                    } else this.updateView()
                 },
                 toggleColors: function () {
                     ib.set("colorize", bd.dark = !bd.dark);
@@ -9984,6 +10005,17 @@ var $lime_init = function (K, v) {
                 toggleFading: function () {
                     ib.set("fading", Ae.useFading = !Ae.useFading);
                     this.updateView()
+                },
+                applyArchitecture: function (a) {
+                    hb.setStyle(a);
+                    this.house.updateProps();
+                    this.updateView()
+                },
+                applyArchiPreset: function (a) {
+                    var prevFortified = A.fortified;
+                    "castle" == a ? A.fortified = !0 : A.fortified && (A.fortified = !1);
+                    A.fortified != prevFortified && A.random();
+                    this.applyArchitecture(a)
                 },
                 reset: function (a) {
                     ub.prototype.reset.call(this, a);
@@ -10082,104 +10114,100 @@ var $lime_init = function (K, v) {
                             this.map.updateShading()
                         } else this.editName(a)
                 },
-                fillViewMenu: function (a) {
-                    var b = this,
-                        c = new Ac;
-                    c.addItem("Regular", m(this, this.toggleRoomSet), !Z.gothicSet);
-                    c.addItem("Gothic", m(this, this.toggleRoomSet), Z.gothicSet);
-                    var d = new Ac,
-                        g = function (a, c) {
-                            d.addItem(a,
-                                function () {
-                                    ib.set("grid", mb.mode = c);
-                                    b.updateView()
-                                }).setCheck(mb.mode == c)
-                        };
-                    g("Hidden", "hidden");
-                    g("Solid", "solid");
-                    g("Dashes", "dashes");
-                    g("Dots", "dots");
-                    g("Planks", "planks");
-                    g("Tiles", "tiles");
-                    d.addSeparator();
-                    d.addItem("Double", m(this, this.toggleDoubleGrid)).setCheck(mb.double);
-                    var f = new Ac;
-                    g = function (a, c) {
-                        f.addItem(a, function () {
-                            ib.set("doors", nd.mode = c);
-                            b.updateView()
-                        }).setCheck(nd.mode == c)
-                    };
-                    g("Hidden", "hidden");
-                    g("Simple", "simple");
-                    g("Open", "open");
-                    var k = new Ac;
-                    k.addItem("Names", m(this, this.labelsShown),
-                        Qc.isVisible && !Qc.showNumbers);
-                    k.addItem("Numbers", m(this, this.labelsNumbers), Qc.isVisible && Qc.showNumbers);
-                    k.addItem("Hidden", m(this, this.labelsHidden), !Qc.isVisible);
-                    var q = this.getRoofSubmenu();
-                    g = new Ac;
-                    g.addSubmenu("Grid", d);
-                    g.addSubmenu("Doors", f);
-                    g.addSubmenu("Labels", k);
-                    g.addSubmenu("Roof", q);
-                    g.addItem("Arrows", m(this, this.toggleArrows), Sa.showArrows);
-                    g.addItem("Props", m(this, this.toggleProps), Sa.showProps);
-                    g.addItem("AO", m(this, this.toggleAO), Sa.showAO);
-                    g.addItem("Lights", m(this, this.toggleLights),
-                        Sa.showLights);
-                    var l = new Ac;
-                    k = function (a, c) {
-                        l.addItem(a, function () {
-                            b.applyArchiPreset(c)
-                        })
-                    };
-                    k("Simple", "simple");
-                    k("Castle", "castle");
-                    k("Log house", "logs");
-                    k("Modern", "modern");
-                    k("Sci-fi", "scifi");
+                fillViewMenu: function (rootMenu) {
+                    var contextThis = this;
 
-                    a.addItem("Elevation", m(this, this.switchView));
-                    a.addItem("Blueprint", m(this, this.switchToBlueprint));
+                    rootMenu.addItem("New house", function () {contextThis.reset(Xd.random())});
+                    rootMenu.addItem("View outside", m(this, this.switchView));
+
+                    rootMenu.addItem("Import...", m(this, this.importPlan));
                     var exportMenu = new Ac;
                     this.fillExportMenu(exportMenu);
-                    a.addItem("Import...", m(this, this.importPlan));
-                    0 < g.items.length && a.addSubmenu("Export as", exportMenu);
-                    a.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
+                    rootMenu.addSubmenu("Export as", exportMenu);
+                    rootMenu.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
+                    rootMenu.addSeparator();
 
-                    a.addSeparator();
-                    a.addItem("Parameters...", m(this, this.showParams));
-                    a.addSubmenu("Layers", g);
-                    a.addSubmenu("Rooms", c);
-                    a.addSubmenu("Walls", l);
-                    a.addItem("Style...", m(this, this.showColors));
-                    ub.prototype.fillViewMenu.call(this, a)
+                    // ###################### //
+
+                    rootMenu.addItem("Edit...", m(this, this.switchToBlueprint));
+
+                    var displayMenu = new Ac;
+
+                    var gridMenu = new Ac;
+                    gridMenu.addItem("Hidden", function () {ib.set("grid", mb.mode = "hidden");contextThis.updateView()}).setCheck(mb.mode == "hidden");
+                    gridMenu.addItem("Solid", function () {ib.set("grid", mb.mode = "solid");contextThis.updateView()}).setCheck(mb.mode == "solid");
+                    gridMenu.addItem("Dashes", function () {ib.set("grid", mb.mode = "dashes");contextThis.updateView()}).setCheck(mb.mode == "dashes");
+                    gridMenu.addItem("Dots", function () {ib.set("grid", mb.mode = "dots");contextThis.updateView()}).setCheck(mb.mode == "dots");
+                    gridMenu.addItem("Planks", function () {ib.set("grid", mb.mode = "planks");contextThis.updateView()}).setCheck(mb.mode == "planks");
+                    gridMenu.addItem("Tiles", function () {ib.set("grid", mb.mode = "tiles");contextThis.updateView()}).setCheck(mb.mode == "tiles");
+                    gridMenu.addSeparator();
+                    gridMenu.addItem("Double", m(this, this.toggleDoubleGrid)).setCheck(mb.double);
+                    displayMenu.addSubmenu("Grid", gridMenu);
+
+                    var doorsMenu = new Ac;
+                    doorsMenu.addItem("Hidden", function () {ib.set("doors", nd.mode = "hidden");contextThis.updateView()}).setCheck(nd.mode == "hidden");
+                    doorsMenu.addItem("Simple", function () {ib.set("doors", nd.mode = "simple");contextThis.updateView()}).setCheck(nd.mode == "simple");
+                    doorsMenu.addItem("Open", function () {ib.set("doors", nd.mode = "open");contextThis.updateView()}).setCheck(nd.mode == "open");
+                    displayMenu.addSubmenu("Doors", doorsMenu);
+
+                    var labelsMenu = new Ac;
+                    labelsMenu.addItem("Names", m(this, this.labelsShown), Qc.isVisible && !Qc.showNumbers);
+                    labelsMenu.addItem("Numbers", m(this, this.labelsNumbers), Qc.isVisible && Qc.showNumbers);
+                    labelsMenu.addItem("Hidden", m(this, this.labelsHidden), !Qc.isVisible);
+                    displayMenu.addSubmenu("Labels", labelsMenu);
+
+                    var wallsMenu = new Ac;
+                    var currentArchi = ib.get("architecture");
+                    (null == currentArchi || "" == currentArchi || "architecture_unspecified" == currentArchi) && (currentArchi = "simple");
+                    wallsMenu.addItem("Simple", function () {contextThis.applyArchiPreset("simple")}, "simple" == currentArchi);
+                    wallsMenu.addItem("Castle", function () {contextThis.applyArchiPreset("castle")}, "castle" == currentArchi);
+                    wallsMenu.addItem("Log house", function () {contextThis.applyArchiPreset("logs")}, "logs" == currentArchi);
+                    wallsMenu.addItem("Modern", function () {contextThis.applyArchiPreset("modern")}, "modern" == currentArchi);
+                    wallsMenu.addItem("Sci-fi", function () {contextThis.applyArchiPreset("scifi")}, "scifi" == currentArchi);
+                    displayMenu.addSubmenu("Walls", wallsMenu);
+
+                    displayMenu.addSubmenu("Roof", this.getRoofSubmenu());
+                    displayMenu.addItem("Arrows", m(this, this.toggleArrows), Sa.showArrows);
+                    displayMenu.addItem("Props", m(this, this.toggleProps), Sa.showProps);
+                    displayMenu.addItem("AO", m(this, this.toggleAO), Sa.showAO);
+                    displayMenu.addItem("Lights", m(this, this.toggleLights), Sa.showLights);
+                    rootMenu.addSubmenu("Display", displayMenu);
+
+                    var generatorMenu = new Ac;
+                    generatorMenu.addItem("Parameters...", m(this, this.showParams));
+
+                    var roomsMenu = new Ac;
+                    roomsMenu.addItem("Regular", m(this, this.toggleRoomSet), !Z.gothicSet);
+                    roomsMenu.addItem("Gothic", m(this, this.toggleRoomSet), Z.gothicSet);
+                    generatorMenu.addSubmenu("Rooms", roomsMenu);
+
+                    rootMenu.addSubmenu("Generator", generatorMenu);
+
+                    rootMenu.addItem("Style...", m(this, this.showColors));
+                    ub.prototype.fillViewMenu.call(this, rootMenu)
                 },
-                fillExportMenu: function (a) {
-                    var b =
-                        this;
-                    ub.prototype.fillExportMenu.call(this, a);
-                    a.addItem("JSON", function () {
+                fillExportMenu: function (rootMenu) {
+                    var contextThis = this;
+                    ub.prototype.fillExportMenu.call(this, rootMenu);
+                    rootMenu.addItem("JSON", function () {
                         sb.runBusy("Exporting JSON file...", function () {
-                            sb.export(b.house)
+                            sb.export(contextThis.house)
                         }, function (c) {
                             var msg = c && c.message || "" + c;
                             console.error(msg);
                             ma.showToast(msg)
                         })
                     });
-                    a.addItem("PROTO", function () {
+                    rootMenu.addItem("PROTO", function () {
                         sb.runBusy("Exporting PROTO file...", function () {
-                            sb.exportAsProto(b.house)
+                            sb.exportAsProto(contextThis.house)
                         }, function (c) {
                             var msg = c && c.message || "" + c;
                             console.error(msg);
                             ma.showToast(msg)
                         })
                     });
-                    a.addItem("Advanced...", m(this, this.multiExport))
+                    rootMenu.addItem("Advanced...", m(this, this.multiExport))
                 },
                 reset: function (a) {
                     this.permalinkDisabled=!1;
@@ -10297,16 +10325,16 @@ var $lime_init = function (K, v) {
                     this.map.updateLabels(this.house)
                 },
                 getRoofSubmenu: function () {
-                    var a = this,
+                    var contextThis = this,
                         b = new Ac;
                     b.addItem("Simple", function () {
-                        a.setRoofMode(!0, !1)
+                        contextThis.setRoofMode(!0, !1)
                     }, Ea.displayed && !Ea.detailed);
                     b.addItem("Detailed", function () {
-                        a.setRoofMode(!0, !0)
+                        contextThis.setRoofMode(!0, !0)
                     }, Ea.displayed && Ea.detailed);
                     b.addItem("Hidden", function () {
-                        a.setRoofMode(!1, !1)
+                        contextThis.setRoofMode(!1, !1)
                     }, !Ea.displayed);
                     b.addSeparator();
                     b.addItem("Shade", Ea.detailed ? m(this, this.toggleRoofShading) : null, Ea.shading);
@@ -10383,6 +10411,9 @@ var $lime_init = function (K, v) {
                     this.updateView()
                 },
                 applyArchiPreset: function (a) {
+                    var prevFortified = A.fortified;
+                    "castle" == a ? A.fortified = !0 : A.fortified && (A.fortified = !1);
+                    A.fortified != prevFortified && A.random();
                     this.applyArchitecture(a)
                 },
                 showColors: function () {

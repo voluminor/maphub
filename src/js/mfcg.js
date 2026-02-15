@@ -13856,21 +13856,6 @@ var $lime_init = function (A, t) {
                 this.addButtonRow("Town", l(this, this.rerollName), "Districts", (G = this.model, l(G, G.rerollDistricts)));
                 this.addSection("Points of interest");
                 this.addButtonRow("Load", l(this, this.onLoadPOIs), "Clear", l(this, this.onClearPOIs));
-                this.addSeparator();
-                this.addButtonRow("Warp", l(this, this.onWarp), "Overworld", l(this, this.onOverworld));
-                var b = new ed;
-                b.setMargins(0, 8);
-                var c = new fb("Permalink");
-                this.permalinkBtn = c;
-                c.set_width(96);
-                c.set_enabled(!be.importMode);
-                c.click.add(l(this, this.onCopyURL));
-                b.add(c);
-                c = new fe("Export", ["PNG", "SVG", "JSON", "PROTO"]);
-                c.set_width(96);
-                c.action.add(l(this, this.onExport));
-                b.add(c);
-                this.add(b);
                 Bb.newModel.add(l(this, this.onNewModel));
                 Bb.titleChanged.add(l(this, this.onTitleChanged));
                 Bb.geometryChanged.add(l(this, this.onGeometryChanged))
@@ -14014,7 +13999,7 @@ var $lime_init = function (A, t) {
             ke.__super__ = vc;
             ke.prototype = v(vc.prototype, {
                 getTitle: function () {
-                    return "Style"
+                    return "Display"
                 },
                 addCheckbox: function (a, b, c, d, f) {
                     a = new ud(a);
@@ -14478,6 +14463,11 @@ var $lime_init = function (A, t) {
                 onWarp: function () {
                     bb.switchScene(jd)
                 },
+                onWarpTool: function (a) {
+                    this.onWarp();
+                    var b = bb.scene;
+                    null != b && b instanceof jd && b.keyMap.h.hasOwnProperty(a) && b.switchTool(b.keyMap.h[a])
+                },
                 onImport: function () {
                     var a = this,
                         b = new Gf;
@@ -14531,56 +14521,75 @@ var $lime_init = function (A, t) {
                     a.set_position(b)
                 },
                 onMapContext: function (a) {
-                    var b = this;
+                    var contextThis = this;
                     a.addItem("Add landmark", l(this, this.addLandmark));
                     null != this.patch && this.patch.isRerollable() && (a.addItem("Reroll geometry", (G = this.patch, l(G, G.reroll))), this.patch.ward.onContext(a, this.mouse.x, this.mouse.y));
                     if (null == this.model.focus) {
                         var c = this.patch;
                         c = null != (null != c ? c.district : null)
                     } else c = !1;
-                    c && a.addItem("Zoom in", function () {
-                        b.zoomIn(b.patch.district)
-                    })
+                    c && a.addItem("Zoom in", function () {contextThis.zoomIn(contextThis.patch.district)})
                 },
-                onContext: function (a) {
-                    var b = this;
-                    null != this.model.focus && (a.addItem("Zoom out", function () {
-                        b.zoomIn(null)
-                    }),
-                        a.addSeparator());
-                    a.addItem("New city", l(this, this.buildNew));
-                    a.addItem("Warp", l(this, this.onWarp));
-                    a.addItem("Colors...", ia.editColors);
-                    var c = new dd;
-                    c.addItem("PNG", be.asPNG);
-                    c.addItem("SVG", be.asSVG);
-                    c.addItem("JSON", be.asJSON);
-                    c.addItem("PROTO", be.asPROTO);
+                onContext: function (rootMenu) {
+                    var contextThis = this;
 
-                    a.addItem("View in 3D", l(this, this.onViewIn3D));
-                    a.addItem("Import...", l(this, this.onImport));
-                    a.addSubmenu("Export as", c);
-                    a.addItem("Permalink..", !this.permalinkDisabled ? l(this, this.onPermalink) : null)
+                    if(null != this.model.focus){
+                        rootMenu.addItem("Zoom out", function () {contextThis.zoomIn(null)});
+                        rootMenu.addSeparator();
+                    }
 
-                    a.addSeparator();
-                    c = function (c, f) {
-                        a.addItem(c, function () {
-                            b.toggleWindow(f)
-                        }, null != u.findWidnow(f))
-                    };
-                    c("Generate", Kd);
-                    c("Settlement", rg);
-                    c("Style...", ke);
+                    // BEGIN //
 
-                    a.addSeparator();
-                    a.addItem("Fullscreen", l(this, this.toggleFullscreen), this.stage.window.__fullscreen);
-                    a.addItem("About", function () {
-                        null == u.findWidnow(AboutDialogForm) && u.showDialog(new AboutDialogForm)
-                    });
+                    rootMenu.addItem("New city", l(this, this.buildNew));
+                    rootMenu.addItem("View in 3D", l(this, this.onViewIn3D));
+                    rootMenu.addItem("Import...", l(this, this.onImport));
+
+                    var exportMenu = new dd;
+                    exportMenu.addItem("PNG", be.asPNG);
+                    exportMenu.addItem("SVG", be.asSVG);
+                    exportMenu.addItem("JSON", be.asJSON);
+                    exportMenu.addItem("PROTO", be.asPROTO);
+                    rootMenu.addSubmenu("Export as", exportMenu);
+
+                    rootMenu.addItem("Permalink..", !this.permalinkDisabled ? l(this, this.onPermalink) : null)
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    var rerollMenu = new dd;
+                    var model = contextThis.model || Ub.instance;
+                    rerollMenu.addItem("Districts names", null != model? function(){model.rerollDistricts();} : null);
+                    rerollMenu.addItem("Town name", null != model? function(){model.setName(model.rerollName());} : null );
+                    rootMenu.addSubmenu("Reroll", rerollMenu);
+
+                    var editMenu = new dd;
+                    editMenu.addItem("Settlement...", function () {contextThis.toggleWindow(rg)}, null != u.findWidnow(rg));
+                    editMenu.addItem("Line measurement", function () {contextThis.onWarpTool(77)});
+                    editMenu.addItem("Curve measurement", function () {contextThis.onWarpTool(67)});
+                    editMenu.addSeparator();
+                    editMenu.addItem("Displace", function () {contextThis.onWarpTool(68)});
+                    editMenu.addItem("Rotate", function () {contextThis.onWarpTool(82)});
+                    editMenu.addItem("Liquify", function () {contextThis.onWarpTool(76)});
+                    editMenu.addItem("Relax", function () {contextThis.onWarpTool(88)});
+                    editMenu.addItem("Bloat", function () {contextThis.onWarpTool(66)});
+                    editMenu.addItem("Pinch", function () {contextThis.onWarpTool(80)});
+                    editMenu.addItem("Equalize", function () {contextThis.onWarpTool(69)});
+                    rootMenu.addSubmenu("Edit", editMenu);
+
+                    rootMenu.addItem("Display...", function () {contextThis.toggleWindow(ke)}, null != u.findWidnow(ke));
+                    rootMenu.addItem("Generator...", function () {contextThis.toggleWindow(Kd)}, null != u.findWidnow(Kd));
+                    rootMenu.addItem("Style...", ia.editColors);
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    rootMenu.addItem("Fullscreen", l(this, this.toggleFullscreen), this.stage.window.__fullscreen);
+                    rootMenu.addItem("About", function () {null == u.findWidnow(AboutDialogForm) && u.showDialog(new AboutDialogForm)});
+
+                    // END //
                 },
                 toggleWindow: function (a) {
-                    var b =
-                        u.findWidnow(a);
+                    var b = u.findWidnow(a);
                     null == b ? (a = w.createInstance(a, []), u.showDialog(a), a instanceof vc && va.__cast(a, vc).restore()) : b.hide()
                 },
                 addLandmark: function () {
@@ -16265,6 +16274,9 @@ var $lime_init = function (A, t) {
                 h = new wi(this);
                 k.h[77] = h;
                 k = this.keyMap;
+                h = new Cmt(this);
+                k.h[67] = h;
+                k = this.keyMap;
                 h = new xi(this);
                 k.h[69] = h;
                 if (null == jd.lastTool) this.switchTool(this.keyMap.h[68]);
@@ -16374,14 +16386,44 @@ var $lime_init = function (A, t) {
                     this.showMenu(this.btnMenu)
                 },
                 onContext: function (a) {
-                    for (var b = this, c = this.keyMap.iterator(); c.hasNext();) {
-                        var d = [c.next()];
-                        a.addItem(d[0].getName(), function (a) {
+                    for (var b = this, c = [], d = this.keyMap.iterator(); d.hasNext();) c.push(d.next());
+                    var f = [],
+                        h = 0;
+                    for (var k = c.length; h < k;) {
+                        var n = c[h];
+                        ++h;
+                        if ("Line measurement" == n.getName() || "Curve measurement" == n.getName()) {
+                            f.push(n);
+                            N.remove(c, n);
+                            --h;
+                            --k
+                        }
+                    }
+                    if (0 < f.length) {
+                        h = 0;
+                        for (k = f.length; h < k;) {
+                            n = f[h];
+                            ++h;
+                            var p = [n];
+                            a.addItem(p[0].getName(), function (a) {
+                                    return function () {
+                                        b.switchTool(a[0])
+                                    }
+                                }(p),
+                                p[0] == this.tool)
+                        }
+                        a.addSeparator()
+                    }
+                    for (h = 0, k = c.length; h < k;) {
+                        n = c[h];
+                        ++h;
+                        p = [n];
+                        a.addItem(p[0].getName(), function (a) {
                                 return function () {
                                     b.switchTool(a[0])
                                 }
-                            }(d),
-                            d[0] == this.tool)
+                            }(p),
+                            p[0] == this.tool)
                     }
                     a.addSeparator();
                     a.addItem("Apply", l(this, this.onSave));
@@ -17057,10 +17099,7 @@ var $lime_init = function (A, t) {
                 context: function (a, b) {
                     var c = this,
                         d = ia.getMenu();
-                    d.addItem("Edit name", function () {
-                        c.edit(a, b)
-                    });
-                    d.addItem("Reroll all", (G = this.model, l(G, G.rerollDistricts)))
+                    d.addItem("Edit name", function () {c.edit(a, b)});
                 },
                 exportPNG: function (a) {
                     if (a){
@@ -17273,34 +17312,20 @@ var $lime_init = function (A, t) {
                     this.legend.relayout()
                 },
                 onContext: function (a) {
-                    var b =
-                            this,
+                    var b = this,
                         c = ia.getMenu();
-                    a = function (a, f) {
-                        c.addItem(a, function () {
-                            Db.set_current(f);
-                            b.scalebar.update();
-                            b.update();
-                            b.legend.relayout()
-                        }, Db.get_current() == f)
-                    };
-                    a("Metric units", Db.metric);
-                    a("Imperial units", Db.imperial);
-                    a = function (a, f) {
-                        c.addItem(a, function () {
-                            Lb.sbClass = f;
-                            b.removeChild(b.scalebar);
-                            b.scalebar = Lb.create(!0);
-                            b.addChild(b.scalebar);
-                            b.update();
-                            b.legend.relayout()
-                        }, Lb.sbClass == f)
-                    };
-                    a("Default style", of);
-                    a("Alternative style", vg);
-                    c.addItem("Hide", function () {
-                        ba.set("scale_bar", !1)
-                    })
+
+                    var unitMain = new dd;
+                    unitMain.addItem("Metric", function () {Db.set_current(Db.metric);b.scalebar.update();b.update();b.legend.relayout()}, Db.get_current() == Db.metric)
+                    unitMain.addItem("Imperial", function () {Db.set_current(Db.imperial);b.scalebar.update();b.update();b.legend.relayout()}, Db.get_current() == Db.imperial)
+                    c.addSubmenu("Unit", unitMain);
+
+                    var styleMain = new dd;
+                    styleMain.addItem("Default", function () {Lb.sbClass = of;b.removeChild(b.scalebar);b.scalebar = Lb.create(!0);b.addChild(b.scalebar);b.update();b.legend.relayout()}, Lb.sbClass == of);
+                    styleMain.addItem("Alternative", function () {Lb.sbClass = vg;b.removeChild(b.scalebar);b.scalebar = Lb.create(!0);b.addChild(b.scalebar);b.update();b.legend.relayout()}, Lb.sbClass == vg);
+                    c.addSubmenu("Style", styleMain);
+
+                    c.addItem("Hide", function () {ba.set("scale_bar", !1)});
                 },
                 __class__: oh
             });
@@ -17442,7 +17467,6 @@ var $lime_init = function (A, t) {
                                 h[0].context.add(function (c) {
                                     return function () {
                                         b.addItem("Edit name", c[0]);
-                                        b.addItem("Reroll all", l(a, a.rerollDistricts))
                                     }
                                 }(p))
                             }
@@ -17904,26 +17928,19 @@ var $lime_init = function (A, t) {
             ni.__super__ = Ca;
             ni.prototype = v(Ca.prototype, {
                 onContext: function (a) {
-                    var b = this,
-                        c = function (c, f) {
-                            a.addItem(c, function () {
-                                Db.set_current(f);
-                                b.scalebar.update()
-                            }, Db.get_current() == f)
-                        };
-                    c("Metric units", Db.metric);
-                    c("Imperial units", Db.imperial);
-                    c = function (c, f) {
-                        a.addItem(c, function () {
-                            Lb.sbClass = f;
-                            b.replace()
-                        }, Lb.sbClass == f)
-                    };
-                    c("Default style", of);
-                    c("Alternative style", vg);
-                    a.addItem("Hide", function () {
-                        ba.set("scale_bar", !1)
-                    })
+                    var b = this;
+
+                    var unitMain = new dd;
+                    unitMain.addItem("Metric", function () {Db.set_current(Db.metric);b.scalebar.update();b.update();}, Db.get_current() == Db.metric)
+                    unitMain.addItem("Imperial", function () {Db.set_current(Db.imperial);b.scalebar.update();b.update();}, Db.get_current() == Db.imperial)
+                    a.addSubmenu("Unit", unitMain);
+
+                    var styleMain = new dd;
+                    styleMain.addItem("Default", function () {Lb.sbClass = of;b.replace()}, Lb.sbClass == of);
+                    styleMain.addItem("Alternative", function () {Lb.sbClass = vg;b.replace()}, Lb.sbClass == vg);
+                    a.addSubmenu("Style", styleMain);
+
+                    a.addItem("Hide", function () {ba.set("scale_bar", !1)});
                 },
                 replace: function () {
                     null != this.scalebar &&
@@ -18012,16 +18029,12 @@ var $lime_init = function (A, t) {
                 },
                 onContext: function (a) {
                     var b = this;
-                    a.addItem("Edit", function () {
-                        b.title.edit(b.model)
-                    });
+                    a.addItem("Edit", function () {b.title.edit(b.model)});
                     a.addItem("Reroll", function () {
                         b.model.setName(b.model.rerollName());
                         b.title.setText(b.model.name)
                     });
-                    a.addItem("Hide", function () {
-                        ba.set("city_name", !1)
-                    })
+                    a.addItem("Hide", function () {ba.set("city_name", !1);  b.scene.toggleOverlays();});
                 },
                 exportPNG: function (a) {
                     this.title.filterOn(!a)
@@ -18345,7 +18358,7 @@ var $lime_init = function (A, t) {
             wi.__super__ = Mb;
             wi.prototype = v(Mb.prototype, {
                 getName: function () {
-                    return "Measure"
+                    return "Line measurement"
                 },
                 activate: function () {
                     this.scene.updateBrush(0);
@@ -18379,6 +18392,70 @@ var $lime_init = function (A, t) {
                     this.scene.drawNode(this.cur, 4)
                 },
                 __class__: wi
+            });
+            var Cmt = function (a) {
+                this.points = [];
+                this.cur = null;
+                Mb.call(this, a)
+            };
+            g["scenestools.CurveMeasureTool"] = Cmt;
+            Cmt.__name__ = "scenestools.CurveMeasureTool";
+            Cmt.__super__ = Mb;
+            Cmt.prototype = v(Mb.prototype, {
+                getName: function () {
+                    return "Curve measurement"
+                },
+                activate: function () {
+                    this.points = [];
+                    this.cur = null;
+                    this.scene.updateBrush(0);
+                    this.scene.clearMesh()
+                },
+                onPress: function (a, b) {
+                    Mb.prototype.onPress.call(this, a, b);
+                    this.points.push(new I(a, b));
+                    this.cur = null;
+                    this.updateMesh();
+                    this.showDistance()
+                },
+                onRelease: function () {
+                },
+                onMove: function (a, b) {
+                    0 < this.points.length && (null == this.cur && (this.cur = new I(a, b)), this.cur.setTo(a, b), this.updateMesh())
+                },
+                onDrag: function (a, b) {
+                    Mb.prototype.onDrag.call(this, a, b);
+                    0 < this.points.length && (null == this.cur && (this.cur = new I(a, b)), this.cur.setTo(a, b), this.updateMesh())
+                },
+                showDistance: function () {
+                    if (1 < this.points.length) {
+                        for (var a = 0, b = 1, c = this.points.length; b < c;) {
+                            var d = this.points[b - 1],
+                                f = this.points[b];
+                            ++b;
+                            a += I.distance(d, f)
+                        }
+                        a = Db.get_current().measure(a);
+                        b = a.value;
+                        q.show((10 > b ? Math.round(10 * b) / 10 : Math.round(b)) + " " + a.system.unit)
+                    }
+                },
+                updateMesh: function () {
+                    this.scene.clearMesh();
+                    for (var a = 1, b = this.points.length; a < b;) {
+                        var c = this.points[a - 1],
+                            d = this.points[a];
+                        ++a;
+                        this.scene.drawEdge(c, d, 2)
+                    }
+                    for (a = 0, b = this.points.length; a < b;) {
+                        c = this.points[a];
+                        ++a;
+                        this.scene.drawNode(c, 4)
+                    }
+                    0 < this.points.length && null != this.cur && (a = this.points[this.points.length - 1], this.scene.drawEdge(a, this.cur, 2), this.scene.drawNode(this.cur, 4))
+                },
+                __class__: Cmt
             });
             var vi = function (a) {
                 me.call(this, a)
