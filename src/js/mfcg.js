@@ -14531,56 +14531,62 @@ var $lime_init = function (A, t) {
                     a.set_position(b)
                 },
                 onMapContext: function (a) {
-                    var b = this;
+                    var contextThis = this;
                     a.addItem("Add landmark", l(this, this.addLandmark));
                     null != this.patch && this.patch.isRerollable() && (a.addItem("Reroll geometry", (G = this.patch, l(G, G.reroll))), this.patch.ward.onContext(a, this.mouse.x, this.mouse.y));
                     if (null == this.model.focus) {
                         var c = this.patch;
                         c = null != (null != c ? c.district : null)
                     } else c = !1;
-                    c && a.addItem("Zoom in", function () {
-                        b.zoomIn(b.patch.district)
-                    })
+                    c && a.addItem("Zoom in", function () {contextThis.zoomIn(contextThis.patch.district)})
                 },
-                onContext: function (a) {
-                    var b = this;
-                    null != this.model.focus && (a.addItem("Zoom out", function () {
-                        b.zoomIn(null)
-                    }),
-                        a.addSeparator());
-                    a.addItem("New city", l(this, this.buildNew));
-                    a.addItem("Warp", l(this, this.onWarp));
-                    a.addItem("Colors...", ia.editColors);
+                onContext: function (rootMenu) {
+                    var contextThis = this;
+
+                    if(null != this.model.focus){
+                        rootMenu.addItem("Zoom out", function () {contextThis.zoomIn(null)});
+                        rootMenu.addSeparator();
+                    }
+
+                    // BEGIN //
+
+                    rootMenu.addItem("New city", l(this, this.buildNew));
+                    rootMenu.addItem("Warp", l(this, this.onWarp));
+                    rootMenu.addItem("Colors...", ia.editColors);
                     var c = new dd;
                     c.addItem("PNG", be.asPNG);
                     c.addItem("SVG", be.asSVG);
                     c.addItem("JSON", be.asJSON);
                     c.addItem("PROTO", be.asPROTO);
 
-                    a.addItem("View in 3D", l(this, this.onViewIn3D));
-                    a.addItem("Import...", l(this, this.onImport));
-                    a.addSubmenu("Export as", c);
-                    a.addItem("Permalink..", !this.permalinkDisabled ? l(this, this.onPermalink) : null)
+                    rootMenu.addItem("View in 3D", l(this, this.onViewIn3D));
+                    rootMenu.addItem("Import...", l(this, this.onImport));
+                    rootMenu.addSubmenu("Export as", c);
+                    rootMenu.addItem("Permalink..", !this.permalinkDisabled ? l(this, this.onPermalink) : null)
+                    rootMenu.addSeparator();
 
-                    a.addSeparator();
+                    // ###################### //
+
                     c = function (c, f) {
-                        a.addItem(c, function () {
-                            b.toggleWindow(f)
-                        }, null != u.findWidnow(f))
+                        rootMenu.addItem(c, function () {contextThis.toggleWindow(f)}, null != u.findWidnow(f));
                     };
+
+                    rootMenu.addItem("Reroll all", function () {Ub.rerollDistricts();})
+
                     c("Generate", Kd);
                     c("Settlement", rg);
                     c("Style...", ke);
+                    rootMenu.addSeparator();
 
-                    a.addSeparator();
-                    a.addItem("Fullscreen", l(this, this.toggleFullscreen), this.stage.window.__fullscreen);
-                    a.addItem("About", function () {
-                        null == u.findWidnow(AboutDialogForm) && u.showDialog(new AboutDialogForm)
-                    });
+                    // ###################### //
+
+                    rootMenu.addItem("Fullscreen", l(this, this.toggleFullscreen), this.stage.window.__fullscreen);
+                    rootMenu.addItem("About", function () {null == u.findWidnow(AboutDialogForm) && u.showDialog(new AboutDialogForm)});
+
+                    // END //
                 },
                 toggleWindow: function (a) {
-                    var b =
-                        u.findWidnow(a);
+                    var b = u.findWidnow(a);
                     null == b ? (a = w.createInstance(a, []), u.showDialog(a), a instanceof vc && va.__cast(a, vc).restore()) : b.hide()
                 },
                 addLandmark: function () {
@@ -17057,10 +17063,7 @@ var $lime_init = function (A, t) {
                 context: function (a, b) {
                     var c = this,
                         d = ia.getMenu();
-                    d.addItem("Edit name", function () {
-                        c.edit(a, b)
-                    });
-                    d.addItem("Reroll all", (G = this.model, l(G, G.rerollDistricts)))
+                    d.addItem("Edit name", function () {c.edit(a, b)});
                 },
                 exportPNG: function (a) {
                     if (a){
@@ -17442,7 +17445,6 @@ var $lime_init = function (A, t) {
                                 h[0].context.add(function (c) {
                                     return function () {
                                         b.addItem("Edit name", c[0]);
-                                        b.addItem("Reroll all", l(a, a.rerollDistricts))
                                     }
                                 }(p))
                             }
