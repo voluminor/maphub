@@ -1,20 +1,20 @@
 # Fantasy MapHub Generators
 
-[Перейти к Русской версии](./README.RU.md)
+[Go to Russian version](./README.RU.md)
 
-## Technical part
+## Technical details
 
-### Build and publishing
+### Build and deployment
 
-To build, it’s enough to run `npm run build` so that the project is fully built into the `dist` folder.
+To build, run `npm run build` — the project will be built into the `dist` folder.
 
-To make it available locally in the browser, run `npm run preview`.
+To make it available locally in your browser, run `npm run preview`.
 
-When deploying to a server, it’s enough to move the contents of the `dist` folder to the root.
+For deployment on a server, copy the contents of the `dist` folder to the web root.
 
-### Other features
+### Other notes
 
-This project is built based on predefined values and page templates; to make changes, it’s enough to interact with these files:
+This project is built from predefined values and page templates; to make changes, it’s enough to work with these files:
 
 - [package.json](./package.json)
 - [static.config.mjs](./static.config.mjs)
@@ -22,11 +22,13 @@ This project is built based on predefined values and page templates; to make cha
 
 If needed, you can “cut out” only one specific generator — at the code level they are self-contained and independent of their neighbors.
 
-Work with data is built on the proto-first principle, while keeping support for older JSON export formats. If you plan to create your own solution using this generator, I recommend relying only on binary proto files, because JSON import/export is primarily focused on supporting older variants and the original watabou generators. Proto files, in turn, guarantee long-term support even if new functionality is added — old saved files will be supported in new versions without losing backward compatibility.
+Data handling follows a proto-first approach, while keeping support for older JSON export formats. If you plan to create your own solution using this generator, I recommend relying only on binary proto files, because JSON import/export is primarily focused on supporting older variants and the original watabou generators. Proto files, in turn, guarantee long-term support even if new functionality is added — old saved files will be supported in new versions without losing backward compatibility.
 
-### Binary file structure
+Import only works with the extended export format — older exported files (watabou export) won’t open for editing in MFCG, because those files don’t contain the fields required to restore a map for editing.
 
-All binary files are generated from proto definitions located in the [protobuf](./protobuf) directory.
+### Generating binary files
+
+All binary files are generated from proto files located in the [protobuf](./protobuf) directory.
 
 Import accepts both raw binary proto objects from root structures and objects wrapped in a typed envelope with CRC32.
 
@@ -47,7 +49,7 @@ Root structures:
 
 ## About the project
 
-This project is a consolidation into one project of map generators by [watabou](https://github.com/watabou/) that he published at [watabou.github.io](https://watabou.github.io). Not all of them are publicly available, and even what is available is written in a not-so-popular language.
+This project brings together the map generators by [watabou](https://github.com/watabou/) that he published at [watabou.github.io](https://watabou.github.io). Not all of them are publicly available, and even what is available is written in a not-so-popular language.
 
 I took the web version implemented in JS and made many changes to it.
 
@@ -57,27 +59,33 @@ The work is not finished yet; the final goal is to get a fully self-contained ge
 
 - These generators are now fully local. That is, they can work without the internet: all connections are internal, and the downloaded files are included in the project.
 - Maximum automation has been implemented. You can conveniently assemble everything for your use case by interacting only with constructors and JSON parameters.
-- I wrote `openapi.json` for the generators and made it available directly via RapiDoc.
-- I changed the marshalling approach, making it proto-first.
-- I added import/export to a binary file: pure protobuf. Backward compatibility is preserved.
-- I tried to standardize the context menu so that items in different generators are in the same places and have the same names. I also added functionality for those generators that didn’t have it (`Permalink...`, `Fullscreen`).
+- `openapi.json` has been created for the generators; it’s available directly via RapiDoc.
+- I changed the serialisation approach, making it proto-first.
+- I added import/export to a binary file: pure protobuf (import for MFCG and Village only works with extended export files, because the standard ones aren’t enough to restore a map for editing). Backward compatibility is preserved.
+- Context menus have been standardised so that items across generators are in the same places and have the same names. Groups were reorganised to improve the UI as much as possible. Functionality was also added for generators that didn’t have it (`Permalink...`, `Fullscreen`).
 - I added the ability to open cities and villages directly in the 3D viewer (`View in 3D`).
-- I made dialogs more user-friendly (for example, it now clearly reports what the problem is during import).
+- Dialogs have been made more user-friendly (for example, it now clearly reports what the issue is during import). Loading indicators were also added for heavy operations such as PNG export.
 - I added prefixes for exported files (`*.palette.mf.json`, `*.mf.json`) so it’s clear what relates to what without looking inside.
+- Many small edge-case bugs were fixed.
+- New functionality was added (mouse-wheel handling in MFCG and Dwellings, and an advanced ruler for MFCG).
 - I published it as a separate [web resource](https://maphub.webtools.download), including a [PWA](https://en.wikipedia.org/wiki/Progressive_web_app), which makes it possible to install it as an app that doesn’t need the internet.
 
 ### Plans for the future:
 
 - ~~Move palette import/export to proto.~~
 - Add export for Cave/Glade Generator.
-- Add the ability to import schemes from a file for all generators except City Viewer (since City Viewer already has import).
+- ~~Add the ability to import schemes from a file for all generators except City Viewer (since City Viewer already has import).~~
 - Add a 3D visualizer for buildings (separate or just extend City Viewer functionality).
-- Add an advanced export mode that transfers names, labels, and other fields.
+- ~~Add an advanced export mode that transfers names, labels, and other fields.~~
 - Add generation of Cave/Glade pointers in Medieval-Fantasy-City/Village Generator.
 - After advanced export, it will be possible to link Cave/Glade/Dwellings Generator and Medieval-Fantasy-City/Village Generator.
 - Make it separately buildable or extend the current build with a list of saved maps and palettes directly in the app.
 
 ## Gallery
+
+### All context menus in one image
+
+![all\-menu](.github/img/all-menu.png)
 
 ### How the context menu changed
 
