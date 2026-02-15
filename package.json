@@ -1,7 +1,7 @@
 {
   "name": "fantasy-maphub",
   "name_full": "Fantasy MapHub Generators",
-  "version": "1.2.6-edit-ui-texts.0",
+  "version": "1.2.6",
   "description": "Offline windowed map editor for detailed city layouts. Based on the original Watabou editor and expanded into a full-featured app with fast generation, rich editing tools, an advanced ruler, standardized context menus, progress feedback for heavy exports, extended import/export for round-trip editing with backward compatibility, and one-click handoff to the 3D viewer.",
   "license": "MPL-2.0",
   "author": "mail@sunsung.fun",
