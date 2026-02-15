@@ -13,15 +13,11 @@ message GeoObj {
   GeoType type = 1;
   GeoObj geometry = 2;
   google.protobuf.ListValue coordinates = 3;
-  reserved 4 to 8;
-  string embed_uid = 9;
+  reserved 4 to 9;
 
   repeated GeoObj features = 10;
   repeated GeoObj geometries = 11;
-  reserved 12 to 16;
-  repeated GeoPartObj embed_parts = 17;
-  GeoTransformObj embed_export_transform = 18;
-  GeoBBoxObj embed_bbox = 19;
+  reserved 12 to 19;
 
   optional GeoGeneratorType generator = 20;
   optional GeoFeatureType id = 21;

@@ -44,6 +44,7 @@ export function detectLegacyRootType(obj) {
     if (obj != null && typeof obj === "object" && obj.type === "FeatureCollection" && Array.isArray(obj.features)) return DT.geo;
     if (!isPlainObject(obj)) return null;
 
+    if (isPlainObject(obj.colors) && isPlainObject(obj.trees) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.misc)) return DT.palette_glade;
     if (isPlainObject(obj.colors) && isPlainObject(obj.misc) && isPlainObject(obj.strokes)) return DT.palette_dwellings;
     if (isPlainObject(obj.colors) && isPlainObject(obj.shadow) && isPlainObject(obj.strokes) && isPlainObject(obj.hatching)) return DT.palette_cave;
 
@@ -312,6 +313,35 @@ function decodeCityFromJsonTextAsProto(text) {
 }
 
 export function decodeCityFile(name, data) {
+    let generatorOverride = null;
+    let text = bytesToUtf8Text(data);
+    if (typeof text === "string") {
+        try {
+            let obj = JSON.parse(text);
+            if (obj != null && Array.isArray(obj.features)) {
+                for (let i = 0; i < obj.features.length; i++) {
+                    let f = obj.features[i];
+                    let id = readProp(f, "id");
+                    if (id === "values") {
+                        let gen = readProp(f, "generator");
+                        if (gen === "hood" || gen === "hoods") generatorOverride = gen;
+                        break;
+                    }
+                }
+            }
+        } catch (e) {}
+    }
     let msg = decodeDataFromFile(DT.geo, decodeCityFromJsonTextAsProto, data);
-    return geoJsonFromProtoMessage(msg);
+    let out = geoJsonFromProtoMessage(msg);
+    if (generatorOverride && out != null && Array.isArray(out.features)) {
+        for (let j = 0; j < out.features.length; j++) {
+            let f2 = out.features[j];
+            let id2 = readProp(f2, "id");
+            if (id2 === "values") {
+                f2.generator = generatorOverride;
+                break;
+            }
+        }
+    }
+    return out;
 }

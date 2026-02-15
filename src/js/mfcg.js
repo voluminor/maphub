@@ -8,10 +8,12 @@ import * as DataMfcg from "./shared/data/mfcg.js";
 import * as FuncBin from "./shared/data/bin-verify.js";
 
 import * as DataProto from "./struct/data.js";
+import * as DataGeo from "./shared/data/data.js";
 import {paletteProtoBytesFromObj} from "./shared/data/mfcg.js";
 import {exportBin} from "./shared/data/bin-verify.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_MFCG}}`));
+const isFrame = typeof window.parent.pingFrame === "function"
 
 var $lime_init = function (A, t) {
     var E = function (t, E) {
@@ -1752,13 +1754,64 @@ var $lime_init = function (A, t) {
                 ba.init(null, kd.prepare);
                 K.restore();
                 this.stage.showDefaultContextMenu = !1;
+                var b = sb.takeLocalStorageTownBuf();
                 var a = Fd.fromURL();
                 null == a ? a = Fd.create(25, C.seed) : null != a.style && K.setPalette(Xc.fromAsset(a.style));
                 new Ub(a);
-                bb.call(this, Ec)
+                bb.call(this, Ec);
+                null != b && sb.applyLocalStorageTownBuf(b)
             };
             g["fMain"] = sb;
             sb.__name__ = "fMain";
+            sb.takeLocalStorageTownBuf = function () {
+                var a = null;
+                try {
+                    a = window.localStorage.getItem("{{LOCALSTORAGE_TOWN_BUF}}")
+                } catch (c) {
+                    Ta.lastError = c;
+                    try {
+                        var b = qf.getLocalStorage();
+                        if (null != b) {
+                            a = b.getItem("{{LOCALSTORAGE_TOWN_BUF}}")
+                        }
+                    } catch (d) {
+                        Ta.lastError = d
+                    }
+                }
+                return a
+            };
+            sb.applyLocalStorageTownBuf = function (a) {
+                if (null == a || "" === a) return !1;
+                var b = a.charAt(0),
+                    c = a.substring(1);
+                try {
+                    if ("p" === b) {
+                        var d = new Uint8Array(c.length);
+                        for (var f = 0; f < c.length;) d[f] = c.charCodeAt(f) & 255, ++f;
+                        a = be.decodeImportFile("mfcg.pb", d.buffer);
+                        be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator, !0);
+                        try {
+                            window.localStorage.removeItem("{{LOCALSTORAGE_TOWN_BUF}}")
+                        } catch (g) {
+                            Ta.lastError = g
+                        }
+                        return !0
+                    }
+                    if ("j" === b) {
+                        a = be.decodeImportFile("mfcg.json", c);
+                        be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator, !0);
+                        try {
+                            window.localStorage.removeItem("{{LOCALSTORAGE_TOWN_BUF}}")
+                        } catch (g2) {
+                            Ta.lastError = g2
+                        }
+                        return !0
+                    }
+                } catch (g) {
+                    Ta.lastError = g
+                }
+                return !1
+            };
             sb.__super__ = bb;
             sb.prototype = v(bb.prototype, {
                 getScale: function (a,
@@ -7832,61 +7885,347 @@ var $lime_init = function (A, t) {
             };
             g["classExport"] = be;
             be.__name__ = "classExport";
-            be.asPNG = function () {
-                var a = Ub.instance,
-                    b = a.getViewport(),
-                    c = 40 * (null != a.focus ? .25 : 1),
-                    d = b.width + c,
-                    f = b.height + c;
-                b = gk.getMaxArea(ia.map);
-                c = Math.sqrt(Math.min(16777216 / (d * f), 67108864 / b));
-                var h = c * d | 0,
-                    k = c * f | 0;
-                b = new Fb(h, k, !1, K.colorPaper);
-                hb.trace(c, {
-                    className: "classExport",
-                    methodName: "asPNG",
-                    customParams: [h, k]
-                });
-                c = ia.inst;
-                k = c.rWidth;
-                var n = c.rHeight;
-                d *= c.get_mapScale();
-                f *= c.get_mapScale();
-                c.setSize(d, f);
-                f = h / d;
-                d = new ua;
-                d.scale(f, f);
-                f = ia.map;
-                h = 0;
-                for (var p = c.overlays; h < p.length;) {
-                    var g = p[h];
-                    ++h;
-                    g.exportPNG(!0)
+            be.importMode = !1;
+            be._busyOverlay = {
+                active: !1,
+                el: null,
+                textEl: null,
+                listeners: null,
+                ensure: function () {
+                    if (null != this.el) return;
+                    var a = window.document;
+                    var b = a.createElement("div");
+                    b.id = "mfcg-busy-overlay";
+                    b.style.cssText = "position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,0.55);color:#fff;z-index:2147483647;pointer-events:auto;";
+                    var c = a.createElement("div");
+                    c.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 22px;border-radius:10px;background:rgba(0,0,0,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:80vw;";
+                    var d = a.createElement("div");
+                    d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:mfcg-busy-spin 0.8s linear infinite;";
+                    var f = a.createElement("div");
+                    f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
+                    f.textContent = "Please wait...";
+                    c.appendChild(d);
+                    c.appendChild(f);
+                    b.appendChild(c);
+                    this.el = b;
+                    this.textEl = f;
+                    (a.body || a.documentElement).appendChild(b);
+                    if (null == a.getElementById("mfcg-busy-style")) {
+                        var h = a.createElement("style");
+                        h.id = "mfcg-busy-style";
+                        h.textContent = "@keyframes mfcg-busy-spin{to{transform:rotate(360deg);}}";
+                        (a.head || a.documentElement).appendChild(h)
+                    }
+                },
+                attach: function () {
+                    if (null != this.listeners) return;
+                    var a = this;
+                    var b = function (c) {
+                        if (!a.active) return;
+                        c.preventDefault();
+                        c.stopPropagation();
+                        return !1
+                    };
+                    var c = {
+                        capture: !0,
+                        passive: !1
+                    };
+                    var d = window.document;
+                    var f = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel", "touchstart", "touchmove", "touchend", "touchcancel", "pointerdown", "pointermove", "pointerup"];
+                    var h = 0;
+                    for (; h < f.length;) d.addEventListener(f[h++], b, c);
+                    this.listeners = {
+                        handler: b,
+                        options: c,
+                        events: f
+                    };
+                    try {
+                        null != d.activeElement && d.activeElement.blur()
+                    } catch (k) {
+                    }
+                },
+                detach: function () {
+                    if (null == this.listeners) return;
+                    var a = window.document;
+                    var b = this.listeners.events;
+                    var c = this.listeners.handler;
+                    var d = this.listeners.options;
+                    var f = 0;
+                    for (; f < b.length;) a.removeEventListener(b[f++], c, d);
+                    this.listeners = null
+                },
+                show: function (a) {
+                    this.ensure();
+                    this.textEl.textContent = null != a && "" !== a ? a : "Please wait...";
+                    this.el.style.display = "flex";
+                    this.active = !0;
+                    this.attach()
+                },
+                hide: function () {
+                    if (null == this.el) return;
+                    this.active = !1;
+                    this.el.style.display = "none";
+                    this.detach()
                 }
-                var q = f.get_transform().get_matrix().clone();
-                q.concat(d);
-                b.draw(f, q, null, null, null, !0);
-                h = 0;
-                for (p = c.overlays; h < p.length;) g = p[h], ++h, g.get_visible() && (q = g.get_transform().get_matrix().clone(), q.concat(d), b.draw(g, q, null, null, null, !0));
-                c.setSize(k, n);
-                c.resetOverlays();
-                ge.savePNG(b, a.name)
+            };
+            be.runBusy = function (a, b, c) {
+                be._busyOverlay.show(a);
+                var d = function () {
+                    try {
+                        b()
+                    } catch (f) {
+                        if ("function" == typeof c) {
+                            c(f);
+                            return
+                        }
+                        throw f
+                    } finally {
+                        be._busyOverlay.hide()
+                    }
+                };
+                if (null != window.requestAnimationFrame) {
+                    window.requestAnimationFrame(function () {
+                        window.requestAnimationFrame(function () {
+                            window.setTimeout(d, 0)
+                        })
+                    })
+                } else window.setTimeout(d, 0)
+            };
+            be.asPNG = function () {
+                return be.runBusy("Exporting PNG file...", function () {
+                    var a = Ub.instance,
+                        b = a.getViewport(),
+                        c = 40 * (null != a.focus ? .25 : 1),
+                        d = b.width + c,
+                        f = b.height + c;
+                    b = gk.getMaxArea(ia.map);
+                    c = Math.sqrt(Math.min(16777216 / (d * f), 67108864 / b));
+                    var h = c * d | 0,
+                        k = c * f | 0;
+                    b = new Fb(h, k, !1, K.colorPaper);
+                    hb.trace(c, {
+                        className: "classExport",
+                        methodName: "asPNG",
+                        customParams: [h, k]
+                    });
+                    c = ia.inst;
+                    k = c.rWidth;
+                    var n = c.rHeight;
+                    d *= c.get_mapScale();
+                    f *= c.get_mapScale();
+                    c.setSize(d, f);
+                    f = h / d;
+                    d = new ua;
+                    d.scale(f, f);
+                    f = ia.map;
+                    h = 0;
+                    for (var p = c.overlays; h < p.length;) {
+                        var g = p[h];
+                        ++h;
+                        g.exportPNG(!0)
+                    }
+                    var q = f.get_transform().get_matrix().clone();
+                    q.concat(d);
+                    b.draw(f, q, null, null, null, !0);
+                    h = 0;
+                    for (p = c.overlays; h < p.length;) g = p[h], ++h, g.get_visible() && (q = g.get_transform().get_matrix().clone(), q.concat(d), b.draw(g, q, null, null, null, !0));
+                    c.setSize(k, n);
+                    c.resetOverlays();
+                    ge.savePNG(b, a.name)
+                }, function (a) {
+                    q.show(a && a.message ? a.message : String(a))
+                })
             };
             be.asSVG = function () {
-                var a = Ub.instance,
-                    b = Rd.export(a, ia.inst);
-                a = a.name;
-                ge.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + Df.print(b.root), "" + a + ".mf.svg", "image/svg+xml")
+                return be.runBusy("Exporting SVG file...", function () {
+                    var a = Ub.instance,
+                        b = Rd.export(a, ia.inst);
+                    a = a.name;
+                    ge.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + Df.print(b.root), "" + a + ".mf.svg", "image/svg+xml")
+                }, function (a) {
+                    q.show(a && a.message ? a.message : String(a))
+                })
             };
             be.asJSON = function () {
-                var a = Ub.instance, b = lg.export(a);
-                a = a.name, ge.saveText(lg.stringify(b), "" + a + ".mf.json", "application/json");
+                return be.runBusy("Exporting JSON file...", function () {
+                    var a = Ub.instance, b = lg.export(a);
+                    a = a.name, ge.saveText(lg.stringify(b), "" + a + ".mf.json", "application/json");
+                }, function (a) {
+                    q.show(a && a.message ? a.message : String(a))
+                })
             };
             be.asPROTO = function () {
-                var a = Ub.instance, b = lg.export(a), c = DataProto.data.GeoObj.encode(b).finish();
-                var bb = FuncBin.exportBin(c, DataProto.data.DataType.geo);
-                a = a.name, ge.saveBinary(Td.fromArrayBuffer(bb), "" + a + ".mf.pb", "application/x-protobuf")
+                return be.runBusy("Exporting PROTO file...", function () {
+                    var a = Ub.instance, b = lg.export(a), c = DataProto.data.GeoObj.encode(b).finish();
+                    var bb = FuncBin.exportBin(c, DataProto.data.DataType.geo);
+                    a = a.name, ge.saveBinary(Td.fromArrayBuffer(bb), "" + a + ".mf.pb", "application/x-protobuf")
+                }, function (a) {
+                    q.show(a && a.message ? a.message : String(a))
+                })
+            };
+            be.importFromFile = function (a, b) {
+                return be.runBusy("Importing map file...", function () {
+                    var c = be.decodeImportFile(a, b);
+                    return be.applyImportPayload(c.payload, c.state, c.url, c.blueprint, c.generator, !0)
+                }, function (c) {
+                    q.show(c && c.message ? c.message : String(c))
+                })
+            };
+            be.goToVillageFromBlueprint = function (a) {
+                if (a == null || "object" != typeof a) return !1;
+                var b = FuncProto.paramsUrlString(params.routes.village);
+                var c = [];
+                var d = a.seed;
+                d != null && c.push("seed=" + encodeURIComponent("" + d));
+                var f = a.tags;
+                Array.isArray(f) && (f = f.join(","));
+                f != null && "" !== f && c.push("tags=" + encodeURIComponent("" + f));
+                var h = a.width;
+                h != null && 0 != h && c.push("width=" + encodeURIComponent("" + h));
+                var k = a.height;
+                k != null && 0 != k && c.push("height=" + encodeURIComponent("" + k));
+                var p = a.treeSeed;
+                p != null && d != null && p !== d && c.push("trees=" + encodeURIComponent("" + p));
+                var l = a.name;
+                l != null && "" !== l && c.push("name=" + encodeURIComponent("" + l));
+                var m = a.pop;
+                m != null && 0 != m && c.push("pop=" + encodeURIComponent("" + m));
+                var n = a.varSeed;
+                n != null && 0 != n && c.push("roads=" + encodeURIComponent("" + n));
+                var q = a.numbered;
+                Array.isArray(q) && q.length && c.push("marked=" + encodeURIComponent(q.join(",")));
+                var r = a.style;
+                r != null && "" !== r && c.push("style=" + encodeURIComponent("" + r));
+                b = c.length ? b + "?" + c.join("&") : b;
+                window.open(b, "_self");
+                return !0
+            };
+            be.applyImportPayload = function (a, b, c, d, f, g) {
+                var e = null;
+                null == b && null != a && typeof a === "object" && (b = a.state);
+                null == c && null != a && typeof a === "object" && (c = a.url);
+                null == d && null != a && typeof a === "object" && (d = a.blueprint);
+                null == f && null != a && typeof a === "object" && (f = a.generator);
+                "string" == typeof a ? e = a : null != a && "object" == typeof a && (Object.prototype.hasOwnProperty.call(a, "model") ? e = a.model : Object.prototype.hasOwnProperty.call(a, "data") && (e = a.data));
+                if (null == e) {
+                    if (d != null && ("vg" == f || "village" == f) && be.goToVillageFromBlueprint(d)) return null;
+                    throw new Error("This file does not include MFCG editor state. Export a new map from MFCG to continue editing.");
+                }
+                var h = null;
+                try {
+                    h = pd.run(e)
+                } catch (h) {
+                    throw new Error("An error occurred while restoring the map: " + (h && h.message ? h.message : String(h)));
+                }
+                if (null == h) throw new Error("An error occurred while restoring the map.");
+                if (g) {
+                    var keepPreview = za.getFlag("preview") || sb.preview;
+                    be.importMode = !0;
+                    const url = new URL(window.location);
+                    url.search = '?import_mode=1';
+                    window.history.replaceState({}, document.title, url);
+                }
+                if (null != b && "object" == typeof b) {
+                    ba.init();
+                    ba.data = b;
+                    ba.so.data = ba.data;
+                    ba.so.flush()
+                }
+                if (g) {
+                    za.data = {
+                        import_mode: "1"
+                    };
+                    keepPreview && (za.data.preview = "1");
+                    za.update()
+                } else if (null != c && "object" == typeof c) za.data = c, za.update();
+                K.restore();
+                Ub.instance = h;
+                bb.switchScene(Ec);
+                Bb.newModel.dispatch(h);
+                return h
+            };
+            be.decodeImportFile = function (a, b) {
+                var c = null, d = DataGeo.bytesToUtf8Text(b);
+                var f = null != a ? String(a).toLowerCase() : "";
+                var k = f.endsWith(".pb") || f.endsWith(".mf.pb");
+                if (!k) {
+                    var h = d != null ? String(d).trim() : "";
+                    var n = 0 < h.length && ("{" == h.charAt(0) || "[" == h.charAt(0));
+                    if (n || f.endsWith(".json") || f.endsWith(".mf.json")) {
+                        try {
+                            c = JSON.parse(d)
+                        } catch (p) {
+                            throw new Error("An error occurred while parsing: " + (p && p.message ? p.message : String(p)));
+                        }
+                        if (null != c) {
+                            var t = DataGeo.detectLegacyRootType(c);
+                            if (t != null && t !== DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, t);
+                            if (c == null || "object" != typeof c || Array.isArray(c)) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                            var r = c.type != null && (c.features != null || c.geometries != null || c.geometry != null || c.coordinates != null);
+                            if (!r) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                            if (c.embedProps == null && c.embedEditorPayload == null) throw new Error("This format is too outdated and cannot be opened because it does not contain the necessary data.");
+                            return be.extractPayloadFromJson(c)
+                        }
+                    }
+                }
+                var f = DataGeo.toUint8Array(b);
+                if (null == f) throw new Error("Invalid data buffer.");
+                var k = null;
+                try {
+                    k = FuncBin.importBin(f)
+                } catch (n) {
+                }
+                if (null != k) {
+                    if (k.number != DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, k.number);
+                    f = new Uint8Array(k.buffer)
+                }
+                var p = null;
+                try {
+                    p = DataProto.data.GeoObj.decode(f)
+                } catch (n2) {
+                    console.error("MFCG import proto decode failed:", n2);
+                }
+                if (null == p) {
+                    var g2 = be.stripLengthDelimited(f);
+                    if (null != g2) try {
+                        p = DataProto.data.GeoObj.decode(g2)
+                    } catch (m2) {
+                        console.error("MFCG import length-delimited proto decode failed:", m2);
+                    }
+                }
+                if (null == p) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                var r2 = p.type != null && (p.features != null || p.geometries != null || p.geometry != null || p.coordinates != null);
+                if (!r2) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                if (p.embedProps == null && p.embedEditorPayload == null) throw new Error("This format is too outdated and cannot be opened because it does not contain the necessary data.");
+                return be.extractPayloadFromProto(p)
+            };
+            be.extractPayloadFromJson = function (a) {
+                var b = null;
+                if (null != a && "object" == typeof a) {
+                    b = a.embedProps;
+                    null == b && null != a.embedEditorPayload && (b = a.embedEditorPayload.props)
+                }
+                var c = null, d = null, f = null, h = null, k = null;
+                null != b && "object" == typeof b && (c = b.mfcgPayload, d = b.state, f = b.url, h = b.blueprint, k = b.generator);
+                return {payload: c, state: d, url: f, blueprint: h, generator: k}
+            };
+            be.extractPayloadFromProto = function (a) {
+                var b = null;
+                a.embedProps != null && Object.hasOwnProperty.call(a, "embedProps") && (b = lg.structToJson(a.embedProps));
+                null == b && a.embedEditorPayload != null && a.embedEditorPayload.props != null && (b = lg.structToJson(a.embedEditorPayload.props));
+                var c = null, d = null, f = null, h = null, k = null;
+                null != b && "object" == typeof b && (c = b.mfcgPayload, d = b.state, f = b.url, h = b.blueprint, k = b.generator);
+                return {payload: c, state: d, url: f, blueprint: h, generator: k}
+            };
+            be.stripLengthDelimited = function (a) {
+                for (var b = 0, c = 0, d = 0; b < a.length && 35 > d;) {
+                    var f = a[b++];
+                    c |= (f & 127) << d;
+                    if (0 == (f & 128)) break;
+                    d += 7
+                }
+                if (!(0 >= b || b >= a.length || 0 >= c || b + c > a.length)) return a.subarray(b, b + c);
+                return null
             };
             var lg = function () {
             };
@@ -7923,7 +8262,8 @@ var $lime_init = function (A, t) {
                     if (a == null || typeof a !== "object" || Array.isArray(a)) return new DataProto.default.google.protobuf.Struct({fields: {}});
                     var b = {}, c = Object.keys(a), d = 0;
                     for (; d < c.length;) {
-                        var f = c[d++], h = a[f];
+                        var f = c[d++];
+                        var h = a[f];
                         h === null || h === void 0 || (b[f] = lg.jsToValue(h))
                     }
                     return new DataProto.default.google.protobuf.Struct({fields: b})
@@ -7946,77 +8286,6 @@ var $lime_init = function (A, t) {
                     }
                     return b
                 },
-                lg.makeTransform = function () {
-                    var a = new DataProto.data.GeoTransformObj;
-                    return a.scale = Wa.SCALE, a.cx = Wa.CX, a.cy = Wa.CY, a.invertY = !0, a.precisionPow10 = 3, a
-                },
-                lg._bboxWalk = function (a, b) {
-                    if (a == null) return;
-                    if (Array.isArray(a)) {
-                        if (2 <= a.length && typeof a[0] === "number" && typeof a[1] === "number") {
-                            var c = a[0], d = a[1];
-                            c < b.minX && (b.minX = c);
-                            d < b.minY && (b.minY = d);
-                            c > b.maxX && (b.maxX = c);
-                            d > b.maxY && (b.maxY = d);
-                            return
-                        }
-                        for (c = 0; c < a.length;) d = a[c], ++c, lg._bboxWalk(d, b)
-                    }
-                },
-                lg.bboxFromCoords = function (a) {
-                    var b = {minX: 1 / 0, minY: 1 / 0, maxX: -1 / 0, maxY: -1 / 0};
-                    lg._bboxWalk(a, b);
-                    if (b.minX === 1 / 0) return null;
-                    var c = new DataProto.data.GeoBBoxObj;
-                    return c.minX = b.minX, c.minY = b.minY, c.maxX = b.maxX, c.maxY = b.maxY, c
-                },
-                lg.mergeBbox = function (a, b) {
-                    if (a == null) return b;
-                    if (b == null) return a;
-                    var c = new DataProto.data.GeoBBoxObj;
-                    return c.minX = Math.min(a.minX, b.minX), c.minY = Math.min(a.minY, b.minY), c.maxX = Math.max(a.maxX, b.maxX), c.maxY = Math.max(a.maxY, b.maxY), c
-                },
-                lg.computeBbox = function (a) {
-                    if (a == null) return null;
-                    var b = null;
-                    if (a.coordinates != null && Object.hasOwnProperty.call(a, "coordinates")) {
-                        var c = lg.listValueToJson(a.coordinates);
-                        b = lg.bboxFromCoords(c)
-                    } else if (a.geometry != null && Object.hasOwnProperty.call(a, "geometry")) b = lg.computeBbox(a.geometry);
-                    else if (a.features != null && a.features.length) {
-                        c = 0;
-                        for (var d = a.features; c < d.length;) {
-                            var f = d[c];
-                            ++c;
-                            b = lg.mergeBbox(b, lg.computeBbox(f))
-                        }
-                    } else if (a.geometries != null && a.geometries.length) {
-                        c = 0;
-                        for (d = a.geometries; c < d.length;) f = d[c], ++c, b = lg.mergeBbox(b, lg.computeBbox(f))
-                    }
-                    return b
-                },
-                lg.ensureParts = function (a) {
-                    if (a == null) return;
-                    if (!(a.type == DataProto.data.GeoType.MultiPolygon || a.type == DataProto.data.GeoType.MultiPoint || a.type == DataProto.data.GeoType.MultiLineString)) return;
-                    if (a.coordinates == null || !Object.hasOwnProperty.call(a, "coordinates")) return;
-                    if (a.embedParts != null && a.embedParts.length) return;
-                    var b = lg.listValueToJson(a.coordinates);
-                    if (!Array.isArray(b)) return;
-                    a.embedParts = [];
-                    for (var c = 0; c < b.length;) {
-                        var d = c, f = b[c++];
-                        var h = new DataProto.data.GeoPartObj;
-                        h.index = d;
-                        h.uid = (a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") ? a.embedUid : "obj") + ":part:" + d;
-                        a.name != null && Object.hasOwnProperty.call(a, "name") && (h.name = "" + a.name + " #" + (d + 1));
-                        var k = lg.bboxFromCoords(f);
-                        k != null && (h.bbox = k);
-                        h.props = lg.toStruct({parentUid: a.embedUid, index: d});
-                        a.embedParts.push(h)
-                    }
-                },
                 lg.buildPropsForObj = function (a) {
                     if (a == null) return null;
                     var b = {geoType: DataProto.data.GeoType[a.type]};
@@ -8028,26 +8297,21 @@ var $lime_init = function (A, t) {
                     a.wallThickness != null && Object.hasOwnProperty.call(a, "wallThickness") && (b.wallThickness = a.wallThickness);
                     a.generator != null && Object.hasOwnProperty.call(a, "generator") && (b.generator = DataProto.data.GeoGeneratorType[a.generator]);
                     a.version != null && Object.hasOwnProperty.call(a, "version") && (b.version = a.version);
-                    a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") && (b.uid = a.embedUid);
                     return b
                 },
-                lg.enrichGeoObj = function (a, b) {
+                lg.enrichGeoObj = function (a) {
                     if (a == null) return;
-                    a.embedExportTransform == null && b != null && b.transform != null && (a.embedExportTransform = b.transform);
-                    (a.embedUid == null || "" === a.embedUid) && b != null && b.uid != null && (a.embedUid = b.uid);
                     if (a.embedProps == null) {
                         var c = lg.buildPropsForObj(a);
                         c != null && (a.embedProps = lg.toStruct(c))
                     }
-                    lg.ensureParts(a);
-                    a.embedBbox == null && (a.embedBbox = lg.computeBbox(a));
-                    if (a.geometry != null && Object.hasOwnProperty.call(a, "geometry")) lg.enrichGeoObj(a.geometry, {uid: a.embedUid + "/geometry", transform: a.embedExportTransform});
+                    if (a.geometry != null && Object.hasOwnProperty.call(a, "geometry")) lg.enrichGeoObj(a.geometry);
                     if (a.features != null && a.features.length) for (c = 0; c < a.features.length;) {
-                        var d = a.features[c], f = d != null && d.id != null && Object.hasOwnProperty.call(d, "id") ? DataProto.data.GeoFeatureType[d.id] : "" + c;
+                        var d = a.features[c];
                         ++c;
-                        lg.enrichGeoObj(d, {uid: a.embedUid + "/features/" + f, transform: a.embedExportTransform})
+                        lg.enrichGeoObj(d)
                     }
-                    if (a.geometries != null && a.geometries.length) for (c = 0; c < a.geometries.length;) d = a.geometries[c], f = "" + c, ++c, lg.enrichGeoObj(d, {uid: a.embedUid + "/geometries/" + f, transform: a.embedExportTransform})
+                    if (a.geometries != null && a.geometries.length) for (c = 0; c < a.geometries.length;) d = a.geometries[c], ++c, lg.enrichGeoObj(d)
                 },
                 lg.makeEditorPayload = function (a) {
                     ba.init();
@@ -8060,14 +8324,52 @@ var $lime_init = function (A, t) {
                     b.props = lg.toStruct(c);
                     return b
                 },
+                lg.makeMfcgPayload = function (a) {
+                    if (a == null) return null;
+                    try {
+                        var b = Bd.USE_CACHE;
+                        var c = null;
+                        var d = [];
+                        if (a.cells != null && a.cells.length) {
+                            for (var f = 0; f < a.cells.length;) {
+                                var h = a.cells[f++];
+                                if (h != null && Object.prototype.hasOwnProperty.call(h, "view") && h.view != null) {
+                                    d.push({obj: h, view: h.view});
+                                    h.view = null
+                                }
+                            }
+                        }
+                        Bd.USE_CACHE = !0;
+                        var k = Bd.run(a);
+                        Bd.USE_CACHE = b;
+                        for (var n = 0; n < d.length;) {
+                            var p = d[n++];
+                            p.obj.view = p.view
+                        }
+                        return {rev: 1, model: k}
+                    } catch (c) {
+                        Bd.USE_CACHE = b;
+                        for (var g2 = 0; g2 < d.length;) {
+                            var m2 = d[g2++];
+                            m2.obj.view = m2.view
+                        }
+                        hb.trace("Unable to serialize map: " + (c && c.message ? c.message : String(c)), {
+                            className: "JsonExporter",
+                            methodName: "makeMfcgPayload"
+                        });
+                        return null
+                    }
+                },
                 lg.enrichRoot = function (a, b) {
                     if (a == null) return;
-                    var c = lg.makeTransform();
-                    a.embedExportTransform = c;
-                    a.embedUid = "root";
                     a.embedEditorPayload = lg.makeEditorPayload(b);
-                    a.embedProps == null && (a.embedProps = lg.toStruct({generator: "mfcg", version: A.current.meta.h.version, blueprint: b != null ? b.bp : null, state: ba.data, url: za.data}));
-                    lg.enrichGeoObj(a, {uid: "root", transform: c})
+                    if (a.embedProps == null) {
+                        var d = {generator: "mfcg", version: A.current.meta.h.version, blueprint: b != null ? b.bp : null, state: ba.data, url: za.data};
+                        var f = lg.makeMfcgPayload(b);
+                        f != null && (d.mfcgPayload = f);
+                        a.embedProps = lg.toStruct(d)
+                    }
+                    lg.enrichGeoObj(a)
                 },
                 lg.toJsonObject = function (a) {
                     var b = DataProto.data.GeoType[a.type], c = {type: b};
@@ -8080,48 +8382,11 @@ var $lime_init = function (A, t) {
                     a.generator != null && Object.hasOwnProperty.call(a, "generator") && (c.generator = DataProto.data.GeoGeneratorType[a.generator]);
                     a.version != null && Object.hasOwnProperty.call(a, "version") && (c.version = a.version);
                     a.riverWidth != null && Object.hasOwnProperty.call(a, "riverWidth") && (c.riverWidth = a.riverWidth);
-                    a.embedUid != null && Object.hasOwnProperty.call(a, "embedUid") && (c.embedUid = a.embedUid);
-                    a.embedExportTransform != null && Object.hasOwnProperty.call(a, "embedExportTransform") && (c.embedExportTransform = {scale: a.embedExportTransform.scale, cx: a.embedExportTransform.cx, cy: a.embedExportTransform.cy, invertY: a.embedExportTransform.invertY, precisionPow10: a.embedExportTransform.precisionPow10});
-                    a.embedBbox != null && Object.hasOwnProperty.call(a, "embedBbox") && (c.embedBbox = {minX: a.embedBbox.minX, minY: a.embedBbox.minY, maxX: a.embedBbox.maxX, maxY: a.embedBbox.maxY});
                     a.embedProps != null && Object.hasOwnProperty.call(a, "embedProps") && (c.embedProps = lg.structToJson(a.embedProps));
-                    if (a.embedParts != null && a.embedParts.length) {
-                        c.embedParts = [];
-                        for (var d2 = 0; d2 < a.embedParts.length;) {
-                            var f2 = a.embedParts[d2++];
-                            c.embedParts.push({
-                                index: f2.index,
-                                uid: f2.uid,
-                                name: f2.name,
-                                bbox: f2.bbox != null ? {minX: f2.bbox.minX, minY: f2.bbox.minY, maxX: f2.bbox.maxX, maxY: f2.bbox.maxY} : null,
-                                props: f2.props != null ? lg.structToJson(f2.props) : null
-                            })
-                        }
-                    }
                     if (a.embedEditorPayload != null && Object.hasOwnProperty.call(a, "embedEditorPayload")) {
                         var h2 = a.embedEditorPayload, k2 = {};
                         h2.payloadRev != null && Object.hasOwnProperty.call(h2, "payloadRev") && (k2.payloadRev = h2.payloadRev);
                         h2.coordSpace != null && Object.hasOwnProperty.call(h2, "coordSpace") && (k2.coordSpace = DataProto.data.EditorCoordSpaceType[h2.coordSpace]);
-                        h2.layers != null && h2.layers.length && (k2.layers = h2.layers.map(function (a2) {
-                            return {layerId: a2.layerId, visible: a2.visible, locked: a2.locked, zIndex: a2.zIndex}
-                        }));
-                        h2.groups != null && h2.groups.length && (k2.groups = h2.groups.map(function (a2) {
-                            return {groupUid: a2.groupUid, name: a2.name, memberUids: a2.memberUids, props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.links != null && h2.links.length && (k2.links = h2.links.map(function (a2) {
-                            return {aUid: a2.aUid, bUid: a2.bUid, type: DataProto.data.EditorLinkType[a2.type], props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.roadModels != null && h2.roadModels.length && (k2.roadModels = h2.roadModels.map(function (a2) {
-                            return {targetUid: a2.targetUid, centerline: a2.centerline != null ? {closed: a2.centerline.closed, points: a2.centerline.points} : null, width: a2.width, closed: a2.closed, props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.shapeModels != null && h2.shapeModels.length && (k2.shapeModels = h2.shapeModels.map(function (a2) {
-                            return {targetUid: a2.targetUid, polyline: a2.polyline, bezier: a2.bezier, arc: a2.arc, props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.snapNodes != null && h2.snapNodes.length && (k2.snapNodes = h2.snapNodes.map(function (a2) {
-                            return {nodeUid: a2.nodeUid, pos: a2.pos, incidentUids: a2.incidentUids, props: a2.props != null ? lg.structToJson(a2.props) : null}
-                        }));
-                        h2.constraints != null && h2.constraints.length && (k2.constraints = h2.constraints.map(function (a2) {
-                            return {constraintUid: a2.constraintUid, type: DataProto.data.EditorConstraintType[a2.type], targetUids: a2.targetUids, params: a2.params != null ? lg.structToJson(a2.params) : null}
-                        }));
                         h2.props != null && Object.hasOwnProperty.call(h2, "props") && (k2.props = lg.structToJson(h2.props));
                         c.embedEditorPayload = k2
                     }
@@ -13543,12 +13808,14 @@ var $lime_init = function (A, t) {
                 },
                 build: function (a) {
                     this.saveFeatures();
+                    be.importMode = !1;
                     new Ub(Fd.create(a, C.seed));
                     bb.switchScene(Ec);
                     this.stage.set_focus(this)
                 },
                 rebuild: function () {
                     this.saveFeatures();
+                    be.importMode = !1;
                     new Ub(Fd.similar(Ub.instance.bp));
                     bb.switchScene(Ec)
                 },
@@ -13594,7 +13861,9 @@ var $lime_init = function (A, t) {
                 var b = new ed;
                 b.setMargins(0, 8);
                 var c = new fb("Permalink");
+                this.permalinkBtn = c;
                 c.set_width(96);
+                c.set_enabled(!be.importMode);
                 c.click.add(l(this, this.onCopyURL));
                 b.add(c);
                 c = new fe("Export", ["PNG", "SVG", "JSON", "PROTO"]);
@@ -13693,9 +13962,27 @@ var $lime_init = function (A, t) {
                             be.asPROTO();
                     }
                 },
+                onImport: function () {
+                    var a = this,
+                        b = new Gf;
+                    b.addEventListener("select", function (c) {
+                        b.addEventListener("complete", l(a, a.onImportLoaded));
+                        b.load()
+                    });
+                    b.browse([new Th("Map", "*.json;*.pb;")])
+                },
+                onImportLoaded: function (a) {
+                    try {
+                        var b = va.__cast(a.target, Gf);
+                        be.importFromFile(b.name, b.data)
+                    } catch (c) {
+                        q.show(c && c.message ? c.message : String(c));
+                    }
+                },
                 onNewModel: function (a) {
                     this.model = a;
                     this.txtName.set_text(a.name);
+                    null != this.permalinkBtn && this.permalinkBtn.set_enabled(!be.importMode);
                     this.townInfo.update(a)
                 },
                 onTitleChanged: function (a) {
@@ -13961,6 +14248,8 @@ var $lime_init = function (A, t) {
             var Ec = function () {
                 this.mouse = new I;
                 ia.call(this);
+                this.permalinkDisabled = be.importMode;
+                this.wheelZoomUntil = 0;
                 this.btnMenu = new fb("Menu", l(this, this.onMenu));
                 sb.preview || u.layer.addChild(this.btnMenu);
                 this.fader = Ke.create(1, l(this, this.onFadeOut))
@@ -13975,6 +14264,8 @@ var $lime_init = function (A, t) {
                         u.layer.addChild(new le);
                         le.inst.awake.add(l(this, this.onAwake));
                         this.stage.addEventListener("mouseMove", l(this, this.onMouseMove));
+                        this.stage.addEventListener("mouseWheel", l(this, this.onMouseWheel));
+                        this.stage.addEventListener("mouseDown", l(this, this.onMouseDown));
                         this.stage.addEventListener("click", l(this, this.onClick));
                         vc.loadSaved(Ec.tools);
                         var a = Ub.instance.bp;
@@ -13999,6 +14290,8 @@ var $lime_init = function (A, t) {
                     ia.prototype.deactivate.call(this);
                     u.layer.removeChild(this.btnMenu);
                     this.stage.removeEventListener("mouseMove", l(this, this.onMouseMove));
+                    this.stage.removeEventListener("mouseWheel", l(this, this.onMouseWheel));
+                    this.stage.removeEventListener("mouseDown", l(this, this.onMouseDown));
                     this.stage.removeEventListener("click", l(this, this.onClick));
                     null != le.inst && u.layer.removeChild(le.inst)
                 },
@@ -14083,6 +14376,97 @@ var $lime_init = function (A, t) {
                 onMouseMove: function (a) {
                     Sd.__neq(a.target, this.stage) || (a = ia.map, this.mouse.setTo(a.get_mouseX(), a.get_mouseY()), a = this.patch = this.model.getCell(this.mouse), a = null != a ? a.ward.getLabel() : null, le.inst.set(a))
                 },
+                onMouseWheel: function (a) {
+                    var b = Date.now();
+                    if (b < this.wheelZoomUntil) return;
+                    if (0 < a.delta) {
+                        var c = ia.map,
+                            d = new I(c.get_mouseX(), c.get_mouseY());
+                        c = this.model.getCell(d);
+                        if (null != c && null != c.district) {
+                            this.zoomIn(c.district);
+                            this.wheelZoomUntil = b + 1E3;
+                            a.stopPropagation()
+                        }
+                    } else if (0 > a.delta && null != this.model.focus) {
+                        this.zoomIn(null);
+                        this.wheelZoomUntil = b + 1E3;
+                        a.stopPropagation()
+                    }
+                },
+                onMouseDown: function (a) {
+                    if (1 < a.clickCount) {
+                        var b = ia.map,
+                            c = new I(b.get_mouseX(), b.get_mouseY()),
+                            d = this.model.getCell(c);
+                        if (null != d) {
+                            var f = d.ward,
+                                h = this.model.bp.seed + this.model.cells.indexOf(d),
+                                k = !1;
+                            if (f instanceof Pc) {
+                                var n = ba.get("display_mode", "Lots");
+                                if ("Block" != n) {
+                                    var p = f.group.blocks;
+                                    for (var g = 0; g < p.length && !k;) {
+                                        var q = p[g];
+                                        ++g;
+                                        if (Gb.containsPoint(q.shape, c)) {
+                                            var m;
+                                            switch (n) {
+                                                case "Complex":
+                                                    m = q.buildings;
+                                                    break;
+                                                case "Simple":
+                                                    m = q.rects;
+                                                    break;
+                                                default:
+                                                    m = q.lots
+                                            }
+                                            for (var u = 0; u < m.length;) {
+                                                var r = m[u];
+                                                ++u;
+                                                if (Gb.containsPoint(r, c)) {
+                                                    var t = h + f.group.blocks.indexOf(q) + m.indexOf(r);
+                                                    Te.openInDwellings(r, !0, t);
+                                                    k = !0;
+                                                    break
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (f instanceof xd) {
+                                null != f.building && Gb.containsPoint(f.building, c) && (Te.openInDwellings(f.building, !0, h), k = !0)
+                            } else if (f instanceof Ne) {
+                                var y = f.building || [];
+                                for (var B = 0; B < y.length;) {
+                                    var A = y[B];
+                                    ++B;
+                                    if (Gb.containsPoint(A, c)) {
+                                        Te.openInDwellings(A, !1, h);
+                                        k = !0;
+                                        break
+                                    }
+                                }
+                            } else if (f instanceof yd) {
+                                if ("Block" != ba.get("display_mode", "Lots")) {
+                                    var C = f.buildings || [];
+                                    for (var D = 0; D < C.length;) {
+                                        var E = C[D];
+                                        ++D;
+                                        if (Gb.containsPoint(E, c)) {
+                                            var F = h + C.indexOf(E);
+                                            Te.openInDwellings(E, !1, F);
+                                            k = !0;
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+                            k && a.stopPropagation()
+                        }
+                    }
+                },
                 onClick: function (a) {
                     null != this.patch && (a.commandKey || a.controlKey ? this.patch.reroll() : a.shiftKey && (null !=
                     this.model.focus ? this.zoomIn(null) : null != this.patch.district && this.zoomIn(this.patch.district)))
@@ -14093,6 +14477,23 @@ var $lime_init = function (A, t) {
                 },
                 onWarp: function () {
                     bb.switchScene(jd)
+                },
+                onImport: function () {
+                    var a = this,
+                        b = new Gf;
+                    b.addEventListener("select", function (c) {
+                        b.addEventListener("complete", l(a, a.onImportLoaded));
+                        b.load()
+                    });
+                    b.browse([new Th("Map", "*.json;*.pb;")])
+                },
+                onImportLoaded: function (a) {
+                    try {
+                        var b = va.__cast(a.target, Gf);
+                        be.importFromFile(b.name, b.data)
+                    } catch (c) {
+                        q.show(c && c.message ? c.message : String(c));
+                    }
                 },
                 createOverlays: function () {
                     ia.prototype.createOverlays.call(this);
@@ -14157,8 +14558,9 @@ var $lime_init = function (A, t) {
                     c.addItem("PROTO", be.asPROTO);
 
                     a.addItem("View in 3D", l(this, this.onViewIn3D));
+                    a.addItem("Import...", l(this, this.onImport));
                     a.addSubmenu("Export as", c);
-                    a.addItem("Permalink..", l(this, this.onPermalink))
+                    a.addItem("Permalink..", !this.permalinkDisabled ? l(this, this.onPermalink) : null)
 
                     a.addSeparator();
                     c = function (c, f) {
@@ -14186,6 +14588,7 @@ var $lime_init = function (A, t) {
                     u.showDialog(new hh(this.model.addLandmark(this.mouse.clone())))
                 },
                 buildNew: function () {
+                    be.importMode = !1;
                     new Ub(Fd.create(Ub.nextSize, C.seed));
                     bb.switchScene(Ec)
                 },
@@ -14248,8 +14651,8 @@ var $lime_init = function (A, t) {
                 onPermalink: function () {
                     null == u.findWidnow(Jf) && u.showDialog(new Jf)
                 },
-                onViewIn3D: function (inNewWindow = true) {
-                    try {
+                onViewIn3D: function (inNewWindow = false) {
+                    return be.runBusy("Preparing 3D view...", function () {
                         var a = Ub.instance, b = lg.export(a), c = DataProto.data.GeoObj.encode(b).finish(), d = "", e = 0;
                         for (; e < c.length;) {
                             var f = e + 32768;
@@ -14258,11 +14661,11 @@ var $lime_init = function (A, t) {
                             e = f
                         }
                         window.localStorage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", "p" + d);
-                        this.goToViewer(inNewWindow, a.name)
-                    } catch (g) {
+                        this.goToViewer(inNewWindow)
+                    }.bind(this), function (g) {
                         Ta.lastError = g;
                         u.showDialog(new Wj("" + g))
-                    }
+                    })
                 },
                 goToPrimarySource: function (inNewWindow = true) {
                     const adr = FuncProto.paramsUrlString(params.routes.primary_source);
@@ -16660,13 +17063,13 @@ var $lime_init = function (A, t) {
                     d.addItem("Reroll all", (G = this.model, l(G, G.rerollDistricts)))
                 },
                 exportPNG: function (a) {
-                    if (a)
+                    if (a){
                         for (a = this.labels.iterator(); a.hasNext();) {
-                            var b =
-                                a.next();
+                            var b = a.next();
                             b.set_filters([]);
                             b.addOutline()
-                        } else {
+                        }
+                    } else {
                         a = !1;
                         null == a && (a = !0);
                         a = 2 * K.getStrokeWidth(K.strokeThick, a);
@@ -19407,6 +19810,7 @@ var $lime_init = function (A, t) {
                 generate: function () {
                     var a = this.input.get_text();
                     za.fromString(a);
+                    be.importMode = !1;
                     new Ub(Fd.fromURL());
                     bb.switchScene(Ec);
                     a = u.findForm(Kd);
@@ -20155,6 +20559,11 @@ var $lime_init = function (A, t) {
                 za.set(a, b ? "1" : "0")
             };
             za.getParams = function () {
+                if (be.importMode) {
+                    var a = "?import_mode=1";
+                    (sb.preview || "1" === (za.data != null ? za.data.preview : null)) && (a += "&preview=1");
+                    return a
+                }
                 for (var a = "", b = za.data, c = ya.fields(b), d = 0; d < c.length;) {
                     var f = c[d++];
                     a += ("" == a ? "?" : "&") + ("" + f + "=" + H.string(b[f]))
@@ -20165,8 +20574,7 @@ var $lime_init = function (A, t) {
                 return za.baseURL + za.getParams()
             };
             za.update = function () {
-                window.history.replaceState(za.data,
-                    "", za.getParams())
+                window.history.replaceState(za.data, "", za.getParams())
             };
             za.fromString = function (a) {
                 za.data = {};

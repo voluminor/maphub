@@ -40,6 +40,24 @@ describe("Cave: paletteObjFromLegacyJsonText", () => {
         expect(msg.hatching).toBeTruthy();
     });
 
+    it("accepts proto-like palette objects", () => {
+        const protoLike = {
+            colors: {
+                page: { r: 10, g: 20, b: 30 },
+                floor: { r: 40, g: 50, b: 60 },
+                water: { r: 70, g: 80, b: 90 },
+                ink: { r: 11, g: 22, b: 33 },
+            },
+            shadow: { shadeAlpha: 0.25, shadowAlpha: 0.4, shadowDist: 1.5 },
+            strokes: { wall: 1.2, detail: 0.6, hatch: 0.9, grid: 1.1 },
+            hatching: { strokes: 3, size: 0.4, distance: 0.3, stones: 0.2 },
+        };
+        const msg = paletteObjFromLegacyJsonText(JSON.stringify(protoLike));
+        expect(msg.colors.page).toEqual({ r: 10, g: 20, b: 30 });
+        expect(msg.shadow.shadowDist).toBeCloseTo(1.5);
+        expect(msg.hatching.strokes).toBe(3);
+    });
+
     it("parses color values correctly", () => {
         const msg = paletteObjFromLegacyJsonText(validCaveJsonText());
         expect(msg.colors.page).toEqual({ r: 240, g: 228, b: 208 });

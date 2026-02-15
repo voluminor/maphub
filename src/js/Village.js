@@ -5,11 +5,13 @@ import * as OthersShared from "./shared/others.js";
 import * as FuncProto from "./shared/proto.js";
 
 import * as DataVillage from "./shared/data/Village.js";
+import * as DataGeo from "./shared/data/data.js";
 
 import * as DataProto from "./struct/data.js";
 import * as FuncBin from "./shared/data/bin-verify.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VILLAGE}}`));
+const isFrame = typeof window.parent.pingFrame === "function"
 
 var $lime_init = function (E, u) {
     var A = function (u, A) {
@@ -7682,6 +7684,111 @@ var $lime_init = function (E, u) {
             };
             g["system.Exporter"] = Sd;
             Sd.__name__ = "system.Exporter";
+            Sd._busyOverlay = {
+                active: !1,
+                el: null,
+                textEl: null,
+                listeners: null,
+                ensure: function () {
+                    if (null != this.el) return;
+                    var a = window.document;
+                    var b = a.createElement("div");
+                    b.id = "vg-busy-overlay";
+                    b.style.cssText = "position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,0.55);color:#fff;z-index:2147483647;pointer-events:auto;";
+                    var c = a.createElement("div");
+                    c.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 22px;border-radius:10px;background:rgba(0,0,0,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:80vw;";
+                    var d = a.createElement("div");
+                    d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:vg-busy-spin 0.8s linear infinite;";
+                    var f = a.createElement("div");
+                    f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
+                    f.textContent = "Please wait...";
+                    c.appendChild(d);
+                    c.appendChild(f);
+                    b.appendChild(c);
+                    this.el = b;
+                    this.textEl = f;
+                    (a.body || a.documentElement).appendChild(b);
+                    if (null == a.getElementById("vg-busy-style")) {
+                        var h = a.createElement("style");
+                        h.id = "vg-busy-style";
+                        h.textContent = "@keyframes vg-busy-spin{to{transform:rotate(360deg);}}";
+                        (a.head || a.documentElement).appendChild(h)
+                    }
+                },
+                attach: function () {
+                    if (null != this.listeners) return;
+                    var a = this;
+                    var b = function (c) {
+                        if (!a.active) return;
+                        c.preventDefault();
+                        c.stopPropagation();
+                        return !1
+                    };
+                    var c = {
+                        capture: !0,
+                        passive: !1
+                    };
+                    var d = window.document;
+                    var f = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel", "touchstart", "touchmove", "touchend", "touchcancel", "pointerdown", "pointermove", "pointerup"];
+                    var h = 0;
+                    for (; h < f.length;) d.addEventListener(f[h++], b, c);
+                    this.listeners = {
+                        handler: b,
+                        options: c,
+                        events: f
+                    };
+                    try {
+                        null != d.activeElement && d.activeElement.blur()
+                    } catch (k) {
+                    }
+                },
+                detach: function () {
+                    if (null == this.listeners) return;
+                    var a = window.document;
+                    var b = this.listeners.events;
+                    var c = this.listeners.handler;
+                    var d = this.listeners.options;
+                    var f = 0;
+                    for (; f < b.length;) a.removeEventListener(b[f++], c, d);
+                    this.listeners = null
+                },
+                show: function (a) {
+                    this.ensure();
+                    this.textEl.textContent = null != a && "" !== a ? a : "Please wait...";
+                    this.el.style.display = "flex";
+                    this.active = !0;
+                    this.attach()
+                },
+                hide: function () {
+                    if (null == this.el) return;
+                    this.active = !1;
+                    this.el.style.display = "none";
+                    this.detach()
+                }
+            };
+            Sd.runBusy = function (a, b, c) {
+                Sd._busyOverlay.show(a);
+                var d = function () {
+                    try {
+                        b()
+                    } catch (f) {
+                        if ("function" == typeof c) {
+                            c(f);
+                            return
+                        }
+                        throw f
+                    } finally {
+                        Sd._busyOverlay.hide()
+                    }
+                };
+                if (null != window.requestAnimationFrame) {
+                    window.requestAnimationFrame(function () {
+                        window.requestAnimationFrame(function () {
+                            window.setTimeout(d, 0)
+                        })
+                    })
+                } else window.setTimeout(d, 0)
+            };
             Sd.saveBinary = function (a, b, c) {
                 b = Sd.fixName(b);
                 a = wd.toArrayBuffer(a);
@@ -9403,13 +9510,36 @@ var $lime_init = function (E, u) {
             };
             g["village.JSONExporter"] = Hh, Hh.__name__ = "village.JSONExporter",
                 Hh.export = function (a) {
-                    var b = Hh.getProto(a), c = Hh.stringifyProto(b);
-                    return Sd.saveText(c, a.name + ".vg.json", "application/json"), b
+                    return Sd.runBusy("Exporting JSON file...", function () {
+                        var b = Hh.getProto(a), c = Hh.stringifyProto(b);
+                        Sd.saveText(c, a.name + ".vg.json", "application/json")
+                    }, function (b) {
+                        w.showToast(b && b.message ? b.message : String(b))
+                    })
                 }, Hh.exportBinary = function (a) {
-                var b = Hh.getProto(a), c = DataProto.data.GeoObj.encode(b).finish();
-                var d = FuncBin.exportBin(c, DataProto.data.DataType.geo);
-                return Sd.saveBinary(wd.fromArrayBuffer(d), a.name + ".vg.pb", "application/x-protobuf"), b
+                return Sd.runBusy("Exporting PROTO file...", function () {
+                    var b = Hh.getProto(a), c = DataProto.data.GeoObj.encode(b).finish();
+                    var d = FuncBin.exportBin(c, DataProto.data.DataType.geo);
+                    Sd.saveBinary(wd.fromArrayBuffer(d), a.name + ".vg.pb", "application/x-protobuf")
+                }, function (b) {
+                    w.showToast(b && b.message ? b.message : String(b))
+                })
             },
+                Hh._blueprintForExport = function (a) {
+                    if (a == null) return null;
+                    return {
+                        seed: a.seed,
+                        tags: a.tags,
+                        width: a.width,
+                        height: a.height,
+                        treeSeed: a.treeSeed,
+                        name: a.name,
+                        pop: a.pop,
+                        numbered: a.numbered,
+                        varSeed: a.varSeed,
+                        style: a.style
+                    }
+                },
                 Hh.getData = function (a) {
                     Ua.CX = 0, Ua.CY = 0, Ua.SCALE = .7;
                     var b = new La;
@@ -9454,6 +9584,7 @@ var $lime_init = function (E, u) {
                 };
             Hh.getProto = function (a) {
                 Ua.CX = 0, Ua.CY = 0, Ua.SCALE = .7;
+                var blueprint = Hh._blueprintForExport(a.bp);
                 var b = [],
                     c = {
                         type: DataProto.data.GeoType.Feature,
@@ -9462,68 +9593,36 @@ var $lime_init = function (E, u) {
                         generator: DataProto.data.GeoGeneratorType.vg,
                         version: params.meta.ver_app,
                         wallThickness: Ua.SCALE,
-                        embedUid: "meta",
                         embedProps: Hh._structFromJs({
-                            name: a.name,
-                            pop: a.pop,
-                            seed: a.bp.seed,
-                            numbered: a.bp.numbered,
-                            realW: a.realW,
-                            realH: a.realH
+                            blueprint: blueprint
                         })
                     },
                     d = Fc.rect(a.realW, a.realH),
-                    f = {
-                        scale: Ua.SCALE,
-                        cx: Ua.CX,
-                        cy: Ua.CY,
-                        invertY: !0,
-                        precisionPow10: 3
-                    },
-                    h = [],
-                    k = [],
-                    p = 0,
-                    l = null;
+                    p = 0;
 
                 b.push(c);
 
-                var m = [Ua.arrPoly(d)],
-                    n = Hh._bboxFromNested(m);
+                var m = [Ua.arrPoly(d)];
 
                 b.push({
                     type: DataProto.data.GeoType.Polygon,
                     id: DataProto.data.GeoFeatureType.earth,
                     coordinates: Hh._listValueFromNested(m),
-                    embedUid: "earth",
-                    embedBbox: Hh._bboxToProto(n),
                     embedProps: Hh._structFromJs({kind: "earth"})
                 });
 
-                l = Hh._bboxMerge(l, n);
-
-                var q = a.network.roads, z = q, A = [], B = null, C = 0, D;
+                var q = a.network.roads, z = q, A = [], D;
 
                 for (q = q.keys(); q.hasNext();) {
                     var E = q.next(), F = z.get(E), G = E;
                     if (F.type != wb.SQUARE) {
                         D = F.type == wb.HIGHWAY ? 0 < x.widthLargeRoad ? x.widthLargeRoad : x.strokeNormal : 0 < x.widthSmallRoad ? x.widthSmallRoad : x.strokeNormal;
-                        var H = Ua.arrPoly(G), I = Hh._bboxFromNested(H), J = "roads:" + C++;
+                        var H = Ua.arrPoly(G);
                         A.push({
                             type: DataProto.data.GeoType.LineString,
                             width: D * Ua.SCALE,
                             coordinates: Hh._listValueFromNested(H),
-                            embedUid: J,
-                            embedBbox: Hh._bboxToProto(I),
                             embedProps: Hh._structFromJs({kind: "road", roadType: F.type, widthWorld: D})
-                        });
-                        B = Hh._bboxMerge(B, I);
-                        l = Hh._bboxMerge(l, I);
-                        h.push({
-                            targetUid: J,
-                            centerline: Hh._editorPolylineFromWorld(G, !1),
-                            width: D,
-                            closed: !1,
-                            props: Hh._structFromJs({roadType: F.type})
                         });
                     }
                 }
@@ -9532,33 +9631,21 @@ var $lime_init = function (E, u) {
                     type: DataProto.data.GeoType.GeometryCollection,
                     id: DataProto.data.GeoFeatureType.roads,
                     geometries: A,
-                    embedUid: "roads",
-                    embedBbox: Hh._bboxToProto(B),
                     embedProps: Hh._structFromJs({kind: "roads"})
                 };
 
-                A = [], B = null, C = 0;
-                q = 0;
+                A = [], q = 0;
                 var L = a.piers;
 
                 for (; q < L.length;) {
                     var M = L[q];
                     ++q;
-                    var N = Ua.arrPoly(M), O = Hh._bboxFromNested(N), P = "planks:" + C++;
+                    var N = Ua.arrPoly(M);
                     A.push({
                         type: DataProto.data.GeoType.LineString,
                         width: 5 * Ua.SCALE,
                         coordinates: Hh._listValueFromNested(N),
-                        embedUid: P,
-                        embedBbox: Hh._bboxToProto(O),
                         embedProps: Hh._structFromJs({kind: "plank", widthWorld: 5})
-                    });
-                    B = Hh._bboxMerge(B, O);
-                    l = Hh._bboxMerge(l, O);
-                    k.push({
-                        targetUid: P,
-                        polyline: Hh._editorPolylineFromWorld(M, !1),
-                        props: Hh._structFromJs({kind: "plank", widthWorld: 5})
                     });
                 }
 
@@ -9566,8 +9653,6 @@ var $lime_init = function (E, u) {
                     type: DataProto.data.GeoType.GeometryCollection,
                     id: DataProto.data.GeoFeatureType.planks,
                     geometries: A,
-                    embedUid: "planks",
-                    embedBbox: Hh._bboxToProto(B),
                     embedProps: Hh._structFromJs({kind: "planks"})
                 };
 
@@ -9598,86 +9683,35 @@ var $lime_init = function (E, u) {
                     V.push(ca);
                 }
 
-                var da = [];
                 q = 0, L = a.props;
                 for (; q < L.length;) {
                     var ea = L[q];
                     ++q;
-                    ea instanceof Sf ? A.push(Ka.__cast(ea, Sf).pos) : ea instanceof Tf && (ca = Ka.__cast(ea, Tf), ea = Fc.regular(16, ca.r), Eb.asTranslate(ea, ca.pos.x, ca.pos.y), W.push(ea), da.push({pos: ca.pos, r: ca.r}));
+                    ea instanceof Sf ? A.push(Ka.__cast(ea, Sf).pos) : ea instanceof Tf && (ca = Ka.__cast(ea, Tf), ea = Fc.regular(16, ca.r), Eb.asTranslate(ea, ca.pos.x, ca.pos.y), W.push(ea));
                 }
 
-                var fa = [], ga = null;
                 for (q = 0; q < V.length;) {
                     ca = V[q];
                     var ha = q++,
                         ia = Ua.arrPoly(ca.rect),
-                        ja = [ia],
-                        ka = Hh._bboxFromNested(ja),
-                        la = "buildings:" + ha;
+                        ja = [ia];
                     X.push(ja);
-                    fa.push({
-                        index: ha,
-                        uid: la,
-                        name: la,
-                        bbox: Hh._bboxToProto(ka),
-                        props: Hh._structFromJs({kind: "building", width: ca.width, depth: ca.depth, height: ca.height, large: ca.large})
-                    });
-                    ga = Hh._bboxMerge(ga, ka);
-                    l = Hh._bboxMerge(l, ka);
-                    k.push({
-                        targetUid: la,
-                        polyline: Hh._editorPolylineFromWorld(ca.rect, !0),
-                        props: Hh._structFromJs({kind: "building", width: ca.width, depth: ca.depth, height: ca.height, large: ca.large})
-                    });
                 }
 
-                var ma = [];
-                B = null;
                 for (q = 0; q < W.length;) {
                     ea = W[q];
                     ha = q++;
                     ia = Ua.arrPoly(ea);
                     ja = [ia];
-                    ka = Hh._bboxFromNested(ja);
-                    la = "prisms:" + ha;
                     Y.push(ja);
-                    ma.push({
-                        index: ha,
-                        uid: la,
-                        name: la,
-                        bbox: Hh._bboxToProto(ka),
-                        props: Hh._structFromJs({kind: "prism", radius: da[ha] != null ? da[ha].r : null})
-                    });
-                    B = Hh._bboxMerge(B, ka);
-                    l = Hh._bboxMerge(l, ka);
-                    k.push({
-                        targetUid: la,
-                        polyline: Hh._editorPolylineFromWorld(ea, !0),
-                        props: Hh._structFromJs({kind: "prism", radius: da[ha] != null ? da[ha].r : null})
-                    });
                 }
 
-                var na2 = Ua.arrPoly(A), oa = Hh._bboxFromNested(na2), pa = [], qa = 0;
-                for (; qa < na2.length;) {
-                    var ra = na2[qa], sa = qa++;
-                    pa.push({
-                        index: sa,
-                        uid: "trees:" + sa,
-                        name: "trees:" + sa,
-                        bbox: Hh._bboxToProto(Hh._bboxFromNested(ra)),
-                        props: Hh._structFromJs({kind: "tree"})
-                    });
-                }
-
-                l = Hh._bboxMerge(l, oa);
+                var na2 = Ua.arrPoly(A);
 
                 b.push({
                     type: DataProto.data.GeoType.MultiPolygon,
                     id: DataProto.data.GeoFeatureType.buildings,
                     coordinates: Hh._listValueFromNested(X),
-                    embedUid: "buildings",
-                    embedBbox: Hh._bboxToProto(ga),
-                    embedParts: fa,
                     embedProps: Hh._structFromJs({kind: "buildings"})
                 });
 
@@ -9685,9 +9719,6 @@ var $lime_init = function (E, u) {
                     type: DataProto.data.GeoType.MultiPolygon,
                     id: DataProto.data.GeoFeatureType.prisms,
                     coordinates: Hh._listValueFromNested(Y),
-                    embedUid: "prisms",
-                    embedBbox: Hh._bboxToProto(B),
-                    embedParts: ma,
                     embedProps: Hh._structFromJs({kind: "prisms"})
                 });
 
@@ -9695,9 +9726,6 @@ var $lime_init = function (E, u) {
                     type: DataProto.data.GeoType.MultiPoint,
                     id: DataProto.data.GeoFeatureType.trees,
                     coordinates: Hh._listValueFromNested(na2),
-                    embedUid: "trees",
-                    embedBbox: Hh._bboxToProto(oa),
-                    embedParts: pa,
                     embedProps: Hh._structFromJs({kind: "trees"})
                 });
 
@@ -9707,75 +9735,37 @@ var $lime_init = function (E, u) {
                 var ta = {
                     type: DataProto.data.GeoType.FeatureCollection,
                     features: b,
-                    embedUid: "root",
-                    embedExportTransform: f,
-                    embedBbox: Hh._bboxToProto(l),
                     embedEditorPayload: {
                         payloadRev: 1,
                         coordSpace: DataProto.data.EditorCoordSpaceType.world,
-                        roadModels: h,
-                        shapeModels: k,
                         props: Hh._structFromJs({generator: "vg", version: params.meta.ver_app})
                     },
-                    embedProps: Hh._structFromJs({generator: "vg", version: params.meta.ver_app, name: a.name})
+                    embedProps: Hh._structFromJs({generator: "vg", version: params.meta.ver_app, blueprint: blueprint})
                 };
 
                 if (a.water != null) {
-                    var ua = [], va = [], wa = null, ya = 0, za2 = a.water.patches;
+                    var ua = [], ya = 0, za2 = a.water.patches;
                     for (; ya < za2.length;) {
                         var Aa = za2[ya];
                         ++ya;
-                        var Ba = Ua.arrPoly(Aa), Ca = [Ba], Da = Hh._bboxFromNested(Ca), Ea = "water:" + (ya - 1);
+                        var Ba = Ua.arrPoly(Aa), Ca = [Ba];
                         ua.push(Ca);
-                        va.push({
-                            index: ya - 1,
-                            uid: Ea,
-                            name: Ea,
-                            bbox: Hh._bboxToProto(Da),
-                            props: Hh._structFromJs({kind: "water"})
-                        });
-                        wa = Hh._bboxMerge(wa, Da);
-                        l = Hh._bboxMerge(l, Da);
-                        k.push({
-                            targetUid: Ea,
-                            polyline: Hh._editorPolylineFromWorld(Aa, !0),
-                            props: Hh._structFromJs({kind: "water"})
-                        });
                     }
 
                     ta.features.push({
                         type: DataProto.data.GeoType.MultiPolygon,
                         id: DataProto.data.GeoFeatureType.water,
                         coordinates: Hh._listValueFromNested(ua),
-                        embedUid: "water",
-                        embedBbox: Hh._bboxToProto(wa),
-                        embedParts: va,
                         embedProps: Hh._structFromJs({kind: "water"})
                     });
 
-                    var Fa = Ua.arrPoly(a.water.edgePoints), Ga = Hh._bboxFromNested(Fa), Ha = [], Ia = 0;
-                    for (; Ia < Fa.length;) {
-                        var Ja = Fa[Ia], Ka2 = Ia++;
-                        Ha.push({
-                            index: Ka2,
-                            uid: "extendable:" + Ka2,
-                            name: "extendable:" + Ka2,
-                            bbox: Hh._bboxToProto(Hh._bboxFromNested(Ja)),
-                            props: Hh._structFromJs({kind: "extendable"})
-                        });
-                    }
-
+                    var Fa = Ua.arrPoly(a.water.edgePoints);
                     ta.features.push({
                         type: DataProto.data.GeoType.MultiPoint,
                         id: DataProto.data.GeoFeatureType.extendable,
                         coordinates: Hh._listValueFromNested(Fa),
-                        embedUid: "extendable",
-                        embedBbox: Hh._bboxToProto(Ga),
-                        embedParts: Ha,
                         embedProps: Hh._structFromJs({kind: "extendable"})
                     });
-
-                    l = Hh._bboxMerge(l, Ga);
                 }
 
                 if (a.network.square != null) {
@@ -9789,56 +9779,28 @@ var $lime_init = function (E, u) {
                                 break
                             }
 
-                    var Na2 = [Ua.arrPoly(La2)], Oa2 = Hh._bboxFromNested(Na2);
+                    var Na2 = [Ua.arrPoly(La2)];
                     ta.features.push({
                         type: DataProto.data.GeoType.MultiPolygon,
                         id: DataProto.data.GeoFeatureType.squares,
                         coordinates: Hh._listValueFromNested([Na2]),
-                        embedUid: "squares",
-                        embedBbox: Hh._bboxToProto(Oa2),
-                        embedParts: [{
-                            index: 0,
-                            uid: "squares:0",
-                            name: "squares:0",
-                            bbox: Hh._bboxToProto(Oa2),
-                            props: Hh._structFromJs({kind: "square"})
-                        }],
                         embedProps: Hh._structFromJs({kind: "squares"})
                     });
-
-                    l = Hh._bboxMerge(l, Oa2);
                 }
 
                 if (a.palisade != null) {
-                    var Pa2 = [], Qa2 = [], Ra2 = null, Sa2 = 0, Ta2 = a.palisade.segments;
+                    var Pa2 = [], Sa2 = 0, Ta2 = a.palisade.segments;
                     for (; Sa2 < Ta2.length;) {
                         var Ua2 = Ta2[Sa2];
                         ++Sa2;
-                        var Va2 = Ua.arrPoly(Ua2), Wa2 = Hh._bboxFromNested(Va2), Xa2 = "palisade:" + (Sa2 - 1);
+                        var Va2 = Ua.arrPoly(Ua2);
                         Pa2.push(Va2);
-                        Qa2.push({
-                            index: Sa2 - 1,
-                            uid: Xa2,
-                            name: Xa2,
-                            bbox: Hh._bboxToProto(Wa2),
-                            props: Hh._structFromJs({kind: "palisade"})
-                        });
-                        Ra2 = Hh._bboxMerge(Ra2, Wa2);
-                        l = Hh._bboxMerge(l, Wa2);
-                        k.push({
-                            targetUid: Xa2,
-                            polyline: Hh._editorPolylineFromWorld(Ua2, !1),
-                            props: Hh._structFromJs({kind: "palisade"})
-                        });
                     }
 
                     ta.features.push({
                         type: DataProto.data.GeoType.MultiLineString,
                         id: DataProto.data.GeoFeatureType.palisade,
                         coordinates: Hh._listValueFromNested(Pa2),
-                        embedUid: "palisade",
-                        embedBbox: Hh._bboxToProto(Ra2),
-                        embedParts: Qa2,
                         embedProps: Hh._structFromJs({kind: "palisade"})
                     });
                 }
@@ -9851,48 +9813,22 @@ var $lime_init = function (E, u) {
                         Ya2.push(db.resampleClosed(ba2, a.bp.minRoad));
                     }
 
-                    var ca2 = 0, da2 = [], ea2, fa2, ga2 = null;
+                    var ca2 = 0, da2 = [], ea2;
                     for (; ca2 < Ya2.length;) {
                         ea2 = Ya2[ca2];
-                        fa2 = ca2++;
-                        var ha2 = [Ua.arrPoly(ea2)], ia2 = Hh._bboxFromNested(ha2), ja2 = "fields:" + fa2;
+                        ca2++;
+                        var ha2 = [Ua.arrPoly(ea2)];
                         da2.push(ha2);
-                        ga2 = Hh._bboxMerge(ga2, ia2);
-                        l = Hh._bboxMerge(l, ia2);
-                        k.push({
-                            targetUid: ja2,
-                            polyline: Hh._editorPolylineFromWorld(ea2, !0),
-                            props: Hh._structFromJs({kind: "field"})
-                        });
-                    }
-
-                    var ka2 = [];
-                    for (ca2 = 0; ca2 < da2.length;) {
-                        var la2 = da2[ca2], ma2 = ca2++;
-                        var na3 = Hh._bboxFromNested(la2);
-                        ka2.push({
-                            index: ma2,
-                            uid: "fields:" + ma2,
-                            name: "fields:" + ma2,
-                            bbox: Hh._bboxToProto(na3),
-                            props: Hh._structFromJs({kind: "field"})
-                        });
                     }
 
                     ta.features.push({
                         type: DataProto.data.GeoType.MultiPolygon,
                         id: DataProto.data.GeoFeatureType.fields,
                         coordinates: Hh._listValueFromNested(da2),
-                        embedUid: "fields",
-                        embedBbox: Hh._bboxToProto(ga2),
-                        embedParts: ka2,
                         embedProps: Hh._structFromJs({kind: "fields"})
                     });
                 }
 
-                ta.embedBbox = Hh._bboxToProto(l);
-                ta.embedEditorPayload.roadModels = h;
-                ta.embedEditorPayload.shapeModels = k;
                 return DataProto.data.GeoObj.fromObject(ta)
             };
             Hh.stringifyProto = function (a) {
@@ -9910,42 +9846,13 @@ var $lime_init = function (E, u) {
                 a.generator != null && (b.generator = DataProto.data.GeoGeneratorType[a.generator]);
                 a.version != null && (b.version = a.version);
 
-                a.embedUid != null && (b.embedUid = a.embedUid);
-
-                a.embedExportTransform != null && (b.embedExportTransform = {
-                    scale: a.embedExportTransform.scale,
-                    cx: a.embedExportTransform.cx,
-                    cy: a.embedExportTransform.cy,
-                    invertY: a.embedExportTransform.invertY,
-                    precisionPow10: a.embedExportTransform.precisionPow10
-                });
-
-                a.embedBbox != null && (b.embedBbox = {
-                    minX: a.embedBbox.minX,
-                    minY: a.embedBbox.minY,
-                    maxX: a.embedBbox.maxX,
-                    maxY: a.embedBbox.maxY
-                });
-
-                if (a.embedParts != null && a.embedParts.length) {
-                    b.embedParts = [];
-                    for (var c = 0; c < a.embedParts.length;) {
-                        var d = a.embedParts[c++];
-                        var f = {index: d.index, uid: d.uid};
-                        d.name != null && (f.name = d.name);
-                        d.bbox != null && (f.bbox = {minX: d.bbox.minX, minY: d.bbox.minY, maxX: d.bbox.maxX, maxY: d.bbox.maxY});
-                        d.props != null && (f.props = Hh._structToJson(d.props));
-                        b.embedParts.push(f);
-                    }
-                }
-
                 a.embedProps != null && (b.embedProps = Hh._structToJson(a.embedProps));
                 a.embedEditorPayload != null && (b.embedEditorPayload = Hh._editorPayloadToJson(a.embedEditorPayload));
 
                 switch (a.type) {
                     case DataProto.data.GeoType.FeatureCollection:
                         b.features = [];
-                        for (c = 0; c < a.features.length;) b.features.push(Hh.protoToGeoJson(a.features[c++]));
+                        for (var c = 0; c < a.features.length;) b.features.push(Hh.protoToGeoJson(a.features[c++]));
                         break;
                     case DataProto.data.GeoType.GeometryCollection:
                         b.geometries = [];
@@ -10001,84 +9908,10 @@ var $lime_init = function (E, u) {
                 return b
             };
 
-            Hh._bboxAcc = function (a, b) {
-                if (b == null) return;
-                if (Array.isArray(b)) {
-                    if (b.length === 2 && typeof b[0] === "number" && typeof b[1] === "number") {
-                        var c = b[0], d = b[1];
-                        a.minX = Math.min(a.minX, c);
-                        a.minY = Math.min(a.minY, d);
-                        a.maxX = Math.max(a.maxX, c);
-                        a.maxY = Math.max(a.maxY, d);
-                    } else {
-                        for (var f = 0; f < b.length;) Hh._bboxAcc(a, b[f++]);
-                    }
-                }
-            };
-
-            Hh._bboxFromNested = function (a) {
-                var b = {minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity};
-                Hh._bboxAcc(b, a);
-                return isFinite(b.minX) ? b : null
-            };
-
-            Hh._bboxMerge = function (a, b) {
-                if (a == null) return b;
-                if (b == null) return a;
-                return {
-                    minX: Math.min(a.minX, b.minX),
-                    minY: Math.min(a.minY, b.minY),
-                    maxX: Math.max(a.maxX, b.maxX),
-                    maxY: Math.max(a.maxY, b.maxY)
-                }
-            };
-
-            Hh._bboxToProto = function (a) {
-                return a == null ? null : {minX: a.minX, minY: a.minY, maxX: a.maxX, maxY: a.maxY}
-            };
-
-            Hh._editorPointsFromWorld = function (a) {
-                for (var b = [], c = 0; c < a.length;) {
-                    var d = a[c++];
-                    b.push({x: d.x, y: d.y});
-                }
-                return b
-            };
-
-            Hh._editorPolylineFromWorld = function (a, b) {
-                null == b && (b = !1);
-                return {points: Hh._editorPointsFromWorld(a), closed: b}
-            };
-
             Hh._editorPayloadToJson = function (a) {
                 var b = {};
                 a.payloadRev != null && (b.payloadRev = a.payloadRev);
                 a.coordSpace != null && (b.coordSpace = a.coordSpace);
-
-                if (a.roadModels != null && a.roadModels.length) {
-                    b.roadModels = [];
-                    for (var c = 0; c < a.roadModels.length;) {
-                        var d = a.roadModels[c++], f = {targetUid: d.targetUid};
-                        d.centerline != null && (f.centerline = {points: d.centerline.points, closed: d.centerline.closed});
-                        d.width != null && (f.width = d.width);
-                        d.closed != null && (f.closed = d.closed);
-                        d.props != null && (f.props = Hh._structToJson(d.props));
-                        b.roadModels.push(f);
-                    }
-                }
-
-                if (a.shapeModels != null && a.shapeModels.length) {
-                    b.shapeModels = [];
-                    for (c = 0; c < a.shapeModels.length;) {
-                        d = a.shapeModels[c++];
-                        f = {targetUid: d.targetUid};
-                        d.polyline != null && (f.polyline = {points: d.polyline.points, closed: d.polyline.closed});
-                        d.bezier != null && (f.bezier = d.bezier);
-                        d.arc != null && (f.arc = d.arc);
-                        d.props != null && (f.props = Hh._structToJson(d.props));
-                        b.shapeModels.push(f);
-                    }
-                }
 
                 a.props != null && (b.props = Hh._structToJson(a.props));
                 return b
@@ -12534,35 +12367,43 @@ var $lime_init = function (E, u) {
                     this.plate.set_y(b.y)
                 },
                 exportPNG: function () {
-                    var a = Math.sqrt(16777215 / (this.village.viewW2 * this.village.viewH2 * 4)),
-                        b = 2 * this.village.viewW2 * a | 0,
-                        c = 2 * this.village.viewH2 * a | 0,
-                        d = new Jb(b, c, !1, x.colorGround[0]),
-                        f = new sa;
-                    f.scale(a, a);
-                    f.translate(b / 2, c / 2);
-                    this.numbers.prepareForExport();
-                    d.draw(this.map, f, null, null, null, !0);
-                    this.numbers.update(this.village);
-                    na.showTitle && (f = new sa, f.translate(this.plate.get_x() - this.rect.get_left(), this.plate.get_y() - this.rect.get_top()), f.scale(a / this.map.get_scaleX(), a / this.map.get_scaleY()), this.plate.prepareForExport(),
-                        d.draw(this.plate, f), this.removeChild(this.plate), this.plate = new Kg(this.village), this.plate.set_visible(na.showTitle), this.addChild(this.plate), this.layoutPlate());
-                    Sd.savePNG(d, this.village.name)
+                    return Sd.runBusy("Exporting PNG file...", function () {
+                        var a = Math.sqrt(16777215 / (this.village.viewW2 * this.village.viewH2 * 4)),
+                            b = 2 * this.village.viewW2 * a | 0,
+                            c = 2 * this.village.viewH2 * a | 0,
+                            d = new Jb(b, c, !1, x.colorGround[0]),
+                            f = new sa;
+                        f.scale(a, a);
+                        f.translate(b / 2, c / 2);
+                        this.numbers.prepareForExport();
+                        d.draw(this.map, f, null, null, null, !0);
+                        this.numbers.update(this.village);
+                        na.showTitle && (f = new sa, f.translate(this.plate.get_x() - this.rect.get_left(), this.plate.get_y() - this.rect.get_top()), f.scale(a / this.map.get_scaleX(), a / this.map.get_scaleY()), this.plate.prepareForExport(),
+                            d.draw(this.plate, f), this.removeChild(this.plate), this.plate = new Kg(this.village), this.plate.set_visible(na.showTitle), this.addChild(this.plate), this.layoutPlate());
+                        Sd.savePNG(d, this.village.name)
+                    }.bind(this), function (a) {
+                        w.showToast(a && a.message ? a.message : String(a))
+                    })
                 },
                 exportSVG: function () {
-                    var a = Ha.create(2 * this.village.viewW2, 2 * this.village.viewH2, x.colorGround[0]);
-                    Ha.substituteFont = na.fixFontNames;
-                    Ha.handleObject = qc.toSVG;
-                    var b = Ha.drawSprite(this);
-                    la.clearTransform(b);
-                    la.translate(b, -this.rect.get_left(), -this.rect.get_top());
-                    la.scale(b, 1 / this.map.get_scaleX(), 1 / this.map.get_scaleY());
-                    var c = Ha.getImports();
-                    a.root.addChild(c);
-                    c = Ha.getGradients();
-                    a.root.addChild(c);
-                    na.showShading && (c = qc.getFilterSVG(), a.root.addChild(c));
-                    a.root.addChild(b);
-                    Sd.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + mf.print(a.root), this.village.name + ".vg.svg", "image/svg+xml")
+                    return Sd.runBusy("Exporting SVG file...", function () {
+                        var a = Ha.create(2 * this.village.viewW2, 2 * this.village.viewH2, x.colorGround[0]);
+                        Ha.substituteFont = na.fixFontNames;
+                        Ha.handleObject = qc.toSVG;
+                        var b = Ha.drawSprite(this);
+                        la.clearTransform(b);
+                        la.translate(b, -this.rect.get_left(), -this.rect.get_top());
+                        la.scale(b, 1 / this.map.get_scaleX(), 1 / this.map.get_scaleY());
+                        var c = Ha.getImports();
+                        a.root.addChild(c);
+                        c = Ha.getGradients();
+                        a.root.addChild(c);
+                        na.showShading && (c = qc.getFilterSVG(), a.root.addChild(c));
+                        a.root.addChild(b);
+                        Sd.saveText('<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + mf.print(a.root), this.village.name + ".vg.svg", "image/svg+xml")
+                    }.bind(this), function (a) {
+                        w.showToast(a && a.message ? a.message : String(a))
+                    })
                 },
                 setShadows: function (a) {
                     this.layerShadows.set_visible(na.showShadows = a);
@@ -16336,6 +16177,7 @@ var $lime_init = function (E, u) {
                     f.addItem("Reroll village", r(this, this.rerollVillage));
                     f.addItem("Rename village...", r(this, this.rename));
                     f.addItem("View in 3D", r(this, this.onViewIn3D));
+                    f.addItem("Import...", r(this, this.onImport));
                     f.addSubmenu("Export as", d);
                     f.addItem("Permalink...", r(this, this.showURL));
 
@@ -16504,7 +16346,134 @@ var $lime_init = function (E, u) {
                         a.restoreVillage()
                     }))
                 },
-                onViewIn3D: function (inNewWindow = true) {
+                onImport: function () {
+                    var a = this,
+                        b = new Bg;
+                    b.addEventListener("select", function (c) {
+                        b.addEventListener("complete", r(a, a.onImportLoaded));
+                        b.load()
+                    });
+                    var c = [new gj("Map", "*.json;*.pb;")];
+                    b.browse(c)
+                },
+                onImportLoaded: function (a) {
+                    var b = this;
+                    Sd.runBusy("Importing map file...", function () {
+                        var c = Ka.__cast(a.target, Bg);
+                        var d = b.decodeImportFile(c.name, c.data);
+                        if ("mfcg" === d.generator) {
+                            b.forwardImportToMfcg(d);
+                            return
+                        }
+                        if ("vg" === d.generator || "village" === d.generator) {
+                            b.applyImportedVillage(d.blueprint);
+                            return
+                        }
+                        throw new Error("This file does not include Village or MFCG editor data.")
+                    }, function (c) {
+                        Qa.lastError = c;
+                        w.showToast(c && c.message ? c.message : String(c))
+                    })
+                },
+                decodeImportFile: function (a, b) {
+                    var c = null, d = DataGeo.bytesToUtf8Text(b);
+                    var f = null;
+                    try {
+                        c = JSON.parse(d);
+                        f = !0
+                    } catch (e) {
+                        f = !1
+                    }
+                    if (f) {
+                        var g = DataGeo.detectLegacyRootType(c);
+                        if (g != null && g !== DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, g);
+                        var h = null;
+                        null != c && "object" == typeof c && (h = c.embedProps != null ? c.embedProps : c.embedEditorPayload != null && c.embedEditorPayload.props != null ? c.embedEditorPayload.props : null);
+                        if (null == h) throw new Error("This format is too outdated and cannot be opened because it does not contain the necessary data.");
+                        return {
+                            generator: h != null ? h.generator : null,
+                            blueprint: h != null ? h.blueprint : null,
+                            rawType: "json",
+                            rawText: d
+                        }
+                    }
+                    var k = DataGeo.toUint8Array(b);
+                    if (null == k) throw new Error("Invalid data buffer.");
+                    var p = k;
+                    var l = null;
+                    try {
+                        l = FuncBin.importBin(k)
+                    } catch (m) {
+                    }
+                    if (null != l) {
+                        if (l.number != DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, l.number);
+                        p = new Uint8Array(l.buffer)
+                    }
+                    var n = null;
+                    try {
+                        n = DataProto.data.GeoObj.decode(p)
+                    } catch (q) {
+                    }
+                    if (null == n) {
+                        var g2 = this.stripLengthDelimited(p);
+                        if (null != g2) try {
+                            n = DataProto.data.GeoObj.decode(g2)
+                        } catch (r2) {
+                        }
+                    }
+                    if (null == n) throw new Error("An error occurred while parsing: file could not be recognized or decoded.");
+                    if (n.embedProps == null && n.embedEditorPayload == null) throw new Error("This format is too outdated and cannot be opened because it does not contain the necessary data.");
+                    var t = null;
+                    n.embedProps != null && Object.hasOwnProperty.call(n, "embedProps") && (t = DataGeo.protoStructToJs(n.embedProps));
+                    null == t && n.embedEditorPayload != null && n.embedEditorPayload.props != null && (t = DataGeo.protoStructToJs(n.embedEditorPayload.props));
+                    return {
+                        generator: t != null ? t.generator : null,
+                        blueprint: t != null ? t.blueprint : null,
+                        rawType: "proto",
+                        rawBytes: k
+                    }
+                },
+                stripLengthDelimited: function (a) {
+                    for (var b = 0, c = 0, d = 0; b < a.length && 35 > d;) {
+                        var f = a[b++];
+                        c |= (f & 127) << d;
+                        if (0 == (f & 128)) break;
+                        d += 7
+                    }
+                    if (!(0 >= b || b >= a.length || 0 >= c || b + c > a.length)) return a.subarray(b, b + c);
+                    return null
+                },
+                forwardImportToMfcg: function (a) {
+                    if ("proto" === a.rawType) {
+                        var b = a.rawBytes;
+                        var c = "", d = 0;
+                        for (; d < b.length;) {
+                            var f = d + 32768;
+                            f > b.length && (f = b.length);
+                            c += String.fromCharCode.apply(null, b.subarray(d, f));
+                            d = f
+                        }
+                        window.localStorage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", "p" + c)
+                    } else {
+                        window.localStorage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", "j" + a.rawText)
+                    }
+                    this.goToMfcg(!1)
+                },
+                applyImportedVillage: function (a) {
+                    if (null == a || "object" != typeof a) throw new Error("This file does not include Village editor data.");
+                    var b = null;
+                    Array.isArray(a.tags) ? b = a.tags : "string" == typeof a.tags && (b = a.tags.split(","));
+                    var c = new jc(a.seed || 0, b, a.width != null ? a.width : 0, a.height != null ? a.height : 0);
+                    a.treeSeed != null && (c.treeSeed = a.treeSeed);
+                    c.name = a.name != null ? a.name : null;
+                    c.pop = a.pop != null ? a.pop : 0;
+                    c.numbered = Array.isArray(a.numbered) ? a.numbered : [];
+                    c.varSeed = a.varSeed != null ? a.varSeed : 0;
+                    c.style = a.style != null ? a.style : null;
+                    null != c.style && x.setPalette(Rb.fromAsset(c.style));
+                    this.createVillage(c)
+                },
+                onViewIn3D: function (inNewWindow = false) {
                     try {
                         var a = this.village;
                         var b = Hh.getProto(a);
@@ -16519,7 +16488,7 @@ var $lime_init = function (E, u) {
                         }
 
                         window.localStorage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", "p" + d);
-                        this.goToViewer(inNewWindow, a.name);
+                        this.goToViewer(inNewWindow);
                     } catch (g) {
                         Qa.lastError = g;
                         w.showDialog(new ej("" + g));

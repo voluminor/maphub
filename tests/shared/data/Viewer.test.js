@@ -3,6 +3,7 @@ import {
     paletteObjFromLegacyJsonText,
     paletteLegacyJsonFromObj,
     decodePaletteFile,
+    paletteProtoBytesFromObj,
 } from "../../../src/js/shared/data/Viewer.js";
 
 const VALID_VIEWER_JSON = {
@@ -42,6 +43,37 @@ describe("Viewer: paletteObjFromLegacyJsonText", () => {
         expect(msg.colors).toBeTruthy();
         expect(msg.lighting).toBeTruthy();
         expect(msg.shapes).toBeTruthy();
+    });
+
+    it("accepts proto-like palette objects", () => {
+        const protoLike = {
+            colors: {
+                ground: { r: 1, g: 2, b: 3 },
+                fields: { r: 4, g: 5, b: 6 },
+                greens: { r: 7, g: 8, b: 9 },
+                foliage: { r: 10, g: 11, b: 12 },
+                roads: { r: 13, g: 14, b: 15 },
+                water: { r: 16, g: 17, b: 18 },
+                walls1: { r: 19, g: 20, b: 21 },
+                walls2: { r: 22, g: 23, b: 24 },
+                roofs1: { r: 25, g: 26, b: 27 },
+                roofs2: { r: 28, g: 29, b: 30 },
+            },
+            lighting: {
+                sky1: { r: 31, g: 32, b: 33 },
+                sky2: { r: 34, g: 35, b: 36 },
+                sun: { r: 37, g: 38, b: 39 },
+                windows: { r: 40, g: 41, b: 42 },
+                sunPos: 30,
+                ambience: 0.4,
+                lighted: 0.6,
+            },
+            shapes: { roofedTowers: true, towers: 1, treeShape: 2, pitch: 1.2 },
+        };
+        const msg = paletteObjFromLegacyJsonText(JSON.stringify(protoLike));
+        expect(msg.colors.roofs1).toEqual({ r: 25, g: 26, b: 27 });
+        expect(msg.lighting.sunPos).toBeCloseTo(30);
+        expect(msg.shapes.roofedTowers).toBe(true);
     });
 
     it("parses 10 main colors", () => {
@@ -174,6 +206,25 @@ describe("Viewer: import/export roundtrip", () => {
         const msg2 = paletteObjFromLegacyJsonText(exp1);
         const exp2 = paletteLegacyJsonFromObj(msg2);
         expect(exp2).toBe(exp1);
+    });
+});
+
+// ─── paletteProtoBytesFromObj ───────────────────────────────────
+
+describe("Viewer: paletteProtoBytesFromObj", () => {
+    it("returns ArrayBuffer", () => {
+        const msg = paletteObjFromLegacyJsonText(validViewerJsonText());
+        const bytes = paletteProtoBytesFromObj(msg);
+        expect(bytes).toBeInstanceOf(ArrayBuffer);
+        expect(bytes.byteLength).toBeGreaterThan(0);
+    });
+
+    it("proto bytes decode back via decodePaletteFile", () => {
+        const msg = paletteObjFromLegacyJsonText(validViewerJsonText());
+        const bytes = paletteProtoBytesFromObj(msg);
+        const decoded = decodePaletteFile("test.bin", bytes);
+        expect(decoded.colors.water).toEqual(msg.colors.water);
+        expect(decoded.lighting.ambience).toBeCloseTo(msg.lighting.ambience);
     });
 });
 

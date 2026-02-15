@@ -10,6 +10,7 @@ import * as DataProto from "./struct/data.js";
 import * as FuncBin from "./shared/data/bin-verify.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_DWELLINGS}}`));
+const isFrame = typeof window.parent.pingFrame === "function"
 
 var $lime_init = function (K, v) {
     var B = function (v, B) {
@@ -5998,7 +5999,27 @@ var $lime_init = function (K, v) {
                             Fa = a.charAt(h >> 2);
                         0 != (E.parseInt("0x" + Fa) >> (h & 3) & 1) && d.push(new Hf(l, f))
                     }
-                return Gf.cloud2gridNArea(d)
+                if (0 == d.length) return null;
+                var r = Gf.cloud2gridNArea(d);
+                if (null == r) return null;
+                if (!r.grid.isConnected(r.area)) {
+                    var t = r.area.slice(),
+                        u = null;
+                    for (; 0 < t.length;) {
+                        var y = md.fill(r.grid, t, t[0]);
+                        (null == u || y.length > u.length) && (u = y);
+                        for (var p = 0; p < y.length;) {
+                            var n = y[p++];
+                            M.remove(t, n)
+                        }
+                    }
+                    if (null != u && 0 < u.length) {
+                        d = [];
+                        for (p = 0; p < u.length;) n = u[p++], d.push(new Hf(n.j + r.trimx, n.i + r.trimy));
+                        r = Gf.cloud2gridNArea(d)
+                    }
+                }
+                return r
             };
             Cc.encodeBitmap = function (a) {
                 var b = a[0].length,
@@ -6558,6 +6579,111 @@ var $lime_init = function (K, v) {
             h["dwellings.model.JsonExporter"]=sb;
             sb.__name__="dwellings.model.JsonExporter";
             sb.grid=null;
+            sb._busyOverlay = {
+                active: !1,
+                el: null,
+                textEl: null,
+                listeners: null,
+                ensure: function () {
+                    if (null != this.el) return;
+                    var a = window.document;
+                    var b = a.createElement("div");
+                    b.id = "dwellings-busy-overlay";
+                    b.style.cssText = "position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,0.55);color:#fff;z-index:2147483647;pointer-events:auto;";
+                    var c = a.createElement("div");
+                    c.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 22px;border-radius:10px;background:rgba(0,0,0,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:80vw;";
+                    var d = a.createElement("div");
+                    d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:dwellings-busy-spin 0.8s linear infinite;";
+                    var f = a.createElement("div");
+                    f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
+                    f.textContent = "Please wait...";
+                    c.appendChild(d);
+                    c.appendChild(f);
+                    b.appendChild(c);
+                    this.el = b;
+                    this.textEl = f;
+                    (a.body || a.documentElement).appendChild(b);
+                    if (null == a.getElementById("dwellings-busy-style")) {
+                        var h = a.createElement("style");
+                        h.id = "dwellings-busy-style";
+                        h.textContent = "@keyframes dwellings-busy-spin{to{transform:rotate(360deg);}}";
+                        (a.head || a.documentElement).appendChild(h)
+                    }
+                },
+                attach: function () {
+                    if (null != this.listeners) return;
+                    var a = this;
+                    var b = function (c) {
+                        if (!a.active) return;
+                        c.preventDefault();
+                        c.stopPropagation();
+                        return !1
+                    };
+                    var c = {
+                        capture: !0,
+                        passive: !1
+                    };
+                    var d = window.document;
+                    var f = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel", "touchstart", "touchmove", "touchend", "touchcancel", "pointerdown", "pointermove", "pointerup"];
+                    var h = 0;
+                    for (; h < f.length;) d.addEventListener(f[h++], b, c);
+                    this.listeners = {
+                        handler: b,
+                        options: c,
+                        events: f
+                    };
+                    try {
+                        null != d.activeElement && d.activeElement.blur()
+                    } catch (k) {
+                    }
+                },
+                detach: function () {
+                    if (null == this.listeners) return;
+                    var a = window.document;
+                    var b = this.listeners.events;
+                    var c = this.listeners.handler;
+                    var d = this.listeners.options;
+                    var f = 0;
+                    for (; f < b.length;) a.removeEventListener(b[f++], c, d);
+                    this.listeners = null
+                },
+                show: function (a) {
+                    this.ensure();
+                    this.textEl.textContent = null != a && "" !== a ? a : "Please wait...";
+                    this.el.style.display = "flex";
+                    this.active = !0;
+                    this.attach()
+                },
+                hide: function () {
+                    if (null == this.el) return;
+                    this.active = !1;
+                    this.el.style.display = "none";
+                    this.detach()
+                }
+            };
+            sb.runBusy = function (a, b, c) {
+                sb._busyOverlay.show(a);
+                var d = function () {
+                    try {
+                        b()
+                    } catch (f) {
+                        if ("function" == typeof c) {
+                            c(f);
+                            return
+                        }
+                        throw f
+                    } finally {
+                        sb._busyOverlay.hide()
+                    }
+                };
+                if (null != window.requestAnimationFrame) {
+                    window.requestAnimationFrame(function () {
+                        window.requestAnimationFrame(function () {
+                            window.setTimeout(d, 0)
+                        })
+                    })
+                } else window.setTimeout(d, 0)
+            };
             sb.exportProto=function(a){
                 sb.grid=a.floors[0].grid;
                 return sb.house2proto(a)
@@ -6578,7 +6704,7 @@ var $lime_init = function (K, v) {
                 a.basement!=null&&b.push(sb.plan2proto(a.basement,a.chimneys));
                 var c=new DataProto.data.DwellingsObj({floors:b,exit:sb.edge2proto(a.floors[0].entrance.door)});
                 a.floors[0].spiral!=null&&(c.spiral=sb.edge2proto(a.floors[0].spiral.entrance));
-                a.name!=null&&a.name!="";
+                a.name!=null&&a.name!=""&&(c.embedName=a.name);
                 var e=ib.get("architecture");
                 if(e!=null){var f=DataProto.data.DwellingsArchitectureType[e];f!==void 0&&(c.embedArchitecture=f)}
                 return c
@@ -6709,6 +6835,308 @@ var $lime_init = function (K, v) {
             sb.area2data=function(a){
                 for(var b=[],c=0;c<a.length;){var d=a[c];++c,b.push(sb.cell2data(d))}
                 return b
+            };
+            sb.json2dir=function(a){
+                if(a==qa.NORTH||a==qa.SOUTH||a==qa.EAST||a==qa.WEST)return a;
+                if(a==null)return null;
+                if(typeof a=="number"){
+                    return a==DataProto.data.DwellingsDirectionType.n?qa.NORTH:
+                        a==DataProto.data.DwellingsDirectionType.s?qa.SOUTH:
+                            a==DataProto.data.DwellingsDirectionType.e?qa.EAST:
+                                a==DataProto.data.DwellingsDirectionType.w?qa.WEST:null
+                }
+                var b=(""+a).toLowerCase();
+                return b=="n"||b=="north"||b=="direction_type_unspecified"?qa.NORTH:
+                    b=="s"||b=="south"?qa.SOUTH:
+                        b=="e"||b=="east"?qa.EAST:
+                            b=="w"||b=="west"?qa.WEST:null
+            };
+            sb.json2doorType=function(a){
+                if(a==null)return null;
+                if(a==ad.NULL||a==ad.DOORWAY||a==ad.REGULAR)return a;
+                if(typeof a=="number")return a==1?ad.NULL:a==2?ad.DOORWAY:a==3?ad.REGULAR:null;
+                var b=(""+a).toLowerCase();
+                return b=="null"||b=="door_type_unspecified"?ad.NULL:
+                    b=="doorway"?ad.DOORWAY:
+                        b=="regular"?ad.REGULAR:null
+            };
+            sb._typeFromId=function(a){
+                if(a==null)return null;
+                var b=(""+a).toLowerCase();
+                for(var c=Object.keys(Z),d=0;d<c.length;){
+                    var g=c[d++],f=Z[g];
+                    if(f!=null&&typeof f=="object"&&f.__class__==Z&&f.name!=null&&(""+f.name).toLowerCase()==b)return f
+                }
+                return null
+            };
+            sb._collectBounds=function(a,b){
+                if(a==null)return;
+                var c=a.i,d=a.j;
+                c<b.minI&&(b.minI=c);
+                d<b.minJ&&(b.minJ=d);
+                c>b.maxI&&(b.maxI=c);
+                d>b.maxJ&&(b.maxJ=d)
+            };
+            sb._edgeFromJson=function(a,b,c,d){
+                var g=a.cell;
+                var f=d.cell(g.i-b,g.j-c);
+                var e=sb.json2dir(a.dir);
+                if(f==null||e==null)return null;
+                return d.cellNdir2edge(f,e)
+            };
+            sb._cellFromJson=function(a,b,c,d){
+                return d.cell(a.i-b,a.j-c)
+            };
+            sb.importFromFile=function(a,b){
+                var u8=b instanceof Uint8Array?b:(b.b instanceof Uint8Array?b.b.subarray(0,b.length):b);
+                var msg=DataDwellings.decodeDwellingsFile(a,u8);
+                return sb.importFromProtoJson(msg,a)
+            };
+            sb.importFromProtoJson=function(a,b){
+                if(a==null||a.floors==null||a.floors.length==0)throw new Error("empty");
+                var embedName=a.embedName;
+                console.log(embedName, a);
+                if(embedName==null||(""+embedName).trim()=="")throw new Error("Your schema is outdated and import cannot be performed.");
+                var arch=a.embedArchitecture;
+                if(arch!=null){
+                    var archName=typeof arch=="number"?DataProto.data.DwellingsArchitectureType[arch]:""+arch;
+                    archName=archName!=null?(""+archName).toLowerCase():null;
+                    archName!=null&&archName!=""&&archName!="architecture_unspecified"&&hb.setStyle(archName)
+                }
+
+
+                var c={minI:Infinity,minJ:Infinity,maxI:-Infinity,maxJ:-Infinity};
+                var d=0,g=a.floors;
+                for(d=0;d<g.length;){
+                    var f=g[d++];
+                    var e=f.rooms||[];
+                    for(var k=0;k<e.length;){
+                        var q=e[k++].cells||[];
+                        for(var l=0;l<q.length;)sb._collectBounds(q[l++],c)
+                    }
+                    e=f.doors||[];
+                    for(k=0;k<e.length;)sb._collectBounds(e[k++].edge.cell,c);
+                    e=f.windows||[];
+                    for(k=0;k<e.length;)sb._collectBounds(e[k++].cell,c);
+                    e=f.stairs||[];
+                    for(k=0;k<e.length;)sb._collectBounds(e[k++].cell,c)
+                }
+                a.exit!=null&&sb._collectBounds(a.exit.cell,c);
+                a.spiral!=null&&sb._collectBounds(a.spiral.cell,c);
+                if(!isFinite(c.minI)||!isFinite(c.minJ))throw new Error("bad bounds");
+
+                var mi=c.minI,mj=c.minJ;
+                var grid=new Gf(c.maxJ-mj+1,c.maxI-mi+1);
+
+                var house=Object.create(fd.prototype);
+                var bp=Object.create(Xd.prototype);
+                bp.seed=0;
+                bp.tags=[];
+                bp.nFloors=a.floors!=null?a.floors.length:0;
+                bp.plan=null;
+                bp.width=0;
+                bp.height=0;
+                bp.name=null;
+                house.bp=bp;
+                house.name=(""+embedName).trim();
+                house.floors=[];
+                house.basement=null;
+                house.rooms=[];
+                house.elevations=null;
+                house.chimneys=new Ba;
+                house.stairCells=new Ba;
+
+                var floors=[],basement=null,stairsByKey={};
+
+                for(var i=0;i<a.floors.length;i++){
+                    var fp=a.floors[i];
+                    var level=fp.level|0;
+
+                    var area=[],seen={};
+                    var rms=fp.rooms||[];
+                    for(var r=0;r<rms.length;r++){
+                        var cells=rms[r].cells||[];
+                        for(var ci=0;ci<cells.length;ci++){
+                            var cc=sb._cellFromJson(cells[ci],mi,mj,grid);
+                            if(cc==null)continue;
+                            var key=cc.i+","+cc.j;
+                            if(seen[key])continue;
+                            seen[key]=!0;
+                            area.push(cc)
+                        }
+                    }
+                    if(area.length==0)continue;
+
+                    var plan=Object.create(Pb.prototype);
+                    plan.house=house;
+                    plan.grid=grid;
+                    plan.area=area;
+                    plan.contour=grid.outline(area);
+                    plan.rooms=[];
+                    plan.stairs=[];
+                    plan.innerWalls=[];
+                    plan.windows=[];
+                    plan.entrance=null;
+                    plan.spiral=null;
+                    plan.stairwell=null;
+                    plan.__importLevel=level;
+                    var chim=fp.embedChimneys;
+                    if(chim!=null&&chim.length>0){
+                        for(var ci2=0;ci2<chim.length;ci2++){
+                            var chcell=sb._cellFromJson(chim[ci2],mi,mj,grid);
+                            chcell!=null&&house.chimneys.set(chcell,level)
+                        }
+                    }
+
+                    for(r=0;r<rms.length;r++){
+                        var rr=rms[r];
+                        var ra=[],rseen={};
+                        var rc=rr.cells||[];
+                        for(ci=0;ci<rc.length;ci++){
+                            cc=sb._cellFromJson(rc[ci],mi,mj,grid);
+                            if(cc==null)continue;
+                            key=cc.i+","+cc.j;
+                            if(rseen[key])continue;
+                            rseen[key]=!0;
+                            ra.push(cc)
+                        }
+                        if(ra.length==0)continue;
+                        var contour=grid.outline(ra);
+                        var room=new Ck(plan,contour);
+                        room.area=ra;
+                        room.narrow=ra;
+                        room.name=rr.name!=null?rr.name:null;
+                        var rt=sb._typeFromId(rr.embedTypeId);
+                        rt!=null&&(room.type=rt);
+                        var el=rr.embedLight;
+                        if(el!=null&&el.pos!=null){
+                            var lp=el.pos;
+                            room.light=new Dc(new F(lp.x,lp.y),el.radius,el.power);
+                            room.light.on=el.on!=null?el.on:!0
+                        }
+                        var dec=rr.embedDecor;
+                        if(dec!=null&&dec.length>0){
+                            room.clutter=new Hd(room);
+                            var shapes=[];
+                            for(var gi=0;gi<dec.length;gi++){
+                                var polysObj=dec[gi].polygons||[];
+                                var polys=[];
+                                for(var pi=0;pi<polysObj.length;pi++){
+                                    var ptsObj=polysObj[pi].points||[];
+                                    var pts=[];
+                                    for(var ti=0;ti<ptsObj.length;ti++){
+                                        var pt=ptsObj[ti];
+                                        pts.push(new F(pt.x,pt.y))
+                                    }
+                                    polys.push(pts)
+                                }
+                                shapes.push(polys)
+                            }
+                            room.clutter.shapes=shapes
+                        }
+                        var props=rr.embedProps;
+                        if(props!=null&&props.length>0){
+                            for(var pp=0;pp<props.length;pp++){
+                                var pr=props[pp];
+                                var kind=pr.kind;
+                                typeof kind=="number"&&(kind=DataProto.data.DwellingsPropType[kind]);
+                                kind=kind!=null?(""+kind).toUpperCase():null;
+                                if(kind=="ALTAR"){
+                                    var wall=pr.wall!=null?sb._edgeFromJson(pr.wall,mi,mj,grid):null;
+                                    wall!=null&&room.props.add(new Xh(wall))
+                                }else if(kind=="STATUE"){
+                                    var stp=pr.pos;
+                                    stp!=null&&room.props.add(new ng(new F(stp.x,stp.y)))
+                                }else if(kind=="CURTAIN"){
+                                    var fe=pr.fromEdge!=null?sb._edgeFromJson(pr.fromEdge,mi,mj,grid):null;
+                                    var te=pr.toEdge!=null?sb._edgeFromJson(pr.toEdge,mi,mj,grid):null;
+                                    fe!=null&&te!=null&&room.props.add(new di(fe,te))
+                                }else if(kind=="BED"){
+                                    room.props.add(new Gk())
+                                }
+                            }
+                            room.props.update()
+                        }
+                        plan.rooms.push(room)
+                    }
+
+                    var wins=fp.windows||[];
+                    for(r=0;r<wins.length;r++){
+                        var we=sb._edgeFromJson(wins[r],mi,mj,grid);
+                        we!=null&&plan.windows.push(we)
+                    }
+
+                    var doors=fp.doors||[];
+                    for(r=0;r<doors.length;r++){
+                        var de=sb._edgeFromJson(doors[r].edge,mi,mj,grid);
+                        if(de==null)continue;
+                        var r1=plan.getRoom(grid.edge2cell(de));
+                        var rev=grid.edges.h[de.b.__id__].h[de.a.__id__];
+                        var r2=rev!=null?plan.getRoom(grid.edge2cell(rev)):null;
+                        if(r1!=null&&r2!=null&&r1!=r2){
+                            var door=r1.link(r2,de);
+                            door!=null&&(door.type=sb.json2doorType(doors[r].type))
+                        }
+                    }
+
+                    var st=fp.stairs||[];
+                    for(r=0;r<st.length;r++){
+                        var sc=sb._cellFromJson(st[r].cell,mi,mj,grid);
+                        var sd2=sb.json2dir(st[r].dir);
+                        var isTrap=st[r].embedTrapdoor===true;
+                        if(sc==null||(!isTrap&&sd2==null))continue;
+                        var stair=new ff(plan,sc,sd2);
+                        stair.__lvl=level;
+                        key=sc.i+","+sc.j;
+                        stairsByKey[key]==null&&(stairsByKey[key]=[]);
+                        stairsByKey[key].push(stair)
+                    }
+
+                    level==-1?basement=plan:floors.push({lvl:level,plan:plan})
+                }
+
+                floors.sort(function(a,b){return a.lvl-b.lvl});
+                for(i=0;i<floors.length;i++)house.floors.push(floors[i].plan);
+                house.basement=basement;
+
+                for(i=0;i<house.floors.length;i++){
+                    var pr=house.floors[i].rooms;
+                    for(r=0;r<pr.length;r++)house.rooms.push(pr[r])
+                }
+                if(house.basement!=null){
+                    pr=house.basement.rooms;
+                    for(r=0;r<pr.length;r++)house.rooms.push(pr[r])
+                }
+
+                var gf=null;
+                for(i=0;i<floors.length;i++)if(floors[i].lvl==0){gf=floors[i].plan;break}
+                gf==null&&(gf=house.floors.length?house.floors[0]:null);
+
+                if(gf!=null&&a.exit!=null){
+                    var ex=sb._edgeFromJson(a.exit,mi,mj,grid);
+                    ex!=null&&(gf.entrance={door:ex,landing:grid.edge2cell(ex)})
+                }
+
+                if(a.spiral!=null){
+                    var sp=sb._edgeFromJson(a.spiral,mi,mj,grid);
+                    if(sp!=null){
+                        for(i=0;i<house.floors.length;i++){
+                            var pl=house.floors[i];
+                            var exit=sp;
+                            var idx=pl.contour.indexOf(sp);
+                            idx!=-1&&(exit=pl.contour[(idx-1+pl.contour.length)%pl.contour.length]);
+                            pl.spiral={entrance:sp,exit:exit,landing:grid.edge2cell(sp)}
+                        }
+                    }
+                }
+
+                for(var kk in stairsByKey){
+                    var arr=stairsByKey[kk];
+                    arr.sort(function(a,b){return a.__lvl-b.__lvl});
+                    for(i=0;i<arr.length-1;i++)arr[i].link(arr[i+1])
+                }
+
+                return house
             };
             var Md = function () {
             };
@@ -9130,6 +9558,40 @@ var $lime_init = function (K, v) {
                         a.reset(Xd.fromURL())
                     }))
                 },
+                importPlan: function () {
+                    var a = this, b = new Zg;
+                    b.addEventListener("select", function () { b.load(); });
+                    b.addEventListener("complete", function (c) { a.onPlanLoaded(Ua.__cast(c.target, Zg)); });
+                    b.browse([new xk("Dwellings", "*.json;*.pb;")])
+                },
+                onPlanLoaded: function (a) {
+                    var b = this;
+                    sb.runBusy("Importing dwelling file...", function () {
+                        var c = sb.importFromFile(a.name, a.data);
+                        b.applyImportedHouse(c)
+                    }, function (c) {
+                        Ha.lastError = c;
+                        var msg = c && c.message || "" + c;
+                        if (msg === "empty") msg = "The file is empty or contains no floor data.";
+                        else if (msg === "bad bounds") msg = "The file contains invalid geometry data.";
+                        console.error(msg);
+                        ma.showToast(msg)
+                    })
+                },
+                applyImportedHouse: function (a) {
+                    fd.inst = a;
+                    this.house = a;
+                    this.permalinkDisabled=!1;
+                    const url = new URL(window.location);
+                    url.search = '?import_mode=1';
+                    window.history.replaceState({}, document.title, url);
+                    this.house.updateProps();
+                    sd.curFloor = 0;
+                    this.floor.update(this.house);
+                    this.permalinkDisabled=!0;
+                    this.floor.select(sd.curFloor);
+                    this.updateView()
+                },
                 applyColors: function (a) {
                     J.setPalette(a, !0);
                     ac.setUIColors([J.colorPaper, J.colorFloor], J.colorInk);
@@ -9530,10 +9992,24 @@ var $lime_init = function (K, v) {
                     this.updateView()
                 },
                 exportAsPNG: function () {
-                    zb.facadeAsPNG(this.house, this.elevation, this.view)
+                    var a = this;
+                    sb.runBusy("Exporting PNG file...", function () {
+                        zb.facadeAsPNG(a.house, a.elevation, a.view)
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        ma.showToast(msg)
+                    })
                 },
                 exportAsSVG: function () {
-                    zb.facadeAsSVG(this.house, this.elevation, this.view)
+                    var a = this;
+                    sb.runBusy("Exporting SVG file...", function () {
+                        zb.facadeAsSVG(a.house, a.elevation, a.view)
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        ma.showToast(msg)
+                    })
                 },
                 applyColors: function (a) {
                     ub.prototype.applyColors.call(this, a);
@@ -9667,10 +10143,11 @@ var $lime_init = function (K, v) {
 
                     a.addItem("Elevation", m(this, this.switchView));
                     a.addItem("Blueprint", m(this, this.switchToBlueprint));
-                    var g = new Ac;
-                    this.fillExportMenu(g);
-                    0 < g.items.length && a.addSubmenu("Export as", g);
-                    a.addItem("Permalink...", m(this, this.onPermalink));
+                    var exportMenu = new Ac;
+                    this.fillExportMenu(exportMenu);
+                    a.addItem("Import...", m(this, this.importPlan));
+                    0 < g.items.length && a.addSubmenu("Export as", exportMenu);
+                    a.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
 
                     a.addSeparator();
                     a.addItem("Parameters...", m(this, this.showParams));
@@ -9684,11 +10161,28 @@ var $lime_init = function (K, v) {
                     var b =
                         this;
                     ub.prototype.fillExportMenu.call(this, a);
-                    a.addItem("JSON", function () {sb.export(b.house)});
-                    a.addItem("PROTO",function(){sb.exportAsProto(b.house)});
+                    a.addItem("JSON", function () {
+                        sb.runBusy("Exporting JSON file...", function () {
+                            sb.export(b.house)
+                        }, function (c) {
+                            var msg = c && c.message || "" + c;
+                            console.error(msg);
+                            ma.showToast(msg)
+                        })
+                    });
+                    a.addItem("PROTO", function () {
+                        sb.runBusy("Exporting PROTO file...", function () {
+                            sb.exportAsProto(b.house)
+                        }, function (c) {
+                            var msg = c && c.message || "" + c;
+                            console.error(msg);
+                            ma.showToast(msg)
+                        })
+                    });
                     a.addItem("Advanced...", m(this, this.multiExport))
                 },
                 reset: function (a) {
+                    this.permalinkDisabled=!1;
                     ub.prototype.reset.call(this, a);
                     this.floor.update(this.house);
                     this.floor.select(sd.curFloor);
@@ -9911,12 +10405,25 @@ var $lime_init = function (K, v) {
                     }
                 },
                 exportAsPNG: function () {
-                    zb.planAsPNG(this.house, this.map, sd.curFloor);
-                    this.map.updateLabels(this.house)
+                    var a = this;
+                    sb.runBusy("Exporting PNG file...", function () {
+                        zb.planAsPNG(a.house, a.map, sd.curFloor);
+                        a.map.updateLabels(a.house)
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        ma.showToast(msg)
+                    })
                 },
                 exportAsSVG: function () {
-                    zb.planAsSVG(this.house, this.map,
-                        sd.curFloor)
+                    var a = this;
+                    sb.runBusy("Exporting SVG file...", function () {
+                        zb.planAsSVG(a.house, a.map, sd.curFloor)
+                    }, function (b) {
+                        var msg = b && b.message || "" + b;
+                        console.error(msg);
+                        ma.showToast(msg)
+                    })
                 },
                 multiExport: function () {
                     null == ma.findForm(sc) && ma.showDialog(new sc(this.house, m(this, this.updateView)))

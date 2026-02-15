@@ -10,7 +10,70 @@ import * as DataViewer from "./shared/data/Viewer.js";
 import * as DataProto from "./struct/data.js";
 
 const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSON_VIEWER}}`));
-let GetParamName = new URLSearchParams(window.location.search).get('name') || '';
+const baseTitle = document.title;
+let mapName = "";
+let isLockedMap = false;
+let returnBuffer = null;
+let returnProps = null;
+const setMapName = (name) => {
+    mapName = name || "";
+    document.title = mapName !== "" ? `${baseTitle} | ${mapName}` : baseTitle;
+    if (params && params.meta && params.meta.about && params.meta.about.params) {
+        if (mapName !== "") {
+            params.meta.about.params["Map Name"] = mapName;
+        } else {
+            delete params.meta.about.params["Map Name"];
+        }
+    }
+};
+const isFrame = typeof window.parent.pingFrame === "function"
+const getReturnPropsFromBuffer = (buffer) => {
+    if (null == buffer || buffer.length < 2) return null;
+    const type = buffer.charAt(0);
+    const payload = buffer.substring(1);
+    if ("j" === type) {
+        try {
+            const obj = JSON.parse(payload);
+            if (obj && "object" == typeof obj) {
+                return obj.embedProps != null ? obj.embedProps : obj.embedEditorPayload != null && obj.embedEditorPayload.props != null ? obj.embedEditorPayload.props : null;
+            }
+        } catch (e) {
+        }
+        return null;
+    }
+    if ("p" === type) {
+        try {
+            const bytes = new Uint8Array(payload.length);
+            for (let i = 0; i < payload.length; i++) bytes[i] = payload.charCodeAt(i) & 255;
+            const geo = DataProto.data.GeoObj.decode(bytes);
+            let props = null;
+            geo.embedProps != null && Object.hasOwnProperty.call(geo, "embedProps") && (props = DataGeo.protoStructToJs(geo.embedProps));
+            null == props && geo.embedEditorPayload != null && geo.embedEditorPayload.props != null && (props = DataGeo.protoStructToJs(geo.embedEditorPayload.props));
+            return props;
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+};
+const blueprintToQuery = (blueprint) => {
+    if (null == blueprint || "object" != typeof blueprint) return "";
+    const search = new URLSearchParams();
+    null != blueprint.seed && search.set("seed", "" + blueprint.seed);
+    if (null != blueprint.tags) {
+        const tags = Array.isArray(blueprint.tags) ? blueprint.tags.join(",") : blueprint.tags;
+        null != tags && "" !== tags && search.set("tags", tags);
+    }
+    null != blueprint.width && 0 != blueprint.width && search.set("width", "" + blueprint.width);
+    null != blueprint.height && 0 != blueprint.height && search.set("height", "" + blueprint.height);
+    null != blueprint.treeSeed && null != blueprint.seed && blueprint.treeSeed != blueprint.seed && search.set("trees", "" + blueprint.treeSeed);
+    null != blueprint.name && "" !== blueprint.name && search.set("name", "" + blueprint.name);
+    null != blueprint.pop && 0 != blueprint.pop && search.set("pop", "" + blueprint.pop);
+    null != blueprint.varSeed && 0 != blueprint.varSeed && search.set("roads", "" + blueprint.varSeed);
+    null != blueprint.numbered && 0 < blueprint.numbered.length && search.set("marked", Array.isArray(blueprint.numbered) ? blueprint.numbered.toString() : "" + blueprint.numbered);
+    const query = search.toString();
+    return "" !== query ? "?" + query : "";
+};
 
 if (params !== null) (function (S, u) {
     S.lime = S.lime || {};
@@ -5480,11 +5543,18 @@ if (params !== null) (function (S, u) {
                     a = this._vertexData.get_length() / 13 | 0;
                     a != this._numVertices && this.disposeVertexBuffers(this._vertexBuffer);
                     this._numVertices = a;
-                    if (0 == this._numVertices) throw new Fa("Bad data: geometry can't have zero triangles");
+                    if (0 == this._numVertices) {
+                        this._activeBuffer = null;
+                        this._activeContext = null;
+                        this._activeDataInvalid = !1;
+                        this.invalidateBounds();
+                        return
+                    }
                     this.invalidateBuffers(this._vertexDataInvalid);
                     this.invalidateBounds()
                 },
                 activateVertexBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c = b._stage3DIndex,
                         d = b._context3D;
                     c != this._contextIndex && this.updateActiveBuffer(c);
@@ -5493,6 +5563,7 @@ if (params !== null) (function (S, u) {
                     d.setVertexBufferAt(a, this._activeBuffer, 0, 3)
                 },
                 activateUVBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c = b._stage3DIndex,
                         d = b._context3D;
                     this._uvsDirty && this._autoGenerateUVs && (this._vertexData = this.updateDummyUVs(this._vertexData), this.invalidateBuffers(this._vertexDataInvalid));
@@ -5502,6 +5573,7 @@ if (params !== null) (function (S, u) {
                     d.setVertexBufferAt(a, this._activeBuffer, 9, 2)
                 },
                 activateSecondaryUVBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c = b._stage3DIndex,
                         d = b._context3D;
                     c != this._contextIndex && this.updateActiveBuffer(c);
@@ -5511,10 +5583,12 @@ if (params !== null) (function (S, u) {
                         11, 2)
                 },
                 uploadData: function (a) {
+                    if (0 == this._numVertices) return;
                     this._activeBuffer.uploadFromVector(this._vertexData, 0, this._numVertices);
                     this._vertexDataInvalid.set(a, this._activeDataInvalid = !1)
                 },
                 activateVertexNormalBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c = b._stage3DIndex,
                         d = b._context3D;
                     c != this._contextIndex && this.updateActiveBuffer(c);
@@ -5523,6 +5597,7 @@ if (params !== null) (function (S, u) {
                     d.setVertexBufferAt(a, this._activeBuffer, 3, 3)
                 },
                 activateVertexTangentBuffer: function (a, b) {
+                    if (0 == this._numVertices) return;
                     var c =
                             b._stage3DIndex,
                         d = b._context3D;
@@ -15446,7 +15521,7 @@ if (params !== null) (function (S, u) {
 
                 var d = [
                     new Ke("Load", p(this, this.onLoad)),
-                    new Ke("Apply", function () {if (GetParamName === "") {a(c.getPalette());}}),
+                    new Ke("Apply", function () {a(c.getPalette());}),
                     exportBtn,
                 ];
                 if (null != b) {
@@ -15493,9 +15568,7 @@ if (params !== null) (function (S, u) {
                     })
                 },
                 onEnter: function () {
-                    if (GetParamName === "") {
-                        this.onApply(this.getPalette());
-                    }
+                    this.onApply(this.getPalette());
                 },
                 layout: function () {
                     null != this.tabs && this.tabs.layout();
@@ -16647,7 +16720,7 @@ if (params !== null) (function (S, u) {
             Oe.onDrop = function (a) {
                 a.preventDefault();
                 a.stopPropagation();
-                if (0 < a.dataTransfer.files.length && GetParamName == "") {
+                if (0 < a.dataTransfer.files.length && !isLockedMap) {
                     var b = a.dataTransfer.files[0],
                         c = new FileReader;
                     c.onload = function (a) {
@@ -17291,8 +17364,6 @@ if (params !== null) (function (S, u) {
                         h = Math.sqrt(kd.area(e)) / 2;
                         var r = kd.center(e).get_length() / f;
                         h *= 1 + Math.pow(1 - r, 2);
-                        100 < h && console.log(
-                            e);
                         Ka.gableRoofs && 0 < aa.pitch ? Rg.add(this.buildings.fa, e, h, aa.pitch) : Pf.add(this.buildings.fa, e, h);
                         this.buildings.manage()
                     }
@@ -17651,6 +17722,10 @@ if (params !== null) (function (S, u) {
                 var n = Math.floor((h - 2 * g + C) / (.8 + C)),
                     l = Math.floor((r - k - q + m) / (1.2 + m));
                 if (!isFinite(n) || !isFinite(l) || n < 1 || l < 1) {
+                    ia.addWindowlessWall(a, b, c, d, e, f);
+                    return;
+                }
+                if (n > 200 || l > 200 || n * l > 2000) {
                     ia.addWindowlessWall(a, b, c, d, e, f);
                     return;
                 }
@@ -18151,7 +18226,7 @@ if (params !== null) (function (S, u) {
             });
             var bc = function (a, b) {
                 this.scale = 1;
-                this.name = (new Yc(a)).file;
+                this.name = b != null && b.name != null && b.name !== "" ? b.name : (new Yc(a)).file;
                 bc.points = [];
                 this.buildings = [];
                 this.walls = [];
@@ -18455,19 +18530,55 @@ if (params !== null) (function (S, u) {
                     if (null == c) return this.thicken(this.getMultiPolygon(a), b);
                     switch (c) {
                         case DataProto.data.GeoType[DataProto.data.GeoType.FeatureCollection]:
-                            a = a.features;
-                            c = [];
-                            for (b = 0; b < a.length;) {
-                                var d = a[b];
-                                ++b;
-                                c.push(new lf(this.getPolygon(d.geometry), d.width))
+                            var features = a.features || [];
+                            var out = [];
+                            for (var i = 0; i < features.length; i++) {
+                                var f = features[i];
+                                if (!f || !f.geometry) {
+                                    console.warn("Skip bad polygon feature:", f);
+                                    continue;
+                                }
+                                var poly = null;
+                                try {
+                                    poly = this.getPolygon(f.geometry)
+                                } catch (err) {
+                                    console.warn("Skip bad polygon feature:", f, err);
+                                    continue;
+                                }
+                                if (!poly || poly.length < 3) {
+                                    console.warn("Skip bad polygon feature (need >=3 points):", f);
+                                    continue;
+                                }
+                                var w = (f.width != null) ? f.width : b;
+                                out.push(new lf(poly, w))
                             }
-                            return c;
+                            return out;
                         case DataProto.data.GeoType[DataProto.data.GeoType.GeometryCollection]:
-                            a = a.geometries;
-                            c = [];
-                            for (b = 0; b < a.length;) d = a[b], ++b, c.push(new lf(this.getPolygon(d), d.width));
-                            return c;
+                            var geoms = a.geometries || [];
+                            var out2 = [];
+                            if (Array.isArray(geoms)) {
+                                for (var j = 0; j < geoms.length; j++) {
+                                    var g = geoms[j];
+                                    if (!g) {
+                                        console.warn("Skip bad polygon geometry:", g);
+                                        continue;
+                                    }
+                                    var poly2 = null;
+                                    try {
+                                        poly2 = this.getPolygon(g)
+                                    } catch (err2) {
+                                        console.warn("Skip bad polygon geometry:", g, err2);
+                                        continue;
+                                    }
+                                    if (!poly2 || poly2.length < 3) {
+                                        console.warn("Skip bad polygon geometry (need >=3 points):", g);
+                                        continue;
+                                    }
+                                    var w2 = (g.width != null) ? g.width : b;
+                                    out2.push(new lf(poly2, w2))
+                                }
+                            }
+                            return out2;
                         default:
                             return this.thicken(this.getMultiPolygon(a),
                                 b)
@@ -18497,6 +18608,8 @@ if (params !== null) (function (S, u) {
                     switch (b) {
                         case DataProto.data.GeoType[DataProto.data.GeoType.Feature]:
                             return this.getMultiPolygon(a.geometry);
+                        case DataProto.data.GeoType[DataProto.data.GeoType.Polygon]:
+                            return [this.getPolygon(a)];
                         case DataProto.data.GeoType[DataProto.data.GeoType.MultiPolygon]:
                             a = a.coordinates;
                             b = [];
@@ -18540,6 +18653,7 @@ if (params !== null) (function (S, u) {
                 },
                 getMultiLineString: function (a) {
                     if (DataProto.data.GeoType[DataProto.data.GeoType.Feature] == a.type) return this.getMultiLineString(a.geometry);
+                    if (DataProto.data.GeoType[DataProto.data.GeoType.LineString] == a.type) return [this.getLineString(a)];
                     a = a.coordinates;
                     for (var b = [], c = 0; c < a.length;) {
                         var d = a[c];
@@ -18657,6 +18771,116 @@ if (params !== null) (function (S, u) {
             };
             g["toytown2.scenes.TownScene"] = Va;
             Va.__name__ = "toytown2.scenes.TownScene";
+            Va._busyOverlay = {
+                active: !1,
+                el: null,
+                textEl: null,
+                listeners: null,
+                ensure: function () {
+                    if (null != this.el) return;
+                    var a = window.document;
+                    var b = a.createElement("div");
+                    b.id = "toytown2-busy-overlay";
+                    b.style.cssText = "position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,0.55);color:#fff;z-index:2147483647;pointer-events:auto;";
+                    var c = a.createElement("div");
+                    c.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 22px;border-radius:10px;background:rgba(0,0,0,0.6);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:80vw;";
+                    var d = a.createElement("div");
+                    d.style.cssText = "width:28px;height:28px;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:toytown2-busy-spin 0.8s linear infinite;";
+                    var f = a.createElement("div");
+                    f.style.cssText = "font:16px/1.4 'Share Tech Mono', monospace;letter-spacing:0.02em;";
+                    f.textContent = "Please wait...";
+                    c.appendChild(d);
+                    c.appendChild(f);
+                    b.appendChild(c);
+                    this.el = b;
+                    this.textEl = f;
+                    (a.body || a.documentElement).appendChild(b);
+                    if (null == a.getElementById("toytown2-busy-style")) {
+                        var h = a.createElement("style");
+                        h.id = "toytown2-busy-style";
+                        h.textContent = "@keyframes toytown2-busy-spin{to{transform:rotate(360deg);}}";
+                        (a.head || a.documentElement).appendChild(h)
+                    }
+                },
+                attach: function () {
+                    if (null != this.listeners) return;
+                    var a = this;
+                    var b = function (c) {
+                        if (!a.active) return;
+                        c.preventDefault();
+                        c.stopPropagation();
+                        return !1
+                    };
+                    var c = {
+                        capture: !0,
+                        passive: !1
+                    };
+                    var d = window.document;
+                    var f = ["keydown", "keyup", "keypress", "mousedown", "mouseup", "click", "dblclick", "contextmenu", "wheel", "touchstart", "touchmove", "touchend", "touchcancel", "pointerdown", "pointermove", "pointerup"];
+                    var h = 0;
+                    for (; h < f.length;) d.addEventListener(f[h++], b, c);
+                    this.listeners = {
+                        handler: b,
+                        options: c,
+                        events: f
+                    };
+                    try {
+                        null != d.activeElement && d.activeElement.blur()
+                    } catch (k) {
+                    }
+                },
+                detach: function () {
+                    if (null == this.listeners) return;
+                    var a = window.document;
+                    var b = this.listeners.events;
+                    var c = this.listeners.handler;
+                    var d = this.listeners.options;
+                    var f = 0;
+                    for (; f < b.length;) a.removeEventListener(b[f++], c, d);
+                    this.listeners = null
+                },
+                show: function (a) {
+                    this.ensure();
+                    this.textEl.textContent = null != a && "" !== a ? a : "Please wait...";
+                    this.el.style.display = "flex";
+                    this.active = !0;
+                    this.attach()
+                },
+                hide: function () {
+                    if (null == this.el) return;
+                    this.active = !1;
+                    this.el.style.display = "none";
+                    this.detach()
+                }
+            };
+            Va.runBusy = function (a, b, c, d) {
+                var f = !Va._busyOverlay.active;
+                if (f) {
+                    Va._busyOverlay.show(a);
+                    d && null != Va._busyOverlay.el && Va._busyOverlay.el.offsetHeight
+                }
+                var h = function () {
+                    try {
+                        return b()
+                    } catch (k) {
+                        if ("function" == typeof c) {
+                            c(k);
+                            return
+                        }
+                        throw k
+                    } finally {
+                        f && Va._busyOverlay.hide()
+                    }
+                };
+                if (d) return h();
+                if (null != window.requestAnimationFrame) {
+                    window.requestAnimationFrame(function () {
+                        window.requestAnimationFrame(function () {
+                            window.setTimeout(h, 0)
+                        })
+                    })
+                } else window.setTimeout(h, 0)
+            };
             Va.__super__ = oe;
             Va.prototype = l(oe.prototype, {
                 activate: function () {
@@ -18748,7 +18972,7 @@ if (params !== null) (function (S, u) {
                 onKey: function (a, b) {
                     if (!this.navMode.onKey(a, b) && b) switch (a) {
                         case 13:
-                            if (GetParamName === "") this.loadSample();
+                            if (!isLockedMap) this.loadSample();
                             break;
                         case 48:
                             this.switchStyle(this.keyShift ? aa.getRandom() :
@@ -18835,7 +19059,7 @@ if (params !== null) (function (S, u) {
                     this.stage.window.set_mouseLock(this.btnRight)
                 },
                 onTap: function (a) {
-                    this.tapOK && GetParamName === "" && this.loadSample()
+                    this.tapOK && !isLockedMap && this.loadSample()
                 },
                 onContext: function (a) {
                     var b = this;
@@ -18857,8 +19081,8 @@ if (params !== null) (function (S, u) {
                         function () {
                             b.setMode(b.navMode == b.modeFly ? b.modeFree : b.modeFly)
                         }, this.navMode == this.modeFly);
-                    a.addItem("New view", p(this, GetParamName != ""? null:this.loadSample));
-                    a.addItem("Import *.json or *.pb", p(this, GetParamName != ""? null:this.loadExternal));
+                    a.addItem(isLockedMap ? "Return to 2D" : "New view", p(this, isLockedMap ? this.returnTo2D : this.loadSample));
+                    a.addItem("Import...", p(this, isLockedMap ? null : this.loadExternal));
                     a.addItem("Export as OBJ", p(this, this.export));
                     a.addSeparator();
                     a.addSubmenu("View", c);
@@ -18901,6 +19125,8 @@ if (params !== null) (function (S, u) {
                 },
                 loadFromExchangeOrSample: function () {
                     var a = null;
+                    returnBuffer = null;
+                    returnProps = null;
                     try {
                         var b = Qe.getLocalStorage();
                         if (null != b) {
@@ -18908,41 +19134,81 @@ if (params !== null) (function (S, u) {
                             null != a && b.removeItem("{{LOCALSTORAGE_TOWN_BUF}}")
                         }
                     } catch (c) {
-                        GetParamName = "";
+                        isLockedMap = false;
+                        setMapName("");
+                        returnBuffer = null;
+                        returnProps = null;
                         Ia.lastError = c
                     }
                     if (null == a) {
-                        GetParamName = "";
+                        isLockedMap = false;
+                        setMapName("");
+                        returnBuffer = null;
+                        returnProps = null;
                         this.loadSample();
                         return
                     }
+                    returnBuffer = a;
+                    returnProps = getReturnPropsFromBuffer(a);
                     var d = a.charAt(0),
                         e = a.substring(1);
                     if ("p" === d) {
                         var f = new Uint8Array(e.length);
                         for (var h = 0; h < e.length;) f[h] = e.charCodeAt(h) & 255, ++h;
-                        !1 === this.load("mfcg.pb", f.buffer) && this.loadSample()
+                        if (!1 === this.load("mfcg.pb", f.buffer)) {
+                            isLockedMap = false;
+                            setMapName("");
+                            this.loadSample();
+                            return
+                        }
                     } else if ("j" === d) {
-                        !1 === this.load("mfcg.json", e) && this.loadSample()
+                        if (!1 === this.load("mfcg.json", e)) {
+                            isLockedMap = false;
+                            setMapName("");
+                            this.loadSample();
+                            return
+                        }
                     } else {
-                        GetParamName = "";
+                        isLockedMap = false;
+                        setMapName("");
+                        returnBuffer = null;
+                        returnProps = null;
                         Ma.showMessage("Invalid exchange data");
-                        this.loadSample()
+                        this.loadSample();
+                        return
                     }
-
-                    if(GetParamName != ""){
-                        document.title = document.title + ' | ' + GetParamName;
-
-                        const url = new URL(window.location.href);
-                        url.searchParams.delete('name');
-                        window.history.replaceState({}, '', url);
-
-                        params.meta.about.params["Map Name"] = GetParamName;
+                    isLockedMap = true;
+                    setMapName(bc.instance != null ? bc.instance.name : "");
+                    const url = new URL(window.location.href);
+                    if (url.searchParams.has("name")) {
+                        url.searchParams.delete("name");
+                        window.history.replaceState({}, "", url);
                     }
+                },
+                returnTo2D: function () {
+                    const generatorVillage = DataProto.data.GeoGeneratorType[DataProto.data.GeoGeneratorType.vg];
+                    const generator = returnProps != null ? returnProps.generator : null;
+                    if ("vg" === generator || "village" === generator || generatorVillage === generator) {
+                        const blueprint = returnProps != null ? returnProps.blueprint : null;
+                        const query = blueprintToQuery(blueprint);
+                        const adr = FuncProto.paramsUrlString(params.routes.village) + query;
+                        window.open(adr, "_self");
+                        return
+                    }
+                    if (null != returnBuffer) {
+                        try {
+                            const storage = Qe.getLocalStorage();
+                            null != storage && storage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", returnBuffer);
+                        } catch (e) {
+                            Ia.lastError = e;
+                        }
+                    }
+                    this.goToMfcg(!1)
                 },
                 loadSample: function () {
                     Va.shuffleStyles && this.loadPresetStyle();
                     Va.lastSample = yb.random(yb.difference(Va.samples, [Va.lastSample]));
+                    console.log("ToyTown2 sample:", Va.lastSample);
                     this.load(Va.lastSample, mc.getText(Va.lastSample))
                 },
                 loadExternal: function () {
@@ -18950,27 +19216,37 @@ if (params !== null) (function (S, u) {
                         b = new Of;
                     b.addEventListener("select", function (c) {
                         b.addEventListener("complete", function (c) {
-                            a.load(b.get_name(), b.data)
+                            Va.runBusy("Importing map file...", function () {
+                                a.load(b.get_name(), b.data, !0)
+                            }, function (d) {
+                                Ma.showMessage(d && d.message ? d.message : String(d))
+                            })
                         });
                         b.load()
                     });
                     var c = [new ti("Cities", "*.json;*.pb;")];
                     b.browse(c)
                 },
-                load: function (a, b) {
-                    if (null != a) try {
-                        var c = DataGeo.decodeCityFile(a, b);
-                        new bc(a, c)
-                    } catch (d) {
-                        Ia.lastError = d;
-                        a = fa.caught(d).unwrap();
-                        Ma.showMessage(n.string(a));
-                        return !1
-                    }
-                    Va.view.reset(bc.instance);
-                    null != a && (this.defaultView(!0), this.modeFly.runner = null);
-                    this.updateFog();
-                    return !0
+                load: function (a, b, c) {
+                    var d = this;
+                    var e = function () {
+                        if (null != a) try {
+                            var c = DataGeo.decodeCityFile(a, b);
+                            new bc(a, c)
+                        } catch (f) {
+                            Ia.lastError = f;
+                            a = fa.caught(f).unwrap();
+                            Ma.showMessage(n.string(a));
+                            return !1
+                        }
+                        Va.view.reset(bc.instance);
+                        null != a && (d.defaultView(!0), d.modeFly.runner = null);
+                        d.updateFog();
+                        return !0
+                    };
+                    return c ? e() : Va.runBusy("Updating scene...", e, function (f) {
+                        Ma.showMessage(f && f.message ? f.message : String(f))
+                    }, !0)
                 },
                 updateFog: function () {
                     this.navMode == this.modeStare ? Va.view.disableFog() : this.navMode == this.modeOrtho ? Va.view.enableOrthFog() : Va.view.enableFog()
@@ -18995,9 +19271,13 @@ if (params !== null) (function (S, u) {
                     this.stage.set_displayState(2 == this.stage.get_displayState() ? 1 : 2)
                 },
                 "export": function () {
-                    var a = bc.instance.name + ".obj",
-                        b = tl.export(Va.view.buildings);
-                    Og.saveText(b, a, "text/plain")
+                    Va.runBusy("Exporting OBJ file...", function () {
+                        var a = bc.instance.name + ".obj",
+                            b = tl.export(Va.view.buildings);
+                        Og.saveText(b, a, "text/plain")
+                    }, function (b) {
+                        Ma.showMessage(b && b.message ? b.message : String(b))
+                    })
                 },
                 goToPrimarySource: function (inNewWindow = true) {
                     const adr = FuncProto.paramsUrlString(params.routes.primary_source);

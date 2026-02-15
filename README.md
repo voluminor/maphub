@@ -16,9 +16,9 @@ When deploying to a server, it’s enough to move the contents of the `dist` fol
 
 This project is built based on predefined values and page templates; to make changes, it’s enough to interact with these files:
 
--[package.json](./package.json)
--[static.config.mjs](./static.config.mjs)
--[pages.config.mjs](./pages.config.mjs)
+- [package.json](./package.json)
+- [static.config.mjs](./static.config.mjs)
+- [pages.config.mjs](./pages.config.mjs)
 
 If needed, you can “cut out” only one specific generator — at the code level they are self-contained and independent of their neighbors.
 
