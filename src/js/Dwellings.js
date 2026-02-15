@@ -9473,19 +9473,15 @@ var $lime_init = function (K, v) {
                 showContextMenu: function (a, b) {
                     null == b && (b = 0);
                     null == a && (a = 0);
-                    var c = this,
-                        d = new Ac;
-                    d.addItem("New house", function () {c.reset(Xd.random())});
+                    var c = this, d = new Ac;
 
                     this.fillViewMenu(d);
-                    d.addItem("About", function () {
-                        null == ma.findForm(AboutDialogForm) && ma.showDialog(new AboutDialogForm)
-                    });
                     0 == a && 0 == b ? ma.showMenu(d) : ma.showMenuAt(d, a, b)
                 },
                 fillViewMenu: function (a) {
                     a.addSeparator();
-                    Oa.mobile || a.addItem("Fullscreen", m(this, this.toggleFullscreen), 2 != this.stage.get_displayState())
+                    Oa.mobile || a.addItem("Fullscreen", m(this, this.toggleFullscreen), 2 != this.stage.get_displayState());
+                    a.addItem("About", function () {null == ma.findForm(AboutDialogForm) && ma.showDialog(new AboutDialogForm)});
                 },
                 fillExportMenu: function (a) {
                     a.addItem("PNG", m(this, this.exportAsPNG));
@@ -9738,15 +9734,13 @@ var $lime_init = function (K, v) {
                                 ub.prototype.onKey.call(this, a, b)
                         } else 16 == a && this.view.set_showWalls(!1)
                     },
-                    fillViewMenu: function (a) {
-                        a.addItem("Random", m(this, this.random));
-                        a.addItem("Box", m(this, this.box));
-                        a.addItem("Clear", m(this, this.clear));
-                        a.addSeparator();
-                        a.addItem("Submit", m(this, this.submit));
-                        a.addItem("Discard", m(this, this.discard));
-                        a.addSeparator();
-                        ub.prototype.fillViewMenu.call(this, a)
+                    fillViewMenu: function (rootMenu) {
+                        rootMenu.addItem("Random", m(this, this.random));
+                        rootMenu.addItem("Box", m(this, this.box));
+                        rootMenu.addItem("Clear", m(this, this.clear));
+                        rootMenu.addSeparator();
+                        rootMenu.addItem("Submit", m(this, this.submit));
+                        rootMenu.addItem("Discard", m(this, this.discard));
                     },
                     submit: function () {
                         this.reset(fd.inst.bp)
@@ -9943,16 +9937,30 @@ var $lime_init = function (K, v) {
                             ub.prototype.onKey.call(this, a, b)
                     }
                 },
-                fillViewMenu: function (a) {
-                    a.addItem("Floor plans", m(this, this.switchView));
-                    a.addItem("Blueprint", m(this,
-                        this.switchToBlueprint));
-                    a.addSeparator();
-                    a.addItem("Reroll", m(this, this.rerollDimensions));
-                    a.addItem("Fortified", m(this, this.toggleFortified)).setCheck(A.fortified);
-                    a.addItem("Dark", m(this, this.toggleColors)).setCheck(I.mode == Pe.DARK);
-                    a.addItem("Fade", m(this, this.toggleFading)).setCheck(Ae.useFading);
-                    ub.prototype.fillViewMenu.call(this, a)
+                fillViewMenu: function (rootMenu) {
+                    var contextThis = this;
+
+                    rootMenu.addItem("New house", function () {contextThis.reset(Xd.random())});
+                    rootMenu.addItem("View inside", m(this, this.switchView));
+
+                    var exportMenu = new Ac;
+                    this.fillExportMenu(exportMenu);
+                    rootMenu.addSubmenu("Export as", exportMenu);
+                    rootMenu.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    rootMenu.addItem("Edit...", m(this, this.switchToBlueprint));
+                    rootMenu.addItem("Reroll", m(this, this.rerollDimensions));
+
+                    var displayMenu = new Ac;
+                    displayMenu.addItem("Fortified", m(this, this.toggleFortified)).setCheck(A.fortified);
+                    displayMenu.addItem("Dark", m(this, this.toggleColors)).setCheck(I.mode == Pe.DARK);
+                    displayMenu.addItem("Fade", m(this, this.toggleFading)).setCheck(Ae.useFading);
+                    rootMenu.addSubmenu("Display", displayMenu);
+
+                    ub.prototype.fillViewMenu.call(this, rootMenu)
                 },
                 setDir: function (a) {
                     this.sideSelector.select(bd.curDir = a);
@@ -10104,6 +10112,7 @@ var $lime_init = function (K, v) {
                 fillViewMenu: function (rootMenu) {
                     var contextThis = this;
 
+                    rootMenu.addItem("New house", function () {contextThis.reset(Xd.random())});
                     rootMenu.addItem("View outside", m(this, this.switchView));
 
                     rootMenu.addItem("Import...", m(this, this.importPlan));
