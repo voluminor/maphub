@@ -19062,45 +19062,46 @@ if (params !== null) (function (S, u) {
                     this.tapOK && !isLockedMap && this.loadSample()
                 },
                 onContext: function (a) {
-                    var b = this;
-                    a = new td;
-                    var c = new td;
-                    c.addItem("Ground", function () {
-                        b.groundView(!1)
-                    });
-                    c.addItem("Default", function () {
-                        b.defaultView(!0)
-                    });
-                    c.addItem("Map", p(this, this.mapView));
-                    c.addItem("Macro", p(this, this.macroView));
-                    var d = new td;
-                    d.addItem("Rotation", function () {
-                        b.setMode(b.navMode == b.modeRotate ? b.modeFree : b.modeRotate)
-                    }, this.navMode == this.modeRotate);
-                    d.addItem("Fly-through",
-                        function () {
-                            b.setMode(b.navMode == b.modeFly ? b.modeFree : b.modeFly)
-                        }, this.navMode == this.modeFly);
-                    a.addItem(isLockedMap ? "Return to 2D" : "New view", p(this, isLockedMap ? this.returnTo2D : this.loadSample));
-                    a.addItem("Import...", p(this, isLockedMap ? null : this.loadExternal));
-                    a.addItem("Export as OBJ", p(this, this.export));
-                    a.addSeparator();
-                    a.addSubmenu("View", c);
-                    a.addSubmenu("Animation", d);
+                    var contextThis = this, rootMenu = new td;
 
-                    a.addSeparator();
-                    a.addItem("Shuffle styles", p(this, this.toggleShuffleStyle), Va.shuffleStyles);
-                    a.addItem("Trees", p(this, this.toggleTrees), Ka.showTrees);
-                    a.addItem("Gable roofs", p(this, this.toggleGableRoofs), Ka.gableRoofs);
-                    a.addItem("Windows", p(this, this.toggleWindows), Ka.showWindows);
-                    a.addItem("Style...", p(this, this.showStyle));
+                    // BEGIN //
 
-                    a.addSeparator();
-                    a.addItem("Fullscreen", p(this, this.toggleFullscreen), 2 != this.stage.get_displayState());
-                    a.addItem("About", function () {
-                        null == Ma.findForm(AboutDialogForm) && Ma.showDialog(new AboutDialogForm)
-                    });
-                    Ma.showMenu(a)
+                    rootMenu.addItem(isLockedMap ? "Return to 2D" : "New view", p(this, isLockedMap ? this.returnTo2D : this.loadSample));
+                    rootMenu.addItem("Import...", p(this, isLockedMap ? null : this.loadExternal));
+                    rootMenu.addItem("Export as OBJ", p(this, this.export));
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    var viewMenu = new td;
+                    viewMenu.addItem("Default", function () {contextThis.defaultView(!0); contextThis.typeView = "";}, contextThis.typeView === "" && contextThis.typeView === null);
+                    viewMenu.addItem("Ground", function () {contextThis.groundView(!1); contextThis.typeView = "ground";}, contextThis.typeView === "ground");
+                    viewMenu.addItem("Map", function () {p(contextThis,  contextThis.mapView); contextThis.typeView = "map";}, contextThis.typeView === "map");
+                    viewMenu.addItem("Macro", function () {p(contextThis,  contextThis.macroView); contextThis.typeView = "macro";}, contextThis.typeView === "macro");
+                    rootMenu.addSubmenu("View", viewMenu);
+
+                    var displayMenu = new td;
+                    displayMenu.addItem("Shuffle styles", p(this, this.toggleShuffleStyle), Va.shuffleStyles);
+                    displayMenu.addItem("Trees", p(this, this.toggleTrees), Ka.showTrees);
+                    displayMenu.addItem("Gable roofs", p(this, this.toggleGableRoofs), Ka.gableRoofs);
+                    displayMenu.addItem("Windows", p(this, this.toggleWindows), Ka.showWindows);
+                    rootMenu.addSubmenu("Display", displayMenu);
+
+                    var animationMenu = new td;
+                    animationMenu.addItem("Rotation", function () {contextThis.setMode(contextThis.navMode == contextThis.modeRotate ? contextThis.modeFree : contextThis.modeRotate)}, contextThis.navMode == contextThis.modeRotate);
+                    animationMenu.addItem("Fly-through", function () {contextThis.setMode(contextThis.navMode == contextThis.modeFly ? contextThis.modeFree : contextThis.modeFly)}, contextThis.navMode == contextThis.modeFly);
+                    rootMenu.addSubmenu("Animation", animationMenu);
+
+                    rootMenu.addItem("Style...", p(this, this.showStyle));
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    rootMenu.addItem("Fullscreen", p(this, this.toggleFullscreen), 2 != this.stage.get_displayState());
+                    rootMenu.addItem("About", function () {null == Ma.findForm(AboutDialogForm) && Ma.showDialog(new AboutDialogForm)});
+                    Ma.showMenu(rootMenu)
+
+                    // END //
                 },
                 switchStyle: function (a) {
                     aa.setPalette(a, !0);
