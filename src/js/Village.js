@@ -16163,34 +16163,35 @@ var $lime_init = function (E, u) {
 
                     // ###################### //
 
-                    rootMenu.addItem("Reroll village", r(this, this.rerollVillage));
-                    rootMenu.addItem("Rename village...", r(this, this.rename));
-                    rootMenu.addItem("Parameters...", r(this, this.configure));
+                    var rerollMenu = new Qc;
+                    rerollMenu.addItem("Trees", r(this, this.rerollTrees));
+                    rerollMenu.addItem("Village", r(this, this.rerollVillage));
+                    rerollMenu.addItem("Others...", r(this, this.rename));
+                    rootMenu.addSubmenu("Reroll", rerollMenu);
 
-                    var layersMenu = new Qc;
-                    layersMenu.addItem("Relief", r(this, this.toggleRelief), na.showRelief);
-                    layersMenu.addItem("Fields", r(this, this.toggleFields), na.showFields);
-                    layersMenu.addItem("Shading", r(this, this.toggleShading), na.showShading);
-                    layersMenu.addItem("Orchards", r(this, this.toggleOrchards), na.showOrchards);
-                    layersMenu.addItem("Shadows", r(this, this.toggleShadows), na.showShadows);
-                    layersMenu.addItem("Buildings", r(this, this.toggleWilderness), na.showBuildings);
-                    layersMenu.addItem("Roads", r(this, this.toggleRoads), na.showRoads);
-                    layersMenu.addItem("Driveways", na.showBuildings ? r(this, this.toggleDriveways) : null, na.showDriveways);
-                    layersMenu.addItem("Title", r(this, this.toggleTitle), na.showTitle);
-                    layersMenu.addItem("Spotlight...", r(this, this.editDramatic));
+                    var displayMenu = new Qc;
+                    displayMenu.addItem("Relief", r(this, this.toggleRelief), na.showRelief);
+                    displayMenu.addItem("Fields", r(this, this.toggleFields), na.showFields);
+                    displayMenu.addItem("Shading", r(this, this.toggleShading), na.showShading);
+                    displayMenu.addItem("Orchards", r(this, this.toggleOrchards), na.showOrchards);
+                    displayMenu.addItem("Shadows", r(this, this.toggleShadows), na.showShadows);
+                    displayMenu.addItem("Buildings", r(this, this.toggleWilderness), na.showBuildings);
+                    displayMenu.addItem("Roads", r(this, this.toggleRoads), na.showRoads);
+                    displayMenu.addItem("Driveways", na.showBuildings ? r(this, this.toggleDriveways) : null, na.showDriveways);
+                    displayMenu.addItem("Title", r(this, this.toggleTitle), na.showTitle);
+                    displayMenu.addItem("Spotlight...", r(this, this.editDramatic));
 
                     var treeMenu = new Qc;
                     treeMenu.addItem("None", function () {contextThis.setTrees(oc.MODE_NONE);}, oc.defaultMode == oc.MODE_NONE);
                     treeMenu.addItem("Some", function () {contextThis.setTrees(oc.MODE_SOME);}, oc.defaultMode == oc.MODE_SOME);
                     treeMenu.addItem("Many", function () {contextThis.setTrees(oc.MODE_MANY);}, oc.defaultMode == oc.MODE_MANY);
                     treeMenu.addSeparator();
-                    treeMenu.addItem("Reroll", r(this, this.rerollTrees));
-                    treeMenu.addSeparator();
                     treeMenu.addItem("Shading", r(this, this.shadeTrees), hb.get("shade_trees", !0));
-                    layersMenu.addSubmenu("Trees", treeMenu);
+                    displayMenu.addSubmenu("Trees", treeMenu);
 
-                    rootMenu.addSubmenu("Layers", layersMenu);
+                    rootMenu.addSubmenu("Display", displayMenu);
 
+                    rootMenu.addItem("Generator...", r(this, this.configure));
                     rootMenu.addItem("Style...", r(this, this.editStyle));
                     rootMenu.addSeparator();
 
