@@ -14556,7 +14556,7 @@ var $lime_init = function (A, t) {
                     null == u.findWidnow(Jf) && u.showDialog(new Jf)
                 },
                 onViewIn3D: function (inNewWindow = false) {
-                    try {
+                    return be.runBusy("Preparing 3D view...", function () {
                         var a = Ub.instance, b = lg.export(a), c = DataProto.data.GeoObj.encode(b).finish(), d = "", e = 0;
                         for (; e < c.length;) {
                             var f = e + 32768;
@@ -14566,10 +14566,10 @@ var $lime_init = function (A, t) {
                         }
                         window.localStorage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", "p" + d);
                         this.goToViewer(inNewWindow)
-                    } catch (g) {
+                    }.bind(this), function (g) {
                         Ta.lastError = g;
                         u.showDialog(new Wj("" + g))
-                    }
+                    })
                 },
                 goToPrimarySource: function (inNewWindow = true) {
                     const adr = FuncProto.paramsUrlString(params.routes.primary_source);
