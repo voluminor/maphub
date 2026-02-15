@@ -13,6 +13,8 @@ const params = FuncProto.initParams(JSON.parse(String.raw`{{EMBED_PARAMETERS_JSO
 const baseTitle = document.title;
 let mapName = "";
 let isLockedMap = false;
+let returnBuffer = null;
+let returnProps = null;
 const setMapName = (name) => {
     mapName = name || "";
     document.title = mapName !== "" ? `${baseTitle} | ${mapName}` : baseTitle;
@@ -25,6 +27,53 @@ const setMapName = (name) => {
     }
 };
 const isFrame = typeof window.parent.pingFrame === "function"
+const getReturnPropsFromBuffer = (buffer) => {
+    if (null == buffer || buffer.length < 2) return null;
+    const type = buffer.charAt(0);
+    const payload = buffer.substring(1);
+    if ("j" === type) {
+        try {
+            const obj = JSON.parse(payload);
+            if (obj && "object" == typeof obj) {
+                return obj.embedProps != null ? obj.embedProps : obj.embedEditorPayload != null && obj.embedEditorPayload.props != null ? obj.embedEditorPayload.props : null;
+            }
+        } catch (e) {
+        }
+        return null;
+    }
+    if ("p" === type) {
+        try {
+            const bytes = new Uint8Array(payload.length);
+            for (let i = 0; i < payload.length; i++) bytes[i] = payload.charCodeAt(i) & 255;
+            const geo = DataProto.data.GeoObj.decode(bytes);
+            let props = null;
+            geo.embedProps != null && Object.hasOwnProperty.call(geo, "embedProps") && (props = DataGeo.protoStructToJs(geo.embedProps));
+            null == props && geo.embedEditorPayload != null && geo.embedEditorPayload.props != null && (props = DataGeo.protoStructToJs(geo.embedEditorPayload.props));
+            return props;
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+};
+const blueprintToQuery = (blueprint) => {
+    if (null == blueprint || "object" != typeof blueprint) return "";
+    const search = new URLSearchParams();
+    null != blueprint.seed && search.set("seed", "" + blueprint.seed);
+    if (null != blueprint.tags) {
+        const tags = Array.isArray(blueprint.tags) ? blueprint.tags.join(",") : blueprint.tags;
+        null != tags && "" !== tags && search.set("tags", tags);
+    }
+    null != blueprint.width && 0 != blueprint.width && search.set("width", "" + blueprint.width);
+    null != blueprint.height && 0 != blueprint.height && search.set("height", "" + blueprint.height);
+    null != blueprint.treeSeed && null != blueprint.seed && blueprint.treeSeed != blueprint.seed && search.set("trees", "" + blueprint.treeSeed);
+    null != blueprint.name && "" !== blueprint.name && search.set("name", "" + blueprint.name);
+    null != blueprint.pop && 0 != blueprint.pop && search.set("pop", "" + blueprint.pop);
+    null != blueprint.varSeed && 0 != blueprint.varSeed && search.set("roads", "" + blueprint.varSeed);
+    null != blueprint.numbered && 0 < blueprint.numbered.length && search.set("marked", Array.isArray(blueprint.numbered) ? blueprint.numbered.toString() : "" + blueprint.numbered);
+    const query = search.toString();
+    return "" !== query ? "?" + query : "";
+};
 
 if (params !== null) (function (S, u) {
     S.lime = S.lime || {};
@@ -18996,7 +19045,7 @@ if (params !== null) (function (S, u) {
                         function () {
                             b.setMode(b.navMode == b.modeFly ? b.modeFree : b.modeFly)
                         }, this.navMode == this.modeFly);
-                    a.addItem("New view", p(this, isLockedMap ? null : this.loadSample));
+                    a.addItem(isLockedMap ? "Return to 2D" : "New view", p(this, isLockedMap ? this.returnTo2D : this.loadSample));
                     a.addItem("Import...", p(this, isLockedMap ? null : this.loadExternal));
                     a.addItem("Export as OBJ", p(this, this.export));
                     a.addSeparator();
@@ -19040,6 +19089,8 @@ if (params !== null) (function (S, u) {
                 },
                 loadFromExchangeOrSample: function () {
                     var a = null;
+                    returnBuffer = null;
+                    returnProps = null;
                     try {
                         var b = Qe.getLocalStorage();
                         if (null != b) {
@@ -19049,14 +19100,20 @@ if (params !== null) (function (S, u) {
                     } catch (c) {
                         isLockedMap = false;
                         setMapName("");
+                        returnBuffer = null;
+                        returnProps = null;
                         Ia.lastError = c
                     }
                     if (null == a) {
                         isLockedMap = false;
                         setMapName("");
+                        returnBuffer = null;
+                        returnProps = null;
                         this.loadSample();
                         return
                     }
+                    returnBuffer = a;
+                    returnProps = getReturnPropsFromBuffer(a);
                     var d = a.charAt(0),
                         e = a.substring(1);
                     if ("p" === d) {
@@ -19078,6 +19135,8 @@ if (params !== null) (function (S, u) {
                     } else {
                         isLockedMap = false;
                         setMapName("");
+                        returnBuffer = null;
+                        returnProps = null;
                         Ma.showMessage("Invalid exchange data");
                         this.loadSample();
                         return
@@ -19089,6 +19148,26 @@ if (params !== null) (function (S, u) {
                         url.searchParams.delete("name");
                         window.history.replaceState({}, "", url);
                     }
+                },
+                returnTo2D: function () {
+                    const generatorVillage = DataProto.data.GeoGeneratorType[DataProto.data.GeoGeneratorType.vg];
+                    const generator = returnProps != null ? returnProps.generator : null;
+                    if ("vg" === generator || "village" === generator || generatorVillage === generator) {
+                        const blueprint = returnProps != null ? returnProps.blueprint : null;
+                        const query = blueprintToQuery(blueprint);
+                        const adr = FuncProto.paramsUrlString(params.routes.village) + query;
+                        window.open(adr, "_self");
+                        return
+                    }
+                    if (null != returnBuffer) {
+                        try {
+                            const storage = Qe.getLocalStorage();
+                            null != storage && storage.setItem("{{LOCALSTORAGE_TOWN_BUF}}", returnBuffer);
+                        } catch (e) {
+                            Ia.lastError = e;
+                        }
+                    }
+                    this.goToMfcg(!1)
                 },
                 loadSample: function () {
                     Va.shuffleStyles && this.loadPresetStyle();
