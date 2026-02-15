@@ -9448,14 +9448,16 @@ var $lime_init = function (K, v) {
                     Jb.prototype.activate.call(this);
                     this.stage.addEventListener("touchTap", m(this, this.onTap));
                     this.stage.addEventListener("click", m(this, this.onClick));
-                    this.stage.addEventListener("rightClick", m(this, this.onRightClick))
+                    this.stage.addEventListener("rightClick", m(this, this.onRightClick));
+                    this.stage.addEventListener("mouseWheel", m(this, this.onWheel))
                 },
                 deactivate: function () {
                     Jb.prototype.deactivate.call(this);
                     ma.layer.removeChild(this.modeSelector);
                     this.stage.removeEventListener("touchTap", m(this, this.onTap));
                     this.stage.removeEventListener("click", m(this, this.onClick));
-                    this.stage.removeEventListener("rightClick", m(this, this.onRightClick))
+                    this.stage.removeEventListener("rightClick", m(this, this.onRightClick));
+                    this.stage.removeEventListener("mouseWheel", m(this, this.onWheel))
                 },
                 onTap: function (a) {
                     ma.checkTarget(a.target) ||
@@ -9465,6 +9467,9 @@ var $lime_init = function (K, v) {
                 },
                 onRightClick: function (a) {
                     ma.checkTarget(a.target) || this.showContextMenu()
+                },
+                onWheel: function (a) {
+                    0 < a.delta ? this.onKey(39, !0) : 0 > a.delta && this.onKey(37, !0)
                 },
                 onMenuButton: function (a) {
                     a = a.getBounds(ma.layer);
