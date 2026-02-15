@@ -10143,10 +10143,10 @@ var $lime_init = function (K, v) {
 
                     a.addItem("Elevation", m(this, this.switchView));
                     a.addItem("Blueprint", m(this, this.switchToBlueprint));
-                    var g = new Ac;
-                    this.fillExportMenu(g);
+                    var exportMenu = new Ac;
+                    this.fillExportMenu(exportMenu);
                     a.addItem("Import...", m(this, this.importPlan));
-                    0 < g.items.length && a.addSubmenu("Export as", g);
+                    0 < g.items.length && a.addSubmenu("Export as", exportMenu);
                     a.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
 
                     a.addSeparator();
