@@ -10085,6 +10085,8 @@ var $lime_init = function (K, v) {
                 fillViewMenu: function (rootMenu) {
                     var contextThis = this;
 
+                    rootMenu.addItem("View outside", m(this, this.switchView));
+
                     rootMenu.addItem("Import...", m(this, this.importPlan));
                     var exportMenu = new Ac;
                     this.fillExportMenu(exportMenu);
@@ -10094,53 +10096,58 @@ var $lime_init = function (K, v) {
 
                     // ###################### //
 
-                    var c = new Ac;
-                    c.addItem("Regular", m(this, this.toggleRoomSet), !Z.gothicSet);
-                    c.addItem("Gothic", m(this, this.toggleRoomSet), Z.gothicSet);
-                    var d = new Ac;
+                    rootMenu.addItem("Edit...", m(this, this.switchToBlueprint));
 
-                    d.addItem("Hidden", function () {ib.set("grid", mb.mode = "hidden");contextThis.updateView()}).setCheck(mb.mode == "hidden");
-                    d.addItem("Solid", function () {ib.set("grid", mb.mode = "solid");contextThis.updateView()}).setCheck(mb.mode == "solid");
-                    d.addItem("Dashes", function () {ib.set("grid", mb.mode = "dashes");contextThis.updateView()}).setCheck(mb.mode == "dashes");
-                    d.addItem("Dots", function () {ib.set("grid", mb.mode = "dots");contextThis.updateView()}).setCheck(mb.mode == "dots");
-                    d.addItem("Planks", function () {ib.set("grid", mb.mode = "planks");contextThis.updateView()}).setCheck(mb.mode == "planks");
-                    d.addItem("Tiles", function () {ib.set("grid", mb.mode = "tiles");contextThis.updateView()}).setCheck(mb.mode == "tiles");
+                    var displayMenu = new Ac;
 
-                    d.addSeparator();
-                    d.addItem("Double", m(this, this.toggleDoubleGrid)).setCheck(mb.double);
-                    var f = new Ac;
-                    f.addItem("Hidden", function () {ib.set("doors", nd.mode = "hidden");contextThis.updateView()}).setCheck(nd.mode == "hidden");
-                    f.addItem("Simple", function () {ib.set("doors", nd.mode = "simple");contextThis.updateView()}).setCheck(nd.mode == "simple");
-                    f.addItem("Open", function () {ib.set("doors", nd.mode = "open");contextThis.updateView()}).setCheck(nd.mode == "open");
+                    var gridMenu = new Ac;
+                    gridMenu.addItem("Hidden", function () {ib.set("grid", mb.mode = "hidden");contextThis.updateView()}).setCheck(mb.mode == "hidden");
+                    gridMenu.addItem("Solid", function () {ib.set("grid", mb.mode = "solid");contextThis.updateView()}).setCheck(mb.mode == "solid");
+                    gridMenu.addItem("Dashes", function () {ib.set("grid", mb.mode = "dashes");contextThis.updateView()}).setCheck(mb.mode == "dashes");
+                    gridMenu.addItem("Dots", function () {ib.set("grid", mb.mode = "dots");contextThis.updateView()}).setCheck(mb.mode == "dots");
+                    gridMenu.addItem("Planks", function () {ib.set("grid", mb.mode = "planks");contextThis.updateView()}).setCheck(mb.mode == "planks");
+                    gridMenu.addItem("Tiles", function () {ib.set("grid", mb.mode = "tiles");contextThis.updateView()}).setCheck(mb.mode == "tiles");
+                    gridMenu.addSeparator();
+                    gridMenu.addItem("Double", m(this, this.toggleDoubleGrid)).setCheck(mb.double);
+                    displayMenu.addSubmenu("Grid", gridMenu);
 
-                    var k = new Ac;
-                    k.addItem("Names", m(this, this.labelsShown), Qc.isVisible && !Qc.showNumbers);
-                    k.addItem("Numbers", m(this, this.labelsNumbers), Qc.isVisible && Qc.showNumbers);
-                    k.addItem("Hidden", m(this, this.labelsHidden), !Qc.isVisible);
-                    var q = this.getRoofSubmenu();
-                    var g = new Ac;
-                    g.addSubmenu("Grid", d);
-                    g.addSubmenu("Doors", f);
-                    g.addSubmenu("Labels", k);
-                    g.addSubmenu("Roof", q);
-                    g.addItem("Arrows", m(this, this.toggleArrows), Sa.showArrows);
-                    g.addItem("Props", m(this, this.toggleProps), Sa.showProps);
-                    g.addItem("AO", m(this, this.toggleAO), Sa.showAO);
-                    g.addItem("Lights", m(this, this.toggleLights), Sa.showLights);
-                    var l = new Ac;
+                    var doorsMenu = new Ac;
+                    doorsMenu.addItem("Hidden", function () {ib.set("doors", nd.mode = "hidden");contextThis.updateView()}).setCheck(nd.mode == "hidden");
+                    doorsMenu.addItem("Simple", function () {ib.set("doors", nd.mode = "simple");contextThis.updateView()}).setCheck(nd.mode == "simple");
+                    doorsMenu.addItem("Open", function () {ib.set("doors", nd.mode = "open");contextThis.updateView()}).setCheck(nd.mode == "open");
+                    displayMenu.addSubmenu("Doors", doorsMenu);
 
-                    l.addItem("Simple", function () {contextThis.applyArchiPreset("simple")});
-                    l.addItem("Castle", function () {contextThis.applyArchiPreset("castle")});
-                    l.addItem("Log house", function () {contextThis.applyArchiPreset("logs")});
-                    l.addItem("Modern", function () {contextThis.applyArchiPreset("modern")});
-                    l.addItem("Sci-fi", function () {contextThis.applyArchiPreset("scifi")});
+                    var labelsMenu = new Ac;
+                    labelsMenu.addItem("Names", m(this, this.labelsShown), Qc.isVisible && !Qc.showNumbers);
+                    labelsMenu.addItem("Numbers", m(this, this.labelsNumbers), Qc.isVisible && Qc.showNumbers);
+                    labelsMenu.addItem("Hidden", m(this, this.labelsHidden), !Qc.isVisible);
+                    displayMenu.addSubmenu("Labels", labelsMenu);
 
-                    rootMenu.addItem("Elevation", m(this, this.switchView));
-                    rootMenu.addItem("Blueprint", m(this, this.switchToBlueprint));
-                    rootMenu.addItem("Parameters...", m(this, this.showParams));
-                    rootMenu.addSubmenu("Layers", g);
-                    rootMenu.addSubmenu("Rooms", c);
-                    rootMenu.addSubmenu("Walls", l);
+                    var wallsMenu = new Ac;
+                    wallsMenu.addItem("Simple", function () {contextThis.applyArchiPreset("simple")});
+                    wallsMenu.addItem("Castle", function () {contextThis.applyArchiPreset("castle")});
+                    wallsMenu.addItem("Log house", function () {contextThis.applyArchiPreset("logs")});
+                    wallsMenu.addItem("Modern", function () {contextThis.applyArchiPreset("modern")});
+                    wallsMenu.addItem("Sci-fi", function () {contextThis.applyArchiPreset("scifi")});
+                    displayMenu.addSubmenu("Walls", wallsMenu);
+
+                    displayMenu.addSubmenu("Roof", this.getRoofSubmenu());
+                    displayMenu.addItem("Arrows", m(this, this.toggleArrows), Sa.showArrows);
+                    displayMenu.addItem("Props", m(this, this.toggleProps), Sa.showProps);
+                    displayMenu.addItem("AO", m(this, this.toggleAO), Sa.showAO);
+                    displayMenu.addItem("Lights", m(this, this.toggleLights), Sa.showLights);
+                    rootMenu.addSubmenu("Display", displayMenu);
+
+                    var generatorMenu = new Ac;
+                    generatorMenu.addItem("Parameters...", m(this, this.showParams));
+
+                    var roomsMenu = new Ac;
+                    roomsMenu.addItem("Regular", m(this, this.toggleRoomSet), !Z.gothicSet);
+                    roomsMenu.addItem("Gothic", m(this, this.toggleRoomSet), Z.gothicSet);
+                    generatorMenu.addSubmenu("Rooms", roomsMenu);
+
+                    rootMenu.addSubmenu("Generator", generatorMenu);
+
                     rootMenu.addItem("Style...", m(this, this.showColors));
                     ub.prototype.fillViewMenu.call(this, rootMenu)
                 },
