@@ -16128,70 +16128,79 @@ var $lime_init = function (E, u) {
                     this.stage.set_displayState(2 == this.stage.get_displayState() ? 1 : 2)
                 },
                 showContextMenu: function () {
-                    var a = this,
-                        b = new Qc,
-                        c = function (c, d) {
-                            b.addItem(c, function () {
-                                    a.setTrees(d)
-                                },
-                                oc.defaultMode == d)
-                        };
-                    c("None", oc.MODE_NONE);
-                    c("Some", oc.MODE_SOME);
-                    c("Many", oc.MODE_MANY);
-                    b.addSeparator();
-                    b.addItem("Reroll", r(this, this.rerollTrees));
-                    b.addSeparator();
-                    b.addItem("Shading", r(this, this.shadeTrees), hb.get("shade_trees", !0));
-                    c = new Qc;
-                    c.addItem("Relief", r(this, this.toggleRelief), na.showRelief);
-                    c.addItem("Fields", r(this, this.toggleFields), na.showFields);
-                    c.addItem("Shading", r(this, this.toggleShading), na.showShading);
-                    c.addItem("Orchards", r(this, this.toggleOrchards), na.showOrchards);
-                    c.addItem("Shadows", r(this, this.toggleShadows), na.showShadows);
-                    c.addItem("Buildings", r(this, this.toggleWilderness), na.showBuildings);
-                    c.addItem("Roads", r(this, this.toggleRoads), na.showRoads);
-                    c.addItem("Driveways", na.showBuildings ? r(this, this.toggleDriveways) : null, na.showDriveways);
-                    c.addItem("Title", r(this, this.toggleTitle), na.showTitle);
-                    c.addItem("Spotlight...", r(this, this.editDramatic));
-                    c.addSubmenu("Trees", b);
-                    var d = new Qc;
-                    d.addItem("PNG", (G = this.view, r(G, G.exportPNG)));
-                    d.addItem("SVG", (G = this.view, r(G, G.exportSVG)));
-                    d.addItem("JSON", function () {Hh.export(a.village)});
-                    d.addItem("PROTO", function () {Hh.exportBinary(a.village)});
-                    var f = new Qc,
+                    var contextThis = this;
+                    var rootMenu = new Qc,
                         h = this.view;
+
                     h = this.village.findBuilding(new I(h.map.get_mouseX(), h.map.get_mouseY()));
                     if (null != h) {
-                        f.addItem("Open in Dwellings", r(h, h.open));
+                        rootMenu.addItem("Open in Dwellings", r(h, h.open));
                         var k = this.village.buildings.indexOf(h);
-                        -1 != this.village.bp.numbered.indexOf(k) ? (f.addItem("Unmark", function () {
-                            a.unmark(k)
-                        }), f.addItem("Unmark all", r(this, this.unmarkAll))) : (f.addItem("Mark", function () {
-                            a.mark(k)
-                        }), f.addItem("Mark all", r(this, this.markAll)));
-                        f.addSeparator()
+                        -1 != this.village.bp.numbered.indexOf(k) ? (rootMenu.addItem("Unmark", function () {
+                            contextThis.unmark(k)
+                        }), rootMenu.addItem("Unmark all", r(this, this.unmarkAll))) : (rootMenu.addItem("Mark", function () {
+                            contextThis.mark(k)
+                        }), rootMenu.addItem("Mark all", r(this, this.markAll)));
+                        rootMenu.addSeparator()
                     }
-                    f.addItem("New village", r(this, this.newVillage));
-                    f.addItem("Reroll village", r(this, this.rerollVillage));
-                    f.addItem("Rename village...", r(this, this.rename));
-                    f.addItem("View in 3D", r(this, this.onViewIn3D));
-                    f.addItem("Import...", r(this, this.onImport));
-                    f.addSubmenu("Export as", d);
-                    f.addItem("Permalink...", r(this, this.showURL));
 
-                    f.addSeparator();
-                    f.addItem("Parameters...", r(this, this.configure));
-                    f.addSubmenu("Layers", c);
-                    f.addItem("Style...", r(this, this.editStyle));
+                    // BEGIN //
 
-                    f.addSeparator();
-                    f.addItem("Fullscreen", r(this, this.toggleFullscreen), 2 != this.stage.get_displayState());
-                    f.addItem("About", function () {
-                        null == w.findForm(AboutDialogForm) && w.showDialog(new AboutDialogForm)
-                    });
-                    w.showMenu(f)
+                    rootMenu.addItem("New village", r(this, this.newVillage));
+                    rootMenu.addItem("View in 3D", r(this, this.onViewIn3D));
+                    rootMenu.addItem("Import...", r(this, this.onImport));
+
+                    var exportMenu = new Qc;
+                    exportMenu.addItem("PNG", (G = this.view, r(G, G.exportPNG)));
+                    exportMenu.addItem("SVG", (G = this.view, r(G, G.exportSVG)));
+                    exportMenu.addItem("JSON", function () {Hh.export(contextThis.village)});
+                    exportMenu.addItem("PROTO", function () {Hh.exportBinary(contextThis.village)});
+                    rootMenu.addSubmenu("Export as", exportMenu);
+
+                    rootMenu.addItem("Permalink...", r(this, this.showURL));
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    rootMenu.addItem("Reroll village", r(this, this.rerollVillage));
+                    rootMenu.addItem("Rename village...", r(this, this.rename));
+                    rootMenu.addItem("Parameters...", r(this, this.configure));
+
+                    var layersMenu = new Qc;
+                    layersMenu.addItem("Relief", r(this, this.toggleRelief), na.showRelief);
+                    layersMenu.addItem("Fields", r(this, this.toggleFields), na.showFields);
+                    layersMenu.addItem("Shading", r(this, this.toggleShading), na.showShading);
+                    layersMenu.addItem("Orchards", r(this, this.toggleOrchards), na.showOrchards);
+                    layersMenu.addItem("Shadows", r(this, this.toggleShadows), na.showShadows);
+                    layersMenu.addItem("Buildings", r(this, this.toggleWilderness), na.showBuildings);
+                    layersMenu.addItem("Roads", r(this, this.toggleRoads), na.showRoads);
+                    layersMenu.addItem("Driveways", na.showBuildings ? r(this, this.toggleDriveways) : null, na.showDriveways);
+                    layersMenu.addItem("Title", r(this, this.toggleTitle), na.showTitle);
+                    layersMenu.addItem("Spotlight...", r(this, this.editDramatic));
+
+                    var treeMenu = new Qc;
+                    treeMenu.addItem("None", function () {contextThis.setTrees(oc.MODE_NONE);}, oc.defaultMode == oc.MODE_NONE);
+                    treeMenu.addItem("Some", function () {contextThis.setTrees(oc.MODE_SOME);}, oc.defaultMode == oc.MODE_SOME);
+                    treeMenu.addItem("Many", function () {contextThis.setTrees(oc.MODE_MANY);}, oc.defaultMode == oc.MODE_MANY);
+                    treeMenu.addSeparator();
+                    treeMenu.addItem("Reroll", r(this, this.rerollTrees));
+                    treeMenu.addSeparator();
+                    treeMenu.addItem("Shading", r(this, this.shadeTrees), hb.get("shade_trees", !0));
+                    layersMenu.addSubmenu("Trees", treeMenu);
+
+                    rootMenu.addSubmenu("Layers", layersMenu);
+
+                    rootMenu.addItem("Style...", r(this, this.editStyle));
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    rootMenu.addItem("Fullscreen", r(this, this.toggleFullscreen), 2 != this.stage.get_displayState());
+                    rootMenu.addItem("About", function () {null == w.findForm(AboutDialogForm) && w.showDialog(new AboutDialogForm)});
+                    w.showMenu(rootMenu)
+
+                    // END //
+
                 },
                 restoreVillage: function () {
                     var a = jc.fromURL();
