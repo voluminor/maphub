@@ -14552,7 +14552,7 @@ var $lime_init = function (A, t) {
 
                     rootMenu.addItem("New city", l(this, this.buildNew));
                     rootMenu.addItem("Warp", l(this, this.onWarp));
-                    rootMenu.addItem("Colors...", ia.editColors);
+
                     var c = new dd;
                     c.addItem("PNG", be.asPNG);
                     c.addItem("SVG", be.asSVG);
@@ -14571,11 +14571,20 @@ var $lime_init = function (A, t) {
                         rootMenu.addItem(c, function () {contextThis.toggleWindow(f)}, null != u.findWidnow(f));
                     };
 
-                    rootMenu.addItem("Reroll all", function () {Ub.rerollDistricts();})
+                    rootMenu.addItem("Reroll all", function () {
+                        var model = contextThis.model || Ub.instance;
+                        null != model && model.rerollDistricts();
+                    })
+
+                    rootMenu.addItem("Reroll title", function () {
+                        var model = contextThis.model || Ub.instance;
+                        null != model && model.setName(model.rerollName());
+                    })
 
                     c("Generate", Kd);
                     c("Settlement", rg);
-                    c("Style...", ke);
+                    c("Display...", ke);
+                    rootMenu.addItem("Style...", ia.editColors);
                     rootMenu.addSeparator();
 
                     // ###################### //
@@ -17276,34 +17285,20 @@ var $lime_init = function (A, t) {
                     this.legend.relayout()
                 },
                 onContext: function (a) {
-                    var b =
-                            this,
+                    var b = this,
                         c = ia.getMenu();
-                    a = function (a, f) {
-                        c.addItem(a, function () {
-                            Db.set_current(f);
-                            b.scalebar.update();
-                            b.update();
-                            b.legend.relayout()
-                        }, Db.get_current() == f)
-                    };
-                    a("Metric units", Db.metric);
-                    a("Imperial units", Db.imperial);
-                    a = function (a, f) {
-                        c.addItem(a, function () {
-                            Lb.sbClass = f;
-                            b.removeChild(b.scalebar);
-                            b.scalebar = Lb.create(!0);
-                            b.addChild(b.scalebar);
-                            b.update();
-                            b.legend.relayout()
-                        }, Lb.sbClass == f)
-                    };
-                    a("Default style", of);
-                    a("Alternative style", vg);
-                    c.addItem("Hide", function () {
-                        ba.set("scale_bar", !1)
-                    })
+
+                    var unitMain = new dd;
+                    unitMain.addItem("Metric", function () {Db.set_current(Db.metric);b.scalebar.update();b.update();b.legend.relayout()}, Db.get_current() == Db.metric)
+                    unitMain.addItem("Imperial", function () {Db.set_current(Db.imperial);b.scalebar.update();b.update();b.legend.relayout()}, Db.get_current() == Db.imperial)
+                    c.addSubmenu("Unit", unitMain);
+
+                    var styleMain = new dd;
+                    styleMain.addItem("Default", function () {Lb.sbClass = of;b.removeChild(b.scalebar);b.scalebar = Lb.create(!0);b.addChild(b.scalebar);b.update();b.legend.relayout()}, Lb.sbClass == of);
+                    styleMain.addItem("Alternative", function () {Lb.sbClass = vg;b.removeChild(b.scalebar);b.scalebar = Lb.create(!0);b.addChild(b.scalebar);b.update();b.legend.relayout()}, Lb.sbClass == vg);
+                    c.addSubmenu("Style", styleMain);
+
+                    c.addItem("Hide", function () {ba.set("scale_bar", !1)});
                 },
                 __class__: oh
             });
@@ -17906,26 +17901,19 @@ var $lime_init = function (A, t) {
             ni.__super__ = Ca;
             ni.prototype = v(Ca.prototype, {
                 onContext: function (a) {
-                    var b = this,
-                        c = function (c, f) {
-                            a.addItem(c, function () {
-                                Db.set_current(f);
-                                b.scalebar.update()
-                            }, Db.get_current() == f)
-                        };
-                    c("Metric units", Db.metric);
-                    c("Imperial units", Db.imperial);
-                    c = function (c, f) {
-                        a.addItem(c, function () {
-                            Lb.sbClass = f;
-                            b.replace()
-                        }, Lb.sbClass == f)
-                    };
-                    c("Default style", of);
-                    c("Alternative style", vg);
-                    a.addItem("Hide", function () {
-                        ba.set("scale_bar", !1)
-                    })
+                    var b = this;
+
+                    var unitMain = new dd;
+                    unitMain.addItem("Metric", function () {Db.set_current(Db.metric);b.scalebar.update();b.update();}, Db.get_current() == Db.metric)
+                    unitMain.addItem("Imperial", function () {Db.set_current(Db.imperial);b.scalebar.update();b.update();}, Db.get_current() == Db.imperial)
+                    a.addSubmenu("Unit", unitMain);
+
+                    var styleMain = new dd;
+                    styleMain.addItem("Default", function () {Lb.sbClass = of;b.replace()}, Lb.sbClass == of);
+                    styleMain.addItem("Alternative", function () {Lb.sbClass = vg;b.replace()}, Lb.sbClass == vg);
+                    a.addSubmenu("Style", styleMain);
+
+                    a.addItem("Hide", function () {ba.set("scale_bar", !1)});
                 },
                 replace: function () {
                     null != this.scalebar &&
@@ -18014,16 +18002,12 @@ var $lime_init = function (A, t) {
                 },
                 onContext: function (a) {
                     var b = this;
-                    a.addItem("Edit", function () {
-                        b.title.edit(b.model)
-                    });
+                    a.addItem("Edit", function () {b.title.edit(b.model)});
                     a.addItem("Reroll", function () {
                         b.model.setName(b.model.rerollName());
                         b.title.setText(b.model.name)
                     });
-                    a.addItem("Hide", function () {
-                        ba.set("city_name", !1)
-                    })
+                    a.addItem("Hide", function () {ba.set("city_name", !1);  b.scene.toggleOverlays();});
                 },
                 exportPNG: function (a) {
                     this.title.filterOn(!a)
