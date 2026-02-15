@@ -16129,19 +16129,20 @@ var $lime_init = function (E, u) {
                 },
                 showContextMenu: function () {
                     var contextThis = this;
-                    var rootMenu = new Qc,
-                        h = this.view;
+                    var rootMenu = new Qc;
 
-                    h = this.village.findBuilding(new I(h.map.get_mouseX(), h.map.get_mouseY()));
-                    if (null != h) {
-                        rootMenu.addItem("Open in Dwellings", r(h, h.open));
-                        var k = this.village.buildings.indexOf(h);
-                        -1 != this.village.bp.numbered.indexOf(k) ? (rootMenu.addItem("Unmark", function () {
-                            contextThis.unmark(k)
-                        }), rootMenu.addItem("Unmark all", r(this, this.unmarkAll))) : (rootMenu.addItem("Mark", function () {
-                            contextThis.mark(k)
-                        }), rootMenu.addItem("Mark all", r(this, this.markAll)));
-                        rootMenu.addSeparator()
+                    var posMouse = this.village.findBuilding(new I(contextThis.view.map.get_mouseX(), contextThis.view.map.get_mouseY()));
+                    if (null != posMouse) {
+                        rootMenu.addItem("Open in Dwellings", r(posMouse, posMouse.open));
+                        var buildObj = this.village.buildings.indexOf(posMouse);
+                        if(-1 != this.village.bp.numbered.indexOf(buildObj)) {
+                            rootMenu.addItem("Unmark", function () {contextThis.unmark(buildObj)});
+                            rootMenu.addItem("Unmark all", r(this, this.unmarkAll));
+                        }else{
+                            rootMenu.addItem("Mark", function () {contextThis.mark(buildObj)});
+                            rootMenu.addItem("Mark all", r(this, this.markAll));
+                        }
+                        rootMenu.addSeparator();
                     }
 
                     // BEGIN //
