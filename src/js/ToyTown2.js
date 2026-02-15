@@ -18530,19 +18530,55 @@ if (params !== null) (function (S, u) {
                     if (null == c) return this.thicken(this.getMultiPolygon(a), b);
                     switch (c) {
                         case DataProto.data.GeoType[DataProto.data.GeoType.FeatureCollection]:
-                            a = a.features;
-                            c = [];
-                            for (b = 0; b < a.length;) {
-                                var d = a[b];
-                                ++b;
-                                c.push(new lf(this.getPolygon(d.geometry), d.width))
+                            var features = a.features || [];
+                            var out = [];
+                            for (var i = 0; i < features.length; i++) {
+                                var f = features[i];
+                                if (!f || !f.geometry) {
+                                    console.warn("Skip bad polygon feature:", f);
+                                    continue;
+                                }
+                                var poly = null;
+                                try {
+                                    poly = this.getPolygon(f.geometry)
+                                } catch (err) {
+                                    console.warn("Skip bad polygon feature:", f, err);
+                                    continue;
+                                }
+                                if (!poly || poly.length < 3) {
+                                    console.warn("Skip bad polygon feature (need >=3 points):", f);
+                                    continue;
+                                }
+                                var w = (f.width != null) ? f.width : b;
+                                out.push(new lf(poly, w))
                             }
-                            return c;
+                            return out;
                         case DataProto.data.GeoType[DataProto.data.GeoType.GeometryCollection]:
-                            a = a.geometries;
-                            c = [];
-                            for (b = 0; b < a.length;) d = a[b], ++b, c.push(new lf(this.getPolygon(d), d.width));
-                            return c;
+                            var geoms = a.geometries || [];
+                            var out2 = [];
+                            if (Array.isArray(geoms)) {
+                                for (var j = 0; j < geoms.length; j++) {
+                                    var g = geoms[j];
+                                    if (!g) {
+                                        console.warn("Skip bad polygon geometry:", g);
+                                        continue;
+                                    }
+                                    var poly2 = null;
+                                    try {
+                                        poly2 = this.getPolygon(g)
+                                    } catch (err2) {
+                                        console.warn("Skip bad polygon geometry:", g, err2);
+                                        continue;
+                                    }
+                                    if (!poly2 || poly2.length < 3) {
+                                        console.warn("Skip bad polygon geometry (need >=3 points):", g);
+                                        continue;
+                                    }
+                                    var w2 = (g.width != null) ? g.width : b;
+                                    out2.push(new lf(poly2, w2))
+                                }
+                            }
+                            return out2;
                         default:
                             return this.thicken(this.getMultiPolygon(a),
                                 b)
