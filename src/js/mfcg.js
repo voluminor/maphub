@@ -14564,7 +14564,8 @@ var $lime_init = function (A, t) {
 
                     var editMenu = new dd;
                     editMenu.addItem("Settlement...", function () {contextThis.toggleWindow(rg)}, null != u.findWidnow(rg));
-                    editMenu.addItem("Measure", function () {contextThis.onWarpTool(77)});
+                    editMenu.addItem("Line measurement", function () {contextThis.onWarpTool(77)});
+                    editMenu.addItem("Curve measurement", function () {contextThis.onWarpTool(67)});
                     editMenu.addSeparator();
                     editMenu.addItem("Displace", function () {contextThis.onWarpTool(68)});
                     editMenu.addItem("Rotate", function () {contextThis.onWarpTool(82)});
@@ -16273,6 +16274,9 @@ var $lime_init = function (A, t) {
                 h = new wi(this);
                 k.h[77] = h;
                 k = this.keyMap;
+                h = new Cmt(this);
+                k.h[67] = h;
+                k = this.keyMap;
                 h = new xi(this);
                 k.h[69] = h;
                 if (null == jd.lastTool) this.switchTool(this.keyMap.h[68]);
@@ -16383,37 +16387,43 @@ var $lime_init = function (A, t) {
                 },
                 onContext: function (a) {
                     for (var b = this, c = [], d = this.keyMap.iterator(); d.hasNext();) c.push(d.next());
-                    var f = null;
-                    d = 0;
-                    for (var h = c.length; d < h;) {
-                        var k = c[d];
-                        ++d;
-                        if ("Measure" == k.getName()) {
-                            f = k;
-                            N.remove(c, k);
-                            break
+                    var f = [],
+                        h = 0;
+                    for (var k = c.length; h < k;) {
+                        var n = c[h];
+                        ++h;
+                        if ("Line measurement" == n.getName() || "Curve measurement" == n.getName()) {
+                            f.push(n);
+                            N.remove(c, n);
+                            --h;
+                            --k
                         }
                     }
-                    if (null != f) {
-                        d = [f];
-                        a.addItem(d[0].getName(), function (a) {
-                                return function () {
-                                    b.switchTool(a[0])
-                                }
-                            }(d),
-                            d[0] == this.tool);
+                    if (0 < f.length) {
+                        h = 0;
+                        for (k = f.length; h < k;) {
+                            n = f[h];
+                            ++h;
+                            var p = [n];
+                            a.addItem(p[0].getName(), function (a) {
+                                    return function () {
+                                        b.switchTool(a[0])
+                                    }
+                                }(p),
+                                p[0] == this.tool)
+                        }
                         a.addSeparator()
                     }
-                    for (d = 0, h = c.length; d < h;) {
-                        k = c[d];
-                        ++d;
-                        var n = [k];
-                        a.addItem(n[0].getName(), function (a) {
+                    for (h = 0, k = c.length; h < k;) {
+                        n = c[h];
+                        ++h;
+                        p = [n];
+                        a.addItem(p[0].getName(), function (a) {
                                 return function () {
                                     b.switchTool(a[0])
                                 }
-                            }(n),
-                            n[0] == this.tool)
+                            }(p),
+                            p[0] == this.tool)
                     }
                     a.addSeparator();
                     a.addItem("Apply", l(this, this.onSave));
@@ -18348,7 +18358,7 @@ var $lime_init = function (A, t) {
             wi.__super__ = Mb;
             wi.prototype = v(Mb.prototype, {
                 getName: function () {
-                    return "Measure"
+                    return "Line measurement"
                 },
                 activate: function () {
                     this.scene.updateBrush(0);
@@ -18382,6 +18392,70 @@ var $lime_init = function (A, t) {
                     this.scene.drawNode(this.cur, 4)
                 },
                 __class__: wi
+            });
+            var Cmt = function (a) {
+                this.points = [];
+                this.cur = null;
+                Mb.call(this, a)
+            };
+            g["scenestools.CurveMeasureTool"] = Cmt;
+            Cmt.__name__ = "scenestools.CurveMeasureTool";
+            Cmt.__super__ = Mb;
+            Cmt.prototype = v(Mb.prototype, {
+                getName: function () {
+                    return "Curve measurement"
+                },
+                activate: function () {
+                    this.points = [];
+                    this.cur = null;
+                    this.scene.updateBrush(0);
+                    this.scene.clearMesh()
+                },
+                onPress: function (a, b) {
+                    Mb.prototype.onPress.call(this, a, b);
+                    this.points.push(new I(a, b));
+                    this.cur = null;
+                    this.updateMesh();
+                    this.showDistance()
+                },
+                onRelease: function () {
+                },
+                onMove: function (a, b) {
+                    0 < this.points.length && (null == this.cur && (this.cur = new I(a, b)), this.cur.setTo(a, b), this.updateMesh())
+                },
+                onDrag: function (a, b) {
+                    Mb.prototype.onDrag.call(this, a, b);
+                    0 < this.points.length && (null == this.cur && (this.cur = new I(a, b)), this.cur.setTo(a, b), this.updateMesh())
+                },
+                showDistance: function () {
+                    if (1 < this.points.length) {
+                        for (var a = 0, b = 1, c = this.points.length; b < c;) {
+                            var d = this.points[b - 1],
+                                f = this.points[b];
+                            ++b;
+                            a += I.distance(d, f)
+                        }
+                        a = Db.get_current().measure(a);
+                        b = a.value;
+                        q.show((10 > b ? Math.round(10 * b) / 10 : Math.round(b)) + " " + a.system.unit)
+                    }
+                },
+                updateMesh: function () {
+                    this.scene.clearMesh();
+                    for (var a = 1, b = this.points.length; a < b;) {
+                        var c = this.points[a - 1],
+                            d = this.points[a];
+                        ++a;
+                        this.scene.drawEdge(c, d, 2)
+                    }
+                    for (a = 0, b = this.points.length; a < b;) {
+                        c = this.points[a];
+                        ++a;
+                        this.scene.drawNode(c, 4)
+                    }
+                    0 < this.points.length && null != this.cur && (a = this.points[this.points.length - 1], this.scene.drawEdge(a, this.cur, 2), this.scene.drawNode(this.cur, 4))
+                },
+                __class__: Cmt
             });
             var vi = function (a) {
                 me.call(this, a)
