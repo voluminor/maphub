@@ -16473,7 +16473,7 @@ var $lime_init = function (E, u) {
                     null != c.style && x.setPalette(Rb.fromAsset(c.style));
                     this.createVillage(c)
                 },
-                onViewIn3D: function (inNewWindow = true) {
+                onViewIn3D: function (inNewWindow = false) {
                     try {
                         var a = this.village;
                         var b = Hh.getProto(a);

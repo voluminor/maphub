@@ -14542,7 +14542,7 @@ var $lime_init = function (A, t) {
                 onPermalink: function () {
                     null == u.findWidnow(Jf) && u.showDialog(new Jf)
                 },
-                onViewIn3D: function (inNewWindow = true) {
+                onViewIn3D: function (inNewWindow = false) {
                     try {
                         var a = Ub.instance, b = lg.export(a), c = DataProto.data.GeoObj.encode(b).finish(), d = "", e = 0;
                         for (; e < c.length;) {
