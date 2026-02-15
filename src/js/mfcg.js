@@ -13999,7 +13999,7 @@ var $lime_init = function (A, t) {
             ke.__super__ = vc;
             ke.prototype = v(vc.prototype, {
                 getTitle: function () {
-                    return "Style"
+                    return "Display"
                 },
                 addCheckbox: function (a, b, c, d, f) {
                     a = new ud(a);
@@ -14463,6 +14463,11 @@ var $lime_init = function (A, t) {
                 onWarp: function () {
                     bb.switchScene(jd)
                 },
+                onWarpTool: function (a) {
+                    this.onWarp();
+                    var b = bb.scene;
+                    null != b && b instanceof jd && b.keyMap.h.hasOwnProperty(a) && b.switchTool(b.keyMap.h[a])
+                },
                 onImport: function () {
                     var a = this,
                         b = new Gf;
@@ -14553,14 +14558,21 @@ var $lime_init = function (A, t) {
 
                     var rerollMenu = new dd;
                     var model = contextThis.model || Ub.instance;
-                    rerollMenu.addItem("Districts names", model.rerollDistricts);
-                    rerollMenu.addItem("Town name", model.rerollName);
+                    rerollMenu.addItem("Districts names", null != model? function(){model.rerollDistricts();} : null);
+                    rerollMenu.addItem("Town name", null != model? function(){model.setName(model.rerollName());} : null );
                     rootMenu.addSubmenu("Reroll", rerollMenu);
 
                     var editMenu = new dd;
                     editMenu.addItem("Settlement...", function () {contextThis.toggleWindow(rg)}, null != u.findWidnow(rg));
+                    editMenu.addItem("Measure", function () {contextThis.onWarpTool(77)});
                     editMenu.addSeparator();
-                    editMenu.addItem("Warp", l(this, this.onWarp));
+                    editMenu.addItem("Displace", function () {contextThis.onWarpTool(68)});
+                    editMenu.addItem("Rotate", function () {contextThis.onWarpTool(82)});
+                    editMenu.addItem("Liquify", function () {contextThis.onWarpTool(76)});
+                    editMenu.addItem("Relax", function () {contextThis.onWarpTool(88)});
+                    editMenu.addItem("Bloat", function () {contextThis.onWarpTool(66)});
+                    editMenu.addItem("Pinch", function () {contextThis.onWarpTool(80)});
+                    editMenu.addItem("Equalize", function () {contextThis.onWarpTool(69)});
                     rootMenu.addSubmenu("Edit", editMenu);
 
                     rootMenu.addItem("Display...", function () {contextThis.toggleWindow(ke)}, null != u.findWidnow(ke));
