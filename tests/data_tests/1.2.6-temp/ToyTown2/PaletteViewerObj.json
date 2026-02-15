@@ -1,0 +1,23 @@
+{
+  "ground": "#b3a72d",
+  "fields": "#ffbb32",
+  "greens": "#89993d",
+  "foliage": "#606029",
+  "roads": "#99937a",
+  "water": "#265380",
+  "walls1": "#fffbf2",
+  "walls2": "#a69d74",
+  "roofs1": "#f28f49",
+  "roofs2": "#99916b",
+  "sky1": "#4774b3",
+  "sky2": "#98bed9",
+  "sun": "#fff7cc",
+  "windows": "#ffffff",
+  "sun_pos": "40.0",
+  "ambience": "0.2",
+  "lighted": "0.0",
+  "pitch": "0.7",
+  "roofedTowers": "true",
+  "towers": "Square",
+  "tree_shape": "Ellipsoid"
+}

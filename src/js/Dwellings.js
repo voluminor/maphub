@@ -13399,6 +13399,10 @@ var $lime_init = function (K, v) {
                         case 0:
                             c = t;
                             g = c.thickness;
+                            if (isNaN(g)) {
+                                c = !1;
+                                break
+                            }
                             f = c.fill;
                             d = f.color;
                             f = f.alpha;

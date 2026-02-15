@@ -1,8 +1,8 @@
 {
   "name": "fantasy-maphub",
   "name_full": "Fantasy MapHub Generators",
-  "version": "1.2.5",
-  "description": "An offline-first hub that bundles several Watabou map generators into one consistent web app: same UI patterns, local assets, and modern import/export. It adds OpenAPI docs, proto-first serialization (including pure protobuf files), and a PWA build so everything works without an internet connection.",
+  "version": "1.2.6-edit-ui-texts.0",
+  "description": "Offline windowed map editor for detailed city layouts. Based on the original Watabou editor and expanded into a full-featured app with fast generation, rich editing tools, an advanced ruler, standardized context menus, progress feedback for heavy exports, extended import/export for round-trip editing with backward compatibility, and one-click handoff to the 3D viewer.",
   "license": "MPL-2.0",
   "author": "mail@sunsung.fun",
   "homepage": "maphub.webtools.download",
