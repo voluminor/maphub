@@ -14263,6 +14263,7 @@ var $lime_init = function (A, t) {
                         u.layer.addChild(new le);
                         le.inst.awake.add(l(this, this.onAwake));
                         this.stage.addEventListener("mouseMove", l(this, this.onMouseMove));
+                        this.stage.addEventListener("mouseDown", l(this, this.onMouseDown));
                         this.stage.addEventListener("click", l(this, this.onClick));
                         vc.loadSaved(Ec.tools);
                         var a = Ub.instance.bp;
@@ -14287,6 +14288,7 @@ var $lime_init = function (A, t) {
                     ia.prototype.deactivate.call(this);
                     u.layer.removeChild(this.btnMenu);
                     this.stage.removeEventListener("mouseMove", l(this, this.onMouseMove));
+                    this.stage.removeEventListener("mouseDown", l(this, this.onMouseDown));
                     this.stage.removeEventListener("click", l(this, this.onClick));
                     null != le.inst && u.layer.removeChild(le.inst)
                 },
@@ -14370,6 +14372,79 @@ var $lime_init = function (A, t) {
                 },
                 onMouseMove: function (a) {
                     Sd.__neq(a.target, this.stage) || (a = ia.map, this.mouse.setTo(a.get_mouseX(), a.get_mouseY()), a = this.patch = this.model.getCell(this.mouse), a = null != a ? a.ward.getLabel() : null, le.inst.set(a))
+                },
+                onMouseDown: function (a) {
+                    if (1 < a.clickCount) {
+                        var b = ia.map,
+                            c = new I(b.get_mouseX(), b.get_mouseY()),
+                            d = this.model.getCell(c);
+                        if (null != d) {
+                            var f = d.ward,
+                                h = this.model.bp.seed + this.model.cells.indexOf(d),
+                                k = !1;
+                            if (f instanceof Pc) {
+                                var n = ba.get("display_mode", "Lots");
+                                if ("Block" != n) {
+                                    var p = f.group.blocks;
+                                    for (var g = 0; g < p.length && !k;) {
+                                        var q = p[g];
+                                        ++g;
+                                        if (Gb.containsPoint(q.shape, c)) {
+                                            var m;
+                                            switch (n) {
+                                                case "Complex":
+                                                    m = q.buildings;
+                                                    break;
+                                                case "Simple":
+                                                    m = q.rects;
+                                                    break;
+                                                default:
+                                                    m = q.lots
+                                            }
+                                            for (var u = 0; u < m.length;) {
+                                                var r = m[u];
+                                                ++u;
+                                                if (Gb.containsPoint(r, c)) {
+                                                    var t = h + f.group.blocks.indexOf(q) + m.indexOf(r);
+                                                    Te.openInDwellings(r, !0, t);
+                                                    k = !0;
+                                                    break
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (f instanceof xd) {
+                                null != f.building && Gb.containsPoint(f.building, c) && (Te.openInDwellings(f.building, !0, h), k = !0)
+                            } else if (f instanceof Ne) {
+                                var y = f.building || [];
+                                for (var B = 0; B < y.length;) {
+                                    var A = y[B];
+                                    ++B;
+                                    if (Gb.containsPoint(A, c)) {
+                                        Te.openInDwellings(A, !1, h);
+                                        k = !0;
+                                        break
+                                    }
+                                }
+                            } else if (f instanceof yd) {
+                                if ("Block" != ba.get("display_mode", "Lots")) {
+                                    var C = f.buildings || [];
+                                    for (var D = 0; D < C.length;) {
+                                        var E = C[D];
+                                        ++D;
+                                        if (Gb.containsPoint(E, c)) {
+                                            var F = h + C.indexOf(E);
+                                            Te.openInDwellings(E, !1, F);
+                                            k = !0;
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+                            k && a.stopPropagation()
+                        }
+                    }
                 },
                 onClick: function (a) {
                     null != this.patch && (a.commandKey || a.controlKey ? this.patch.reroll() : a.shiftKey && (null !=
