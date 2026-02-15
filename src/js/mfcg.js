@@ -1766,13 +1766,17 @@ var $lime_init = function (A, t) {
             sb.takeLocalStorageTownBuf = function () {
                 var a = null;
                 try {
-                    var b = qf.getLocalStorage();
-                    if (null != b) {
-                        a = b.getItem("{{LOCALSTORAGE_TOWN_BUF}}");
-                        null != a && b.removeItem("{{LOCALSTORAGE_TOWN_BUF}}")
-                    }
+                    a = window.localStorage.getItem("{{LOCALSTORAGE_TOWN_BUF}}")
                 } catch (c) {
-                    Ta.lastError = c
+                    Ta.lastError = c;
+                    try {
+                        var b = qf.getLocalStorage();
+                        if (null != b) {
+                            a = b.getItem("{{LOCALSTORAGE_TOWN_BUF}}")
+                        }
+                    } catch (d) {
+                        Ta.lastError = d
+                    }
                 }
                 return a
             };
@@ -1786,11 +1790,21 @@ var $lime_init = function (A, t) {
                         for (var f = 0; f < c.length;) d[f] = c.charCodeAt(f) & 255, ++f;
                         a = be.decodeImportFile("mfcg.pb", d.buffer);
                         be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator, !0);
+                        try {
+                            window.localStorage.removeItem("{{LOCALSTORAGE_TOWN_BUF}}")
+                        } catch (g) {
+                            Ta.lastError = g
+                        }
                         return !0
                     }
                     if ("j" === b) {
                         a = be.decodeImportFile("mfcg.json", c);
                         be.applyImportPayload(a.payload, a.state, a.url, a.blueprint, a.generator, !0);
+                        try {
+                            window.localStorage.removeItem("{{LOCALSTORAGE_TOWN_BUF}}")
+                        } catch (g2) {
+                            Ta.lastError = g2
+                        }
                         return !0
                     }
                 } catch (g) {
@@ -8160,7 +8174,6 @@ var $lime_init = function (A, t) {
                 try {
                     k = FuncBin.importBin(f)
                 } catch (n) {
-                    k = f
                 }
                 if (null != k) {
                     if (k.number != DataProto.data.DataType.geo) throw DataGeo.createTypeMismatchError(DataProto.data.DataType.geo, k.number);
