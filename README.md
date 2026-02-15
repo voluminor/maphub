@@ -1,6 +1,6 @@
 # Fantasy MapHub Generators
 
-[Go to Russian version](./README.RU.md)
+[Перейти к Русской версии](./README.RU.md)
 
 ## Technical details
 
