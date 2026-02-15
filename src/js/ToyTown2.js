@@ -19063,6 +19063,7 @@ if (params !== null) (function (S, u) {
                 },
                 onContext: function (a) {
                     var contextThis = this, rootMenu = new td;
+                    if(typeof contextThis.typeView === "undefined") contextThis.typeView = "default";
 
                     // BEGIN //
 
@@ -19074,11 +19075,16 @@ if (params !== null) (function (S, u) {
                     // ###################### //
 
                     var viewMenu = new td;
-                    viewMenu.addItem("Default", function () {contextThis.defaultView(!0); contextThis.typeView = "";}, contextThis.typeView === "" && contextThis.typeView === null);
+                    viewMenu.addItem("Default", function () {contextThis.defaultView(!0); contextThis.typeView = "default";}, contextThis.typeView === "default");
                     viewMenu.addItem("Ground", function () {contextThis.groundView(!1); contextThis.typeView = "ground";}, contextThis.typeView === "ground");
-                    viewMenu.addItem("Map", function () {p(contextThis,  contextThis.mapView); contextThis.typeView = "map";}, contextThis.typeView === "map");
-                    viewMenu.addItem("Macro", function () {p(contextThis,  contextThis.macroView); contextThis.typeView = "macro";}, contextThis.typeView === "macro");
+                    viewMenu.addItem("Map", function () {contextThis.mapView(); contextThis.typeView = "map";}, contextThis.typeView === "map");
+                    viewMenu.addItem("Macro", function () {contextThis.macroView(); contextThis.typeView = "macro";}, contextThis.typeView === "macro");
                     rootMenu.addSubmenu("View", viewMenu);
+
+                    var animationMenu = new td;
+                    animationMenu.addItem("Rotation", function () {contextThis.setMode(contextThis.navMode == contextThis.modeRotate ? contextThis.modeFree : contextThis.modeRotate)}, contextThis.navMode == contextThis.modeRotate);
+                    animationMenu.addItem("Fly-through", function () {contextThis.setMode(contextThis.navMode == contextThis.modeFly ? contextThis.modeFree : contextThis.modeFly)}, contextThis.navMode == contextThis.modeFly);
+                    rootMenu.addSubmenu("Animation", animationMenu);
 
                     var displayMenu = new td;
                     displayMenu.addItem("Shuffle styles", p(this, this.toggleShuffleStyle), Va.shuffleStyles);
@@ -19086,11 +19092,6 @@ if (params !== null) (function (S, u) {
                     displayMenu.addItem("Gable roofs", p(this, this.toggleGableRoofs), Ka.gableRoofs);
                     displayMenu.addItem("Windows", p(this, this.toggleWindows), Ka.showWindows);
                     rootMenu.addSubmenu("Display", displayMenu);
-
-                    var animationMenu = new td;
-                    animationMenu.addItem("Rotation", function () {contextThis.setMode(contextThis.navMode == contextThis.modeRotate ? contextThis.modeFree : contextThis.modeRotate)}, contextThis.navMode == contextThis.modeRotate);
-                    animationMenu.addItem("Fly-through", function () {contextThis.setMode(contextThis.navMode == contextThis.modeFly ? contextThis.modeFree : contextThis.modeFly)}, contextThis.navMode == contextThis.modeFly);
-                    rootMenu.addSubmenu("Animation", animationMenu);
 
                     rootMenu.addItem("Style...", p(this, this.showStyle));
                     rootMenu.addSeparator();
