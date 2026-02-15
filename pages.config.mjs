@@ -110,7 +110,7 @@ export const PAGES = {
                 frame_rate: 60,
             },
             about:{
-                text: "A “one-page dungeon” style tool for natural locations—caves, burrows, or linked forest clearings—with quick styling, water level control, optional connecting roads, and PNG/SVG export.",
+                text: "Create natural locations in a “one-page dungeon” style: caves, burrows, or linked forest clearings. Generate a layout fast, then tweak the style, adjust the water level, and add optional connecting roads for larger regions. Export clean PNG/SVG for play or reference, and save editable projects with JSON/PROTO import/export. Works offline as an installable app. \n\nBased on generator by watabou.",
             },
         }),
     },
@@ -134,7 +134,7 @@ export const PAGES = {
                 frame_rate: 60,
             },
             about:{
-                text: "A dedicated 3D viewer: import compatible JSON/PROTO, switch view modes and lighting/styles, jump to random scenes, and export the result as an OBJ model.",
+                text: "Explore generated towns and cities in 3D. \nImport compatible JSON/PROTO, fly around with simple camera controls, switch rendering modes, lighting, and style presets, and jump to random scenes for quick inspiration. \nExport the result as an OBJ model for further work in external tools. Works offline as an installable app. \n\nBased on generator by watabou.",
             },
         }),
     },
@@ -159,7 +159,7 @@ export const PAGES = {
                 frame_rate: 60,
             },
             about:{
-                text: "A highly configurable medieval city map maker with lots of controls (walls/river, outline shaping, procedural district names), standardized context menus, integrations with Dwellings and City Viewer, and PNG/SVG + JSON/PROTO export.",
+                text: "Create detailed medieval-fantasy city maps in seconds. \nTweak the layout, districts, streets, walls, and waterways, then annotate the result and measure distances with line/curve tools. \nImport and continue editing saved projects (JSON/PROTO), export as PNG/SVG or editable JSON/PROTO, and open the same city in the built-in 3D viewer. Works offline as an installable app. \n\nBased on generator by watabou.",
             },
         }),
     },
@@ -183,7 +183,7 @@ export const PAGES = {
                 frame_rate: 60,
             },
             about:{
-                text: "Generates believable floorplans from cottages to mansions and small castles, with room purposes, multi-floor layouts (plus optional basement), an editable footprint blueprint, elevation view, and PNG/SVG + JSON/PROTO export.",
+                text: "Design believable building floorplans—from cottages to mansions and small castles—with smart room placement and multi-floor layouts (optional basement). Edit the footprint blueprint and labels, preview an elevation view, and export clean PNG/SVG for handouts. Save and continue later with editable JSON/PROTO import/export. Works offline as an installable app. \n\nBased on generator by watabou",
             },
         }),
     },
@@ -207,7 +207,7 @@ export const PAGES = {
                 frame_rate: 30,
             },
             about:{
-                text: "Builds rural settlements around winding roads: fewer houses than a city, more fields and trees. Includes terrain presets (bridges/piers when needed), relief shading, orchards/squares, integration with Dwellings and the 3D viewer, and PNG/SVG + JSON/PROTO export.",
+                text: "Generate a believable rural settlement built around winding roads: fewer houses than a city, more farms, orchards, trees, and open space. \nQuickly try terrain presets (with bridges/piers when needed), adjust the look with relief shading, and refine the layout before exporting. Import saved projects (JSON/PROTO), export as PNG/SVG or JSON/PROTO, and jump to the 3D viewer or Dwellings when you want more detail. Works offline as an installable app.\n\nBased on generator by watabou.",
             },
         }),
     },
