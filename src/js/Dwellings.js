@@ -9968,9 +9968,17 @@ var $lime_init = function (K, v) {
                     this.updateView()
                 },
                 toggleFortified: function () {
-                    A.fortified = !A.fortified;
+                    var nextFortified = !A.fortified;
+                    if (nextFortified) {
+                        this.applyArchiPreset("castle");
+                        return
+                    }
+                    A.fortified = !1;
                     A.random();
-                    this.updateView()
+                    var currentArchi = ib.get("architecture");
+                    if (null == currentArchi || "" == currentArchi || "architecture_unspecified" == currentArchi || "castle" == currentArchi) {
+                        this.applyArchiPreset("simple")
+                    } else this.updateView()
                 },
                 toggleColors: function () {
                     ib.set("colorize", bd.dark = !bd.dark);
@@ -9984,6 +9992,17 @@ var $lime_init = function (K, v) {
                 toggleFading: function () {
                     ib.set("fading", Ae.useFading = !Ae.useFading);
                     this.updateView()
+                },
+                applyArchitecture: function (a) {
+                    hb.setStyle(a);
+                    this.house.updateProps();
+                    this.updateView()
+                },
+                applyArchiPreset: function (a) {
+                    var prevFortified = A.fortified;
+                    "castle" == a ? A.fortified = !0 : A.fortified && (A.fortified = !1);
+                    A.fortified != prevFortified && A.random();
+                    this.applyArchitecture(a)
                 },
                 reset: function (a) {
                     ub.prototype.reset.call(this, a);
@@ -10124,11 +10143,13 @@ var $lime_init = function (K, v) {
                     displayMenu.addSubmenu("Labels", labelsMenu);
 
                     var wallsMenu = new Ac;
-                    wallsMenu.addItem("Simple", function () {contextThis.applyArchiPreset("simple")});
-                    wallsMenu.addItem("Castle", function () {contextThis.applyArchiPreset("castle")});
-                    wallsMenu.addItem("Log house", function () {contextThis.applyArchiPreset("logs")});
-                    wallsMenu.addItem("Modern", function () {contextThis.applyArchiPreset("modern")});
-                    wallsMenu.addItem("Sci-fi", function () {contextThis.applyArchiPreset("scifi")});
+                    var currentArchi = ib.get("architecture");
+                    (null == currentArchi || "" == currentArchi || "architecture_unspecified" == currentArchi) && (currentArchi = "simple");
+                    wallsMenu.addItem("Simple", function () {contextThis.applyArchiPreset("simple")}, "simple" == currentArchi);
+                    wallsMenu.addItem("Castle", function () {contextThis.applyArchiPreset("castle")}, "castle" == currentArchi);
+                    wallsMenu.addItem("Log house", function () {contextThis.applyArchiPreset("logs")}, "logs" == currentArchi);
+                    wallsMenu.addItem("Modern", function () {contextThis.applyArchiPreset("modern")}, "modern" == currentArchi);
+                    wallsMenu.addItem("Sci-fi", function () {contextThis.applyArchiPreset("scifi")}, "scifi" == currentArchi);
                     displayMenu.addSubmenu("Walls", wallsMenu);
 
                     displayMenu.addSubmenu("Roof", this.getRoofSubmenu());
@@ -10376,6 +10397,9 @@ var $lime_init = function (K, v) {
                     this.updateView()
                 },
                 applyArchiPreset: function (a) {
+                    var prevFortified = A.fortified;
+                    "castle" == a ? A.fortified = !0 : A.fortified && (A.fortified = !1);
+                    A.fortified != prevFortified && A.random();
                     this.applyArchitecture(a)
                 },
                 showColors: function () {
