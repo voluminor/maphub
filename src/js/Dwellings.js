@@ -10083,43 +10083,42 @@ var $lime_init = function (K, v) {
                         } else this.editName(a)
                 },
                 fillViewMenu: function (rootMenu) {
-                    var b = contextThis,
-                        c = new Ac;
+                    var contextThis = this;
+
+                    rootMenu.addItem("Import...", m(this, this.importPlan));
+                    var exportMenu = new Ac;
+                    this.fillExportMenu(exportMenu);
+                    rootMenu.addSubmenu("Export as", exportMenu);
+                    rootMenu.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
+                    rootMenu.addSeparator();
+
+                    // ###################### //
+
+                    var c = new Ac;
                     c.addItem("Regular", m(this, this.toggleRoomSet), !Z.gothicSet);
                     c.addItem("Gothic", m(this, this.toggleRoomSet), Z.gothicSet);
-                    var d = new Ac,
-                        g = function (a, c) {
-                            d.addItem(a,
-                                function () {
-                                    ib.set("grid", mb.mode = c);
-                                    contextThis.updateView()
-                                }).setCheck(mb.mode == c)
-                        };
-                    g("Hidden", "hidden");
-                    g("Solid", "solid");
-                    g("Dashes", "dashes");
-                    g("Dots", "dots");
-                    g("Planks", "planks");
-                    g("Tiles", "tiles");
+                    var d = new Ac;
+
+                    d.addItem("Hidden", function () {ib.set("grid", mb.mode = "hidden");contextThis.updateView()}).setCheck(mb.mode == "hidden");
+                    d.addItem("Solid", function () {ib.set("grid", mb.mode = "solid");contextThis.updateView()}).setCheck(mb.mode == "solid");
+                    d.addItem("Dashes", function () {ib.set("grid", mb.mode = "dashes");contextThis.updateView()}).setCheck(mb.mode == "dashes");
+                    d.addItem("Dots", function () {ib.set("grid", mb.mode = "dots");contextThis.updateView()}).setCheck(mb.mode == "dots");
+                    d.addItem("Planks", function () {ib.set("grid", mb.mode = "planks");contextThis.updateView()}).setCheck(mb.mode == "planks");
+                    d.addItem("Tiles", function () {ib.set("grid", mb.mode = "tiles");contextThis.updateView()}).setCheck(mb.mode == "tiles");
+
                     d.addSeparator();
                     d.addItem("Double", m(this, this.toggleDoubleGrid)).setCheck(mb.double);
                     var f = new Ac;
-                    g = function (a, c) {
-                        f.addItem(a, function () {
-                            ib.set("doors", nd.mode = c);
-                            contextThis.updateView()
-                        }).setCheck(nd.mode == c)
-                    };
-                    g("Hidden", "hidden");
-                    g("Simple", "simple");
-                    g("Open", "open");
+                    f.addItem("Hidden", function () {ib.set("doors", nd.mode = "hidden");contextThis.updateView()}).setCheck(nd.mode == "hidden");
+                    f.addItem("Simple", function () {ib.set("doors", nd.mode = "simple");contextThis.updateView()}).setCheck(nd.mode == "simple");
+                    f.addItem("Open", function () {ib.set("doors", nd.mode = "open");contextThis.updateView()}).setCheck(nd.mode == "open");
+
                     var k = new Ac;
-                    k.addItem("Names", m(this, this.labelsShown),
-                        Qc.isVisible && !Qc.showNumbers);
+                    k.addItem("Names", m(this, this.labelsShown), Qc.isVisible && !Qc.showNumbers);
                     k.addItem("Numbers", m(this, this.labelsNumbers), Qc.isVisible && Qc.showNumbers);
                     k.addItem("Hidden", m(this, this.labelsHidden), !Qc.isVisible);
                     var q = this.getRoofSubmenu();
-                    g = new Ac;
+                    var g = new Ac;
                     g.addSubmenu("Grid", d);
                     g.addSubmenu("Doors", f);
                     g.addSubmenu("Labels", k);
@@ -10127,40 +10126,27 @@ var $lime_init = function (K, v) {
                     g.addItem("Arrows", m(this, this.toggleArrows), Sa.showArrows);
                     g.addItem("Props", m(this, this.toggleProps), Sa.showProps);
                     g.addItem("AO", m(this, this.toggleAO), Sa.showAO);
-                    g.addItem("Lights", m(this, this.toggleLights),
-                        Sa.showLights);
+                    g.addItem("Lights", m(this, this.toggleLights), Sa.showLights);
                     var l = new Ac;
-                    k = function (a, c) {
-                        l.addItem(a, function () {
-                            contextThis.applyArchiPreset(c)
-                        })
-                    };
-                    k("Simple", "simple");
-                    k("Castle", "castle");
-                    k("Log house", "logs");
-                    k("Modern", "modern");
-                    k("Sci-fi", "scifi");
+
+                    l.addItem("Simple", function () {contextThis.applyArchiPreset("simple")});
+                    l.addItem("Castle", function () {contextThis.applyArchiPreset("castle")});
+                    l.addItem("Log house", function () {contextThis.applyArchiPreset("logs")});
+                    l.addItem("Modern", function () {contextThis.applyArchiPreset("modern")});
+                    l.addItem("Sci-fi", function () {contextThis.applyArchiPreset("scifi")});
 
                     rootMenu.addItem("Elevation", m(this, this.switchView));
                     rootMenu.addItem("Blueprint", m(this, this.switchToBlueprint));
-                    var exportMenu = new Ac;
-                    this.fillExportMenu(exportMenu);
-                    rootMenu.addItem("Import...", m(this, this.importPlan));
-                    0 < g.items.length && rootMenu.addSubmenu("Export as", exportMenu);
-                    rootMenu.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
-
-                    rootMenu.addSeparator();
                     rootMenu.addItem("Parameters...", m(this, this.showParams));
                     rootMenu.addSubmenu("Layers", g);
                     rootMenu.addSubmenu("Rooms", c);
                     rootMenu.addSubmenu("Walls", l);
                     rootMenu.addItem("Style...", m(this, this.showColors));
-                    ub.prototype.fillViewMenu.call(this, a)
+                    ub.prototype.fillViewMenu.call(this, rootMenu)
                 },
                 fillExportMenu: function (rootMenu) {
-                    var b =
-                        this;
-                    ub.prototype.fillExportMenu.call(this, a);
+                    var contextThis = this;
+                    ub.prototype.fillExportMenu.call(this, rootMenu);
                     rootMenu.addItem("JSON", function () {
                         sb.runBusy("Exporting JSON file...", function () {
                             sb.export(contextThis.house)
