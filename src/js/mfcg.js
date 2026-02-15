@@ -16382,14 +16382,38 @@ var $lime_init = function (A, t) {
                     this.showMenu(this.btnMenu)
                 },
                 onContext: function (a) {
-                    for (var b = this, c = this.keyMap.iterator(); c.hasNext();) {
-                        var d = [c.next()];
+                    for (var b = this, c = [], d = this.keyMap.iterator(); d.hasNext();) c.push(d.next());
+                    var f = null;
+                    d = 0;
+                    for (var h = c.length; d < h;) {
+                        var k = c[d];
+                        ++d;
+                        if ("Measure" == k.getName()) {
+                            f = k;
+                            N.remove(c, k);
+                            break
+                        }
+                    }
+                    if (null != f) {
+                        d = [f];
                         a.addItem(d[0].getName(), function (a) {
                                 return function () {
                                     b.switchTool(a[0])
                                 }
                             }(d),
-                            d[0] == this.tool)
+                            d[0] == this.tool);
+                        a.addSeparator()
+                    }
+                    for (d = 0, h = c.length; d < h;) {
+                        k = c[d];
+                        ++d;
+                        var n = [k];
+                        a.addItem(n[0].getName(), function (a) {
+                                return function () {
+                                    b.switchTool(a[0])
+                                }
+                            }(n),
+                            n[0] == this.tool)
                     }
                     a.addSeparator();
                     a.addItem("Apply", l(this, this.onSave));
