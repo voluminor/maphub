@@ -10082,8 +10082,8 @@ var $lime_init = function (K, v) {
                             this.map.updateShading()
                         } else this.editName(a)
                 },
-                fillViewMenu: function (a) {
-                    var b = this,
+                fillViewMenu: function (rootMenu) {
+                    var b = contextThis,
                         c = new Ac;
                     c.addItem("Regular", m(this, this.toggleRoomSet), !Z.gothicSet);
                     c.addItem("Gothic", m(this, this.toggleRoomSet), Z.gothicSet);
@@ -10092,7 +10092,7 @@ var $lime_init = function (K, v) {
                             d.addItem(a,
                                 function () {
                                     ib.set("grid", mb.mode = c);
-                                    b.updateView()
+                                    contextThis.updateView()
                                 }).setCheck(mb.mode == c)
                         };
                     g("Hidden", "hidden");
@@ -10107,7 +10107,7 @@ var $lime_init = function (K, v) {
                     g = function (a, c) {
                         f.addItem(a, function () {
                             ib.set("doors", nd.mode = c);
-                            b.updateView()
+                            contextThis.updateView()
                         }).setCheck(nd.mode == c)
                     };
                     g("Hidden", "hidden");
@@ -10132,7 +10132,7 @@ var $lime_init = function (K, v) {
                     var l = new Ac;
                     k = function (a, c) {
                         l.addItem(a, function () {
-                            b.applyArchiPreset(c)
+                            contextThis.applyArchiPreset(c)
                         })
                     };
                     k("Simple", "simple");
@@ -10141,45 +10141,45 @@ var $lime_init = function (K, v) {
                     k("Modern", "modern");
                     k("Sci-fi", "scifi");
 
-                    a.addItem("Elevation", m(this, this.switchView));
-                    a.addItem("Blueprint", m(this, this.switchToBlueprint));
+                    rootMenu.addItem("Elevation", m(this, this.switchView));
+                    rootMenu.addItem("Blueprint", m(this, this.switchToBlueprint));
                     var exportMenu = new Ac;
                     this.fillExportMenu(exportMenu);
-                    a.addItem("Import...", m(this, this.importPlan));
-                    0 < g.items.length && a.addSubmenu("Export as", exportMenu);
-                    a.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
+                    rootMenu.addItem("Import...", m(this, this.importPlan));
+                    0 < g.items.length && rootMenu.addSubmenu("Export as", exportMenu);
+                    rootMenu.addItem("Permalink...", !this.permalinkDisabled?m(this, this.onPermalink):null);
 
-                    a.addSeparator();
-                    a.addItem("Parameters...", m(this, this.showParams));
-                    a.addSubmenu("Layers", g);
-                    a.addSubmenu("Rooms", c);
-                    a.addSubmenu("Walls", l);
-                    a.addItem("Style...", m(this, this.showColors));
+                    rootMenu.addSeparator();
+                    rootMenu.addItem("Parameters...", m(this, this.showParams));
+                    rootMenu.addSubmenu("Layers", g);
+                    rootMenu.addSubmenu("Rooms", c);
+                    rootMenu.addSubmenu("Walls", l);
+                    rootMenu.addItem("Style...", m(this, this.showColors));
                     ub.prototype.fillViewMenu.call(this, a)
                 },
-                fillExportMenu: function (a) {
+                fillExportMenu: function (rootMenu) {
                     var b =
                         this;
                     ub.prototype.fillExportMenu.call(this, a);
-                    a.addItem("JSON", function () {
+                    rootMenu.addItem("JSON", function () {
                         sb.runBusy("Exporting JSON file...", function () {
-                            sb.export(b.house)
+                            sb.export(contextThis.house)
                         }, function (c) {
                             var msg = c && c.message || "" + c;
                             console.error(msg);
                             ma.showToast(msg)
                         })
                     });
-                    a.addItem("PROTO", function () {
+                    rootMenu.addItem("PROTO", function () {
                         sb.runBusy("Exporting PROTO file...", function () {
-                            sb.exportAsProto(b.house)
+                            sb.exportAsProto(contextThis.house)
                         }, function (c) {
                             var msg = c && c.message || "" + c;
                             console.error(msg);
                             ma.showToast(msg)
                         })
                     });
-                    a.addItem("Advanced...", m(this, this.multiExport))
+                    rootMenu.addItem("Advanced...", m(this, this.multiExport))
                 },
                 reset: function (a) {
                     this.permalinkDisabled=!1;
@@ -10297,16 +10297,16 @@ var $lime_init = function (K, v) {
                     this.map.updateLabels(this.house)
                 },
                 getRoofSubmenu: function () {
-                    var a = this,
+                    var contextThis = this,
                         b = new Ac;
                     b.addItem("Simple", function () {
-                        a.setRoofMode(!0, !1)
+                        contextThis.setRoofMode(!0, !1)
                     }, Ea.displayed && !Ea.detailed);
                     b.addItem("Detailed", function () {
-                        a.setRoofMode(!0, !0)
+                        contextThis.setRoofMode(!0, !0)
                     }, Ea.displayed && Ea.detailed);
                     b.addItem("Hidden", function () {
-                        a.setRoofMode(!1, !1)
+                        contextThis.setRoofMode(!1, !1)
                     }, !Ea.displayed);
                     b.addSeparator();
                     b.addItem("Shade", Ea.detailed ? m(this, this.toggleRoofShading) : null, Ea.shading);
