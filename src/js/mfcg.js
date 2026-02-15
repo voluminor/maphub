@@ -13856,21 +13856,6 @@ var $lime_init = function (A, t) {
                 this.addButtonRow("Town", l(this, this.rerollName), "Districts", (G = this.model, l(G, G.rerollDistricts)));
                 this.addSection("Points of interest");
                 this.addButtonRow("Load", l(this, this.onLoadPOIs), "Clear", l(this, this.onClearPOIs));
-                this.addSeparator();
-                this.addButtonRow("Warp", l(this, this.onWarp), "Overworld", l(this, this.onOverworld));
-                var b = new ed;
-                b.setMargins(0, 8);
-                var c = new fb("Permalink");
-                this.permalinkBtn = c;
-                c.set_width(96);
-                c.set_enabled(!be.importMode);
-                c.click.add(l(this, this.onCopyURL));
-                b.add(c);
-                c = new fe("Export", ["PNG", "SVG", "JSON", "PROTO"]);
-                c.set_width(96);
-                c.action.add(l(this, this.onExport));
-                b.add(c);
-                this.add(b);
                 Bb.newModel.add(l(this, this.onNewModel));
                 Bb.titleChanged.add(l(this, this.onTitleChanged));
                 Bb.geometryChanged.add(l(this, this.onGeometryChanged))
@@ -14551,39 +14536,35 @@ var $lime_init = function (A, t) {
                     // BEGIN //
 
                     rootMenu.addItem("New city", l(this, this.buildNew));
-                    rootMenu.addItem("Warp", l(this, this.onWarp));
-
-                    var c = new dd;
-                    c.addItem("PNG", be.asPNG);
-                    c.addItem("SVG", be.asSVG);
-                    c.addItem("JSON", be.asJSON);
-                    c.addItem("PROTO", be.asPROTO);
-
                     rootMenu.addItem("View in 3D", l(this, this.onViewIn3D));
                     rootMenu.addItem("Import...", l(this, this.onImport));
-                    rootMenu.addSubmenu("Export as", c);
+
+                    var exportMenu = new dd;
+                    exportMenu.addItem("PNG", be.asPNG);
+                    exportMenu.addItem("SVG", be.asSVG);
+                    exportMenu.addItem("JSON", be.asJSON);
+                    exportMenu.addItem("PROTO", be.asPROTO);
+                    rootMenu.addSubmenu("Export as", exportMenu);
+
                     rootMenu.addItem("Permalink..", !this.permalinkDisabled ? l(this, this.onPermalink) : null)
                     rootMenu.addSeparator();
 
                     // ###################### //
 
-                    c = function (c, f) {
-                        rootMenu.addItem(c, function () {contextThis.toggleWindow(f)}, null != u.findWidnow(f));
-                    };
+                    var rerollMenu = new dd;
+                    var model = contextThis.model || Ub.instance;
+                    rerollMenu.addItem("Districts names", model.rerollDistricts);
+                    rerollMenu.addItem("Town name", model.rerollName);
+                    rootMenu.addSubmenu("Reroll", rerollMenu);
 
-                    rootMenu.addItem("Reroll all", function () {
-                        var model = contextThis.model || Ub.instance;
-                        null != model && model.rerollDistricts();
-                    })
+                    var editMenu = new dd;
+                    editMenu.addItem("Settlement...", function () {contextThis.toggleWindow(rg)}, null != u.findWidnow(rg));
+                    editMenu.addSeparator();
+                    editMenu.addItem("Warp", l(this, this.onWarp));
+                    rootMenu.addSubmenu("Edit", editMenu);
 
-                    rootMenu.addItem("Reroll title", function () {
-                        var model = contextThis.model || Ub.instance;
-                        null != model && model.setName(model.rerollName());
-                    })
-
-                    c("Generate", Kd);
-                    c("Settlement", rg);
-                    c("Display...", ke);
+                    rootMenu.addItem("Display...", function () {contextThis.toggleWindow(ke)}, null != u.findWidnow(ke));
+                    rootMenu.addItem("Generator...", function () {contextThis.toggleWindow(Kd)}, null != u.findWidnow(Kd));
                     rootMenu.addItem("Style...", ia.editColors);
                     rootMenu.addSeparator();
 
